@@ -2,7 +2,7 @@
 #use the makefile to build the project,
 #Third library is libsys.a to print the log while the project runing
 #
-SRC = src/*.cpp
+SRC = src/readbmp.cpp
 LIB = ./sdk/lib/
 OBJ = 
 HEADERS = 
