@@ -33,8 +33,8 @@ bool readBmp(char *bmpName)
 	biBitCount = head.biBitCount;
 
 	//定义变量，计算图像每行像素所占的字节数（必须是4的倍数）
-	//int lineByte=(bmpWidth * biBitCount/8+3)/4*4;
-	int lineByte = (bmpWidth*biBitCount+31)/32*4;
+	//int lineBYTE=(bmpWidth * biBitCount/8+3)/4*4;
+	int lineBYTE = (bmpWidth*biBitCount+31)/32*4;
 
 	//灰度图像有颜色表，且颜色表表项为256
 	if(biBitCount == 8)
@@ -45,50 +45,32 @@ bool readBmp(char *bmpName)
 	}
 
 	//申请位图数据所需要的空间，读位图数据进内存
-	pBmpBuf = new unsigned char[lineByte * bmpHeight];
-	fread(pBmpBuf,1,lineByte * bmpHeight,fp);
+	pBmpBuf = new unsigned char[lineBYTE * bmpHeight];
+	fread(pBmpBuf,1,lineBYTE * bmpHeight,fp);
 
-	int BytesPerLine;
-	BYTE data[999999];
-	BYTE Color[1300][3];
-	BytesPerLine = (bmpWidth*biBitCount+31)/32*4;
+	int BYTEsPerLine;
+	BYTE8 data[999999];
+	BYTE8 Color[1300][3];
+	BYTEsPerLine = (bmpWidth*biBitCount+31)/32*4;
 	fseek(fp,54,0);
 	int k, m,n = 0;
-	for(int i=bmpHeight-1;i>=0;i--)
+	//for(int i = bmpHeight-1; i >= 0; i--)
+	for(int i = 0; i < bmpHeight; i++)
 	{  
-		fread(data,1,BytesPerLine,fp);  
+		fread(data,1,BYTEsPerLine,fp);  
 		cout<<"第"<< i <<"行[R, G, B]:"<<endl;
 		for(k=0;k <bmpWidth*3;k++)
 		{
+			printf("data:%d ",data[k]);
 			if(k%3==2)
 			{
 				m = k/3;	
-				Color[k/3][0]=data[k-0];//r
+				Color[k/3][0]=data[k-0];//b
 				Color[k/3][1]=data[k-1];//g
-				Color[k/3][2]=data[k-2];//b
-				printf("[%03d,%03d,%03d] ", Color[m][0], Color[m][1], Color[m][2]);
-				n++;
-				if(n%8 == 0)
-					cout << endl;
+				Color[k/3][2]=data[k-2];//r
+				printf("[%03d,%03d,%03d]\n", Color[m][0], Color[m][1], Color[m][2]);
 			}
 		}
-		n = 0;
-		/*
-		int m=1,r,g,b;
-		cout<<"第"<< i <<"行[R, G, B]:"<<endl;
-		for(k=0;k<bmpWidth;k++)
-		{
-			r=int(Color[k][0]);
-			g=int(Color[k][1]);
-			b=int(Color[k][2]);
-				printf("[%03d,%03d,%03d] ",r,g,b);
-			if(k == 8*m-1)
-			{
-				cout<<endl;
-				m++;
-			}
-		}
-		*/
 		cout << endl;
 	}
 	//关闭文件
@@ -118,8 +100,8 @@ bool saveBmp(char *bmpName,unsigned char *imgBuf,int width,int height,
 		colorTablesize=1024;
 
 	//待存储图像数据每行字节数为4的倍数
-	//int lineByte=(width * biBitCount/8+3)/4*4;
-	int lineByte=(bmpWidth*biBitCount+31)/32*4;
+	//int lineBYTE=(width * biBitCount/8+3)/4*4;
+	int lineBYTE=(bmpWidth*biBitCount+31)/32*4;
 
 	//以二进制写的方式打开文件
 	FILE *fp=fopen(bmpName,"wb");
@@ -133,7 +115,7 @@ bool saveBmp(char *bmpName,unsigned char *imgBuf,int width,int height,
 	//bfSize是图像文件4个组成部分之和
 	fileHead.bfSize=sizeof(BITMAPFILEHEADER)+
 		sizeof(BITMAPINFOHEADER)+colorTablesize+
-		lineByte*height;
+		lineBYTE*height;
 	fileHead.bfReserved1=0;
 	fileHead.bfReserved2=0;
 
@@ -151,7 +133,7 @@ bool saveBmp(char *bmpName,unsigned char *imgBuf,int width,int height,
 	head.biHeight=height;
 	head.biPlanes=1;
 	head.biSize=40;
-	head.biSizeImage=lineByte*height;
+	head.biSizeImage=lineBYTE*height;
 	head.biWidth=width;
 	head.biXPelsPerMeter=0;
 	head.biYPelsPerMeter=0;
@@ -164,7 +146,7 @@ bool saveBmp(char *bmpName,unsigned char *imgBuf,int width,int height,
 		fwrite(pColorTable,sizeof(RGBQUAD),256,fp);
 
 	//写位图数据进文件
-	fwrite(imgBuf,height*lineByte,1,fp);
+	fwrite(imgBuf,height*lineBYTE,1,fp);
 
 	//关闭文件fclose(fp);
 	return 1;
@@ -182,6 +164,7 @@ int main(int argc,char* argv[])
 	//输出图像的信息
 	printf("width=%d,height=%d,biBitCount=%d\n",bmpWidth,bmpHeight,biBitCount);
 	cout<<endl;
+	/*
 	//将图像数据存盘
 	char writePath[255] = {0};
 	if(argc == 2)
@@ -193,6 +176,8 @@ int main(int argc,char* argv[])
 		strcpy(writePath,argv[2]);
 	saveBmp(writePath,pBmpBuf,bmpWidth,bmpHeight,biBitCount,pColorTable);
 	//清除缓冲区，pBmpBuf和pColorTable是全局变量，在文件读入时申请的空间
+	//
+	*/
 	delete []pBmpBuf;
 	if(biBitCount==8)
 		delete []pColorTable;

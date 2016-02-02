@@ -2,9 +2,10 @@
 #use the makefile to build the project,
 #Third library is libsys.a to print the log while the project runing
 #
-SRC = src/readbmp.cpp
+SRC = src/bmp.cpp  
+ISRC = include/Rbmp.cpp
 LIB = ./sdk/lib/
-OBJ = 
+OBJ =  
 HEADERS = 
 SDK_INC = ./sdk/inc
 INCLUDE = ./include 
@@ -18,8 +19,8 @@ CC_FLAG = -g -Wall
 all:initdir ${TARGET}
 
 
-${TARGET}:$(SRC)
-	${CXX} $< $(CC_FLAG) -I $(INCLUDE) -I $(SDK_INC) -L $(LIB) ${LLDFLAGS} -o ${TARGET}
+${TARGET}:$(SRC) $(ISRC)
+	${CXX} $^ $(CC_FLAG) -I $(INCLUDE) -I $(SDK_INC) -L $(LIB) ${LLDFLAGS} -o ${TARGET}
 
 test:
 

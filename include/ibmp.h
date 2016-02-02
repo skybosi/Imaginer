@@ -1,12 +1,23 @@
+/* 
+ * define some marco of bmp file, if not a windows 
+ * operate system.
+ * define some marco about pixel point
+ */
 #ifndef _IBMP_H_
 #define _IBMP_H_
 
+#if defined (_WIN32) || defined(_WIN64)  || defined(_WINDOWS) || defined(_CONSOLE)
+#define WINDOWS_HERE
+#endif
+
+#ifndef WINDOWS_HERE
+
 #pragma pack(push, 1)
 
-typedef unsigned char  U8;
+typedef unsigned char U8;
 typedef unsigned short U16;
-typedef unsigned int   U32;
-typedef U8 BYTE;
+typedef unsigned int U32;
+typedef U8 BYTE8;
 
 typedef struct tagBITMAPFILEHEADER
 {
@@ -52,8 +63,35 @@ typedef struct tagBITMAP
 {
 	BITMAPFILEHEADER bfHeader;
 	BITMAPINFO biInfo;
-}BITMAPFILE;
+} BITMAPFILE;
+
+#endif // pixel marco :[]
+
+// pixel position
+typedef struct Ipixpos
+{
+	int pix_X;
+	int pix_Y;
+	bool isEdge;				// edge point
+} PIXPOS;
+
+// pixel point
+typedef struct Ipixpot
+{
+	PIXPOS pot;
+	RGBQUAD prgb;
+} PIXPOT;
+
+// border 8 point pixel
+typedef struct Ipixpot8
+{
+	PIXPOT fcspot;				// focus point
+	PIXPOT pot4s[4];				// 4 side point
+	PIXPOT pot4a[4];				// 4 angle point
+	RGBQUAD diff4s[8];			// 4 side point rgb value diff with the fcspot
+	RGBQUAD diff4a[8];			// 4 angle point rgb value diff with the fcspot
+} PIXPOT8;
 
 #pragma pack(pop)
 
-#endif
+#endif // ibmp.h :[]
