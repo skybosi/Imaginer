@@ -72,7 +72,7 @@ typedef struct Ipixpos
 {
 	int pix_X;
 	int pix_Y;
-	bool isEdge;				// edge point
+	bool bEdge;				// edge point
 } PIXPOS;
 
 // pixel point

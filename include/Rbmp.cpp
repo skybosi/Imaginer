@@ -1,70 +1,43 @@
 #include "Rbmp.h"
+void show_PIXPOT(PIXPOT pots);
+void show_PIXPOS(PIXPOS pixel);
+bool isEdge(PIXPOS pixel, int W,int H);
+void fix_PIXPOS(PIXPOS& pixel,int W,int H);//fix up the point position
+void fix_PIXPOS8(PIXPOT8& pot8,int W,int H);//fix up the 8 point position
 Rbmp::Rbmp(const char* bmpname):bmppath(bmpname),pBmpBuf(NULL),pColorTable(NULL)
 {
-	cout << "create a Rbmp ...." << endl;
 	//二进制读方式打开指定的图像文件
 	fp = fopen(bmppath.c_str(),"rb");
-}
-Rbmp::~Rbmp()
-{
-	if(pBmpBuf)
-		delete []pBmpBuf;
-	if(biBitCount == 8 && pColorTable)
-		delete []pColorTable;
-	cout << "delete a Rbmp ...." << endl;
-}
-/*函数名称read_image()*/
-bool Rbmp::read_image()
-{
-	if(fp ==  NULL) 
-		return false;
-	get_image_msg();
-	int lineByte;
-	lineByte = (bmpWidth * biBitCount + 31)/32*4;
-	BYTE8 *data = new BYTE8[lineByte * bmpHeight];
-	BYTE8 Color[1300][3];
-	fseek(fp,54,0);//sizeof(BITMAPFILEHEADER + BITMAPINFOHEADER)
-	int k, m;
-	for(int i = bmpHeight-1; i >= 0; i--)//左上为原点
-		//for(int i = 0; i < bmpHeight; i++)//左下为原点
-	{  
-		fread(data,1,lineByte,fp);  
-		cout<<"第"<< i <<"行[B, G, R]:" << endl;
-		for(k = 0;k < bmpWidth*3; k++)
-		{
-			printf("%03d ",data[k]);
-			if(k%3 == 2)
-			{
-				m = k/3;	
-				Color[m][0] = data[k-2];//b
-				Color[m][1] = data[k-1];//g
-				Color[m][2] = data[k-0];//r
-				printf("[%03d,%03d,%03d]\n",Color[m][0], Color[m][1], Color[m][2]);
-			}
-		}
-		cout << endl;
+	if(init_image())
+		cout << "init bmp image is OK!" << endl;
+	else
+	{
+		cout << "init bmp image is fair!" << endl;
+		return;
 	}
-	//关闭文件
-	fclose(fp);
-	delete []data;
-	return 1;
+	cout << "create a Rbmp ....\n" << endl;
 }
-bool Rbmp::get_image_msg()
+bool Rbmp::init_image()
 {
 	if(fp ==  NULL) 
 		return false;
+	U16	BM;
+	fread(&BM,sizeof(U16),1,fp);
+	//printf("BBBBBBB:%0X\n",BM);
+	if(BM != 0x4d42)
+	{
+		printf("is not bmp image!");
+		return false;
+	}
+	rewind(fp);
 	//跳过位图文件头结构BITMAPFILEHEADER
-	BITMAPFILEHEADER head;
 	fread(&head, sizeof(BITMAPFILEHEADER),1,fp);
-	printf("BITMAPFILEHEADER:%ld\n",sizeof(BITMAPFILEHEADER));
-	show_bmp_head(head);
+	//printf("BITMAPFILEHEADER:%ld\n",sizeof(BITMAPFILEHEADER));
 	bfOffBits  = head.bfOffBits;
 
-	//定义位图信息头结构变量,存放在变量head中
-	BITMAPINFOHEADER infohead;
+	//位图信息头结构变量,存放在变量head中
 	fread(&infohead, sizeof(BITMAPINFOHEADER), 1,fp);
-	printf("BITMAPINFOHEADER:%ld\n",sizeof(BITMAPINFOHEADER));
-	show_info_head(infohead);
+	//printf("BITMAPINFOHEADER:%ld\n",sizeof(BITMAPINFOHEADER));
 	//获取图像宽、高、每像素所占位数等信息
 	bmpWidth   = infohead.biWidth;
 	bmpHeight  = infohead.biHeight;
@@ -100,79 +73,57 @@ bool Rbmp::get_image_msg()
 	rewind(fp);
 	return true;
 }
-void Rbmp::show_bmp_head(BITMAPFILEHEADER &head)
-{    
-	cout << "位图文件头:" << endl;    
-	cout << "\t文件头类型  : " << head.bfType << endl;    
-	cout << "\t文件的大小  : " << head.bfSize << endl;    
-	cout << "\t保留字 _1   : " << head.bfReserved1 << endl;    
-	cout << "\t保留字 _2   : " << head.bfReserved2 << endl;    
-	cout << "\tRGB偏移字节 : " << head.bfOffBits << endl << endl;    
-}    
 
-void Rbmp::show_info_head(BITMAPINFOHEADER &infohead)
-{    
-	cout << "位图的信息头:" << endl;    
-	cout << "\t结构体的长度: " << infohead.biSize << endl;    
-	cout << "\t位图宽(像素): " << infohead.biWidth << endl;    
-	cout << "\t位图高(像素): " << infohead.biHeight << endl;    
-	cout << "\t位图的平面数: " << infohead.biPlanes << endl;    
-	cout << "\t采用颜色位数: " << infohead.biBitCount << endl;    
-	cout << "\t压缩的方式  : " << infohead.biCompression << endl;    
-	cout << "\t位图数据大小: " << infohead.biSizeImage << endl;    
-	cout << "\tX 方向分辨率: " << infohead.biXPelsPerMeter << endl;    
-	cout << "\tY 方向分辨率: " << infohead.biYPelsPerMeter << endl;    
-	cout << "\t使用的颜色数: " << infohead.biClrUsed << endl;    
-	cout << "\t重要颜色数  : " << infohead.biClrImportant << endl;    
-}   
+Rbmp::~Rbmp()
+{
+	if(pBmpBuf)
+		delete []pBmpBuf;
+	if(biBitCount == 8 && pColorTable)
+		delete []pColorTable;
+	cout << "delete a Rbmp ...." << endl;
+}
 
 PIXPOT Rbmp::get_pot(PIXPOS pixel)
 {
 	PIXPOT pixpot;
-	get_image_msg();
+	if(pixel.pix_X >= bmpWidth || pixel.pix_Y >= bmpHeight ||
+			pixel.pix_X < 0 || pixel.pix_Y < 0)
+	{
+		printf("In get_pot, You set (x,y) is out Range!\n");
+		exit(1);
+	}
 	pixpot.pot.pix_X = pixel.pix_X;
 	pixpot.pot.pix_Y = pixel.pix_Y;
-	pixpot.pot.isEdge = false;
+	pixpot.pot.bEdge = isEdge(pixel,bmpWidth,bmpHeight);
 
 	int lineByte = (bmpWidth * biBitCount + 31)/32*4;
 	fseek(fp,bfOffBits + lineByte*(bmpHeight-pixel.pix_Y-1),0); //左上原点
-	printf("坐标为(%d,%d)的像素\n",pixel.pix_X,pixel.pix_Y);
+//	printf("坐标为(%d,%d)的像素\n",pixel.pix_X,pixel.pix_Y);
 
 	BYTE8 *data = new BYTE8[lineByte];//一行像素的字节数(一个像素4个字节)
-	printf("lineByte:%d\n",lineByte);
-	int k;
+//	printf("lineByte:%d\n",lineByte);
+	fread(data,lineByte,1,fp);//读取一行的所有数据
+	//fread(data,1,lineByte,fp);//读取一行的所有数据
+	int rgbsite;
 	int tablesite;
 	switch(biBitCount)
 	{
 		case 24://OK
-			printf("24位图\n");
-			k = pixel.pix_X*3;
-			fread(data,lineByte,1,fp);//读取一行的所有数据
-			//fread(data,1,lineByte,fp);//读取一行的所有数据
-			printf("B G R:");
-			while(k < pixel.pix_X*3 + 3 )
-			{
-				printf("%03d ",data[k]);
-				pixpot.prgb.rgbBlue  = data[k-pixel.pix_X*3];
-				pixpot.prgb.rgbGreen = data[k-pixel.pix_X*3 + 1];
-				pixpot.prgb.rgbRed   = data[k-pixel.pix_X*3 + 2];
-				k++;
-			}
+//			printf("24位图\n");
+			rgbsite = pixel.pix_X*3;
+			pixpot.prgb.rgbBlue  = data[rgbsite];
+			pixpot.prgb.rgbGreen = data[rgbsite+1];
+			pixpot.prgb.rgbRed   = data[rgbsite+2];
 			break;
 		case 8:
-			printf("8位图\n");
-			k = pixel.pix_X;
-			fread(data,lineByte,1,fp);//读取一行的所有数据
-			printf("%03d\n",data[k]);
-			tablesite = data[k];
-			printf("颜色表位置:%d\n",tablesite);
-			printf("B G R:");
-			printf("%d ",pColorTable[tablesite].rgbRed);
-			printf("%d ",pColorTable[tablesite].rgbGreen);
-			printf("%d ",pColorTable[tablesite].rgbBlue);
-			pixpot.prgb.rgbBlue  = pColorTable[tablesite].rgbBlue;
-			pixpot.prgb.rgbGreen = pColorTable[tablesite].rgbGreen;
+//			printf("8位图\n");
+			rgbsite= pixel.pix_X;
+			tablesite = data[rgbsite];
+			//printf("%03d\n",data[k]);
+			//printf("颜色表位置:%d\n",tablesite);
 			pixpot.prgb.rgbRed   = pColorTable[tablesite].rgbRed;
+			pixpot.prgb.rgbGreen = pColorTable[tablesite].rgbGreen;
+			pixpot.prgb.rgbBlue  = pColorTable[tablesite].rgbBlue;
 			break;
 		case 4:
 			printf("4位图\n");
@@ -186,8 +137,138 @@ PIXPOT Rbmp::get_pot(PIXPOS pixel)
 		default:
 			break;
 	}
-	cout << endl;
+//	show_PIXPOT(pixpot);
 	return pixpot;
+}
+//get 8 point position(x,y)
+PIXPOT8 Rbmp::get_pos8(PIXPOT8& pots8, PIXPOS pixel)
+{
+	/*
+	if(pixel.pix_X >= bmpWidth || pixel.pix_Y >= bmpHeight ||
+			pixel.pix_X < 0 || pixel.pix_Y < 0)
+	{
+		printf("In get_pos8 ,You set (x,y) is out Range!\n");
+		exit(1);
+	}
+	*/
+	//get 4 side point position(x,y)
+	memcpy(&pots8.pot4s[0].pot,&pixel,sizeof(PIXPOS));
+	pots8.pot4s[0].pot.pix_Y-=1;
+	memcpy(&pots8.pot4s[1].pot,&pixel,sizeof(PIXPOS));
+	pots8.pot4s[1].pot.pix_X+=1;
+	memcpy(&pots8.pot4s[2].pot,&pixel,sizeof(PIXPOS));
+	pots8.pot4s[2].pot.pix_Y+=1;
+	memcpy(&pots8.pot4s[3].pot,&pixel,sizeof(PIXPOS));
+	pots8.pot4s[3].pot.pix_X-=1;
+	//get 4 angle point position(x,y)
+	memcpy(&pots8.pot4a[0].pot,&pixel,sizeof(PIXPOS));
+	pots8.pot4a[0].pot.pix_X-=1;
+	pots8.pot4a[0].pot.pix_Y-=1;
+	memcpy(&pots8.pot4a[1].pot,&pixel,sizeof(PIXPOS));
+	pots8.pot4a[1].pot.pix_X+=1;
+	pots8.pot4a[1].pot.pix_Y-=1;
+	memcpy(&pots8.pot4a[2].pot,&pixel,sizeof(PIXPOS));
+	pots8.pot4a[2].pot.pix_X+=1;
+	pots8.pot4a[2].pot.pix_Y+=1;
+	memcpy(&pots8.pot4a[3].pot,&pixel,sizeof(PIXPOS));
+	pots8.pot4a[3].pot.pix_X-=1;
+	pots8.pot4a[3].pot.pix_Y+=1;
+	/*
+	int i = 0;
+	while(i<4)
+	{
+		show_PIXPOT(pots8.pot4s[i]);
+		show_PIXPOT(pots8.pot4a[i]);
+		i++;
+	}
+	*/
+	//fix the 8 point's position
+	fix_PIXPOS8(pots8,bmpWidth,bmpHeight);
+	/*
+	printf("===========================\n");
+	int i = 0;
+	while(i<4)
+	{
+		show_PIXPOT(pots8.pot4s[i]);
+		show_PIXPOT(pots8.pot4a[i]);
+		i++;
+	}
+	*/
+	return pots8;
+}
+//get the 8 point rgb value
+PIXPOT8 Rbmp::get_pot8(PIXPOS pixel)
+{
+	if(pixel.pix_X >= bmpWidth || pixel.pix_Y >= bmpHeight ||
+			pixel.pix_X < 0 || pixel.pix_Y < 0)
+	{
+		printf("In get_pot8 ,You set (x,y) is out Range!\n");
+		exit(1);
+	}
+	PIXPOT8 pots8;
+	memset(&pots8,0,sizeof(PIXPOT8));
+	//get the 8 point right position(x,y)
+	get_pos8(pots8,pixel);
+	pots8.fcspot   = get_pot(pixel);
+	show_PIXPOT(pots8.fcspot);
+	//get the 8 point rgb value
+	int i = 0;
+	while(i<4)
+	{
+		pots8.pot4s[i] = get_pot(pots8.pot4s[i].pot);
+		show_PIXPOT(pots8.pot4s[i]);
+		pots8.pot4a[i] = get_pot(pots8.pot4a[i].pot);
+		show_PIXPOT(pots8.pot4a[i]);
+		i++;
+	}
+	return pots8;
+}
+void fix_PIXPOS8(PIXPOT8& pot8,int W,int H)
+{
+	int i = 0;
+	while(i<4)
+	{
+		fix_PIXPOS(pot8.pot4s[i].pot,W,H);
+		fix_PIXPOS(pot8.pot4a[i].pot,W,H);
+		i++;
+	}
+}
+
+/*函数名称read_image()*/
+bool Rbmp::read_image()
+{
+	if(fp ==  NULL) 
+		return false;
+	get_image_msg();
+	int lineByte;
+	lineByte = (bmpWidth * biBitCount + 31)/32*4;
+	BYTE8 *data = new BYTE8[lineByte * bmpHeight];
+	BYTE8 Color[1300][3];
+	fseek(fp,54,0);//sizeof(BITMAPFILEHEADER + BITMAPINFOHEADER)
+	int k, m;
+	for(int i = bmpHeight-1; i >= 0; i--)//左上为原点
+		//for(int i = 0; i < bmpHeight; i++)//左下为原点
+	{  
+		fread(data,1,lineByte,fp);  
+		cout<<"第"<< i <<"行[B, G, R]:" << endl;
+		for(k = 0;k < bmpWidth*3; k++)
+		{
+			printf("%03d ",data[k]);
+			if(k%3 == 2)
+			{
+				m = k/3;	
+				Color[m][0] = data[k-2];//b
+				Color[m][1] = data[k-1];//g
+				Color[m][2] = data[k-0];//r
+				printf("[%03d,%03d,%03d]\n",Color[m][0], Color[m][1], Color[m][2]);
+			}
+		}
+		cout << endl;
+	}
+	//关闭文件
+	fclose(fp);
+	delete []data;
+	return 1;
 }
 /*函数名称：save_image()函数参数：char *bmppath文件名字及路径;
   unsigned char *imgBuf待存盘的位图数据;
@@ -259,4 +340,82 @@ bool Rbmp::save_image(char *bmppath,unsigned char *imgBuf,int width,int height, 
 
 	//关闭文件fclose(fp);
 	return 1;
+}
+
+void Rbmp::get_image_msg()
+{
+	//显示位图文件头结构BITMAPFILEHEADER
+	show_bmp_head(head);
+	//显示位图信息头结构变量,存放在变量head中
+	show_info_head(infohead);
+}
+void Rbmp::show_bmp_head(BITMAPFILEHEADER &head)
+{    
+	cout << "位图文件头:" << endl;    
+	cout << "\t文件头类型  : " << head.bfType << endl;    
+	cout << "\t文件的大小  : " << head.bfSize << endl;    
+	cout << "\t保留字 _1   : " << head.bfReserved1 << endl;    
+	cout << "\t保留字 _2   : " << head.bfReserved2 << endl;    
+	cout << "\tRGB偏移字节 : " << head.bfOffBits << endl << endl;    
+}    
+
+void Rbmp::show_info_head(BITMAPINFOHEADER &infohead)
+{    
+	cout << "位图的信息头:" << endl;    
+	cout << "\t结构体的长度: " << infohead.biSize << endl;    
+	cout << "\t位图宽(像素): " << infohead.biWidth << endl;    
+	cout << "\t位图高(像素): " << infohead.biHeight << endl;    
+	cout << "\t位图的平面数: " << infohead.biPlanes << endl;    
+	cout << "\t采用颜色位数: " << infohead.biBitCount << endl;    
+	cout << "\t压缩的方式  : " << infohead.biCompression << endl;    
+	cout << "\t位图数据大小: " << infohead.biSizeImage << endl;    
+	cout << "\tX 方向分辨率: " << infohead.biXPelsPerMeter << endl;    
+	cout << "\tY 方向分辨率: " << infohead.biYPelsPerMeter << endl;    
+	cout << "\t使用的颜色数: " << infohead.biClrUsed << endl;    
+	cout << "\t重要颜色数  : " << infohead.biClrImportant << endl;    
+}   
+void show_PIXPOT(PIXPOT pots)
+{
+	printf("X: %-3d Y: %-3d\t[R,G,B]:(%03d,%03d,%03d) %d\n",
+	//printf("X:%d Y:%d\t:(%03d,%03d,%03d)\n",
+	pots.pot.pix_X,
+	pots.pot.pix_Y,
+	pots.prgb.rgbRed,
+	pots.prgb.rgbGreen,
+	pots.prgb.rgbBlue,
+	pots.pot.bEdge);
+}
+
+void show_PIXPOS(PIXPOS pixel)
+{
+	printf("X: %-3d Y: %-3d edge:%d\n",
+	pixel.pix_X,
+	pixel.pix_Y,
+	pixel.bEdge);
+}
+bool isEdge(PIXPOS pixel, int W,int H)
+{
+	if((pixel.pix_X <= 0) | (pixel.pix_X >= W-1) |
+	   (pixel.pix_Y <= 0) | (pixel.pix_Y >= H-1))
+		return true;
+	else
+		return false;
+}
+//fix up the point position,if the point is edge point 
+void fix_PIXPOS(PIXPOS& pixel,int W,int H)
+{
+	if(isEdge(pixel,W,H))
+	{
+		pixel.bEdge = true;
+		if(pixel.pix_X < 0)
+			pixel.pix_X += W;
+		if(pixel.pix_Y < 0)
+			pixel.pix_Y += H;
+		if(pixel.pix_X >= W)
+			pixel.pix_X -= W;
+		if(pixel.pix_Y >= H)
+			pixel.pix_Y -= H;
+	}
+	else
+		pixel.bEdge = false;
 }

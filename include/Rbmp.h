@@ -3,6 +3,7 @@
 #include <iostream>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include "ibmp.h"
 #include "image.h"
 using namespace std;
@@ -18,12 +19,19 @@ class Rbmp
 		unsigned char *pBmpBuf;//读入图像数据的指针
 		RGBQUAD *pColorTable;//颜色表指针
 		int bfOffBits;
+		BITMAPFILEHEADER head;
+		BITMAPINFOHEADER infohead;
 	public:
 		Rbmp(const char* bmpname);
 		~Rbmp();
-		bool get_image_msg();
+		bool init_image();
+		void get_image_msg();
 		bool read_image();
+		//get a point info.
 		PIXPOT get_pot(PIXPOS pixel);
+		//get the 8 point info. around a point
+		PIXPOT8 get_pos8(PIXPOT8& pots8, PIXPOS pixel);
+		PIXPOT8 get_pot8(PIXPOS pixel);
 		bool write_image(){return true;};
 		bool save_image(char *bmppath,unsigned char *imgBuf,int width,int height, int biBitCount, RGBQUAD *pColorTable);
 	private:
