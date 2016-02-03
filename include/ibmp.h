@@ -88,8 +88,8 @@ typedef struct Ipixpot8
 	PIXPOT fcspot;				// focus point
 	PIXPOT pot4s[4];				// 4 side point
 	PIXPOT pot4a[4];				// 4 angle point
-	RGBQUAD diff4s[8];			// 4 side point rgb value diff with the fcspot
-	RGBQUAD diff4a[8];			// 4 angle point rgb value diff with the fcspot
+	RGBQUAD diff4s[4];			// 4 side point rgb value diff with the fcspot
+	RGBQUAD diff4a[4];			// 4 angle point rgb value diff with the fcspot
 } PIXPOT8;
 
 #pragma pack(pop)

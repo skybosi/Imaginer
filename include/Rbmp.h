@@ -29,8 +29,9 @@ class Rbmp
 		bool read_image();
 		//get a point info.
 		PIXPOT get_pot(PIXPOS pixel);
-		//get the 8 point info. around a point
+		//get the 8 point position
 		PIXPOT8 get_pos8(PIXPOT8& pots8, PIXPOS pixel);
+		//get the 8 point info. around a point
 		PIXPOT8 get_pot8(PIXPOS pixel);
 		bool write_image(){return true;};
 		bool save_image(char *bmppath,unsigned char *imgBuf,int width,int height, int biBitCount, RGBQUAD *pColorTable);
