@@ -2,7 +2,8 @@
 #define _IPOINT_H_
 #include "ibmp.h"
 #include <stdio.h>
-
+#include <iostream>
+using namespace std;
 #ifndef ONLY
 // pixel position
 //typedef struct Ipixpos
@@ -16,11 +17,13 @@ class PIXPOS
 		void show_PIXPOS();
 };
 // pixel point
-typedef struct Ipixpot
+class PIXPOT
 {
-	PIXPOS pot;
-	RGBQUAD prgb;
-} PIXPOT;
+	public:
+		PIXPOS pot;
+		RGBQUAD prgb;
+		void show_PIXPOT();
+};
 // border 8 point pixel
 class PIXPOT8
 {
@@ -32,13 +35,13 @@ class PIXPOT8
 	RGBQUAD diff4s[8];			// 4 side point rgb value diff with the fcspot
 	RGBQUAD diff4a[8];			// 4 angle point rgb value diff with the fcspot
 	public:
+	//PIXPOT8(){cout << "PIXPOT8 ...\n";}
+	//~PIXPOT8(){cout << "~PIXPOT8 ...\n";}
 	void fix_PIXPOS(PIXPOS& pixel,int W,int H);//fix up the point position
-	void fix_PIXPOS8(PIXPOT8& pot8,int W,int H);//fix up the 8 point position
-	void show_PIXPOT(PIXPOT pots);
+	void fix_PIXPOS8(PIXPOT8& pots8,int W,int H);//fix up the 8 point position
 	void show_PIXPOT8(PIXPOT8 pots8);
-	RGBQUAD get_diff8RGB(PIXPOT& fcspot,PIXPOT& ppot8);
+	RGBQUAD get_diff8RGB(PIXPOT& fcspot,PIXPOT& ppot);
 	void show_PIXPOT8diffRGB(RGBQUAD diffRgb);
-
 };
 #endif //ONLY
 #endif // ipoint.h :[]

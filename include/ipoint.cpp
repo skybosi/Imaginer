@@ -19,23 +19,23 @@ void PIXPOT8::fix_PIXPOS(PIXPOS& pixel,int W,int H)
 	else
 		pixel.bEdge = false;
 }
-void PIXPOT8::fix_PIXPOS8(PIXPOT8& pot8,int W,int H)
+void PIXPOT8::fix_PIXPOS8(PIXPOT8& pots8,int W,int H)
 {
 	int i = 0;
 	while(i<4)
 	{
-		fix_PIXPOS(pot8.pot4s[i].pot,W,H);
-		fix_PIXPOS(pot8.pot4a[i].pot,W,H);
+		fix_PIXPOS(pots8.pot4s[i].pot,W,H);
+		fix_PIXPOS(pots8.pot4a[i].pot,W,H);
 		i++;
 	}
 }
 //get the diff RGB between the focus point with other 8 point
-RGBQUAD PIXPOT8::get_diff8RGB(PIXPOT& fcspot,PIXPOT& ppot8)
+RGBQUAD PIXPOT8::get_diff8RGB(PIXPOT& fcspot,PIXPOT& ppot)
 {
 	RGBQUAD diffRgb;
-	diffRgb.rgbRed = fcspot.prgb.rgbRed - ppot8.prgb.rgbRed;
-	diffRgb.rgbGreen = fcspot.prgb.rgbGreen - ppot8.prgb.rgbGreen;
-	diffRgb.rgbBlue = fcspot.prgb.rgbBlue - ppot8.prgb.rgbBlue;
+	diffRgb.rgbRed = fcspot.prgb.rgbRed - ppot.prgb.rgbRed;
+	diffRgb.rgbGreen = fcspot.prgb.rgbGreen - ppot.prgb.rgbGreen;
+	diffRgb.rgbBlue = fcspot.prgb.rgbBlue - ppot.prgb.rgbBlue;
 	diffRgb.rgbReserved = 0;
 	return diffRgb;
 }
@@ -44,9 +44,9 @@ void PIXPOT8::show_PIXPOT8(PIXPOT8 pots8)
 	int i = 0;
 	while(i<4)
 	{
-		show_PIXPOT(pots8.pot4s[i]);
+		pots8.pot4s[i].show_PIXPOT();
 		show_PIXPOT8diffRGB(pots8.diff4s[i]);
-		show_PIXPOT(pots8.pot4a[i]);
+		pots8.pot4a[i].show_PIXPOT();
 		show_PIXPOT8diffRGB(pots8.diff4a[i]);
 		i++;
 	}
@@ -58,13 +58,13 @@ void PIXPOT8::show_PIXPOT8diffRGB(RGBQUAD diffRgb)
 		diffRgb.rgbGreen,
 		diffRgb.rgbBlue);
 }
-void PIXPOT8::show_PIXPOT(PIXPOT pots)
+void PIXPOT::show_PIXPOT()
 {
-	pots.pot.show_PIXPOS();
+	pot.show_PIXPOS();
 	printf("[R,G,B]:(%03d,%03d,%03d)\t",
-		pots.prgb.rgbRed,
-		pots.prgb.rgbGreen,
-		pots.prgb.rgbBlue);
+		prgb.rgbRed,
+		prgb.rgbGreen,
+		prgb.rgbBlue);
 }
 
 bool PIXPOS::isEdge(PIXPOS pixel, int W,int H)

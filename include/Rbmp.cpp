@@ -23,15 +23,15 @@ void show_PIXPOT8(PIXPOT8 pots8)
 		i++;
 	}
 }
-void show_PIXPOT(PIXPOT pots)
+void show_PIXPOT(PIXPOT ppot)
 {
 	printf("X: %-3d Y: %-3d Edge: %d \t[R,G,B]:(%03d,%03d,%03d)\t",
-			pots.pot.pix_X,
-			pots.pot.pix_Y,
-			pots.pot.bEdge,
-			pots.prgb.rgbRed,
-			pots.prgb.rgbGreen,
-			pots.prgb.rgbBlue);
+			ppot.pot.pix_X,
+			ppot.pot.pix_Y,
+			ppot.pot.bEdge,
+			ppot.prgb.rgbRed,
+			ppot.prgb.rgbGreen,
+			ppot.prgb.rgbBlue);
 }
 
 void show_PIXPOT8diffRGB(RGBQUAD diffRgb)
@@ -76,22 +76,22 @@ void fix_PIXPOS(PIXPOS& pixel,int W,int H)
 
 }
 //get the diff RGB between the focus point with other 8 point
-RGBQUAD get_diff8RGB(PIXPOT& fcspot,PIXPOT& ppot8)
+RGBQUAD get_diff8RGB(PIXPOT& fcspot,PIXPOT& pot)
 {
 	RGBQUAD diffRgb;
-	diffRgb.rgbRed = fcspot.prgb.rgbRed - ppot8.prgb.rgbRed;
-	diffRgb.rgbGreen = fcspot.prgb.rgbGreen - ppot8.prgb.rgbGreen;
-	diffRgb.rgbBlue = fcspot.prgb.rgbBlue - ppot8.prgb.rgbBlue;
+	diffRgb.rgbRed = fcspot.prgb.rgbRed - pot.prgb.rgbRed;
+	diffRgb.rgbGreen = fcspot.prgb.rgbGreen - pot.prgb.rgbGreen;
+	diffRgb.rgbBlue = fcspot.prgb.rgbBlue - pot.prgb.rgbBlue;
 	diffRgb.rgbReserved = 0;
 	return diffRgb;
 }
-void fix_PIXPOS8(PIXPOT8& pot8,int W,int H)
+void fix_PIXPOS8(PIXPOT8& pots8,int W,int H)
 {
 	int i = 0;
 	while(i<4)
 	{
-		fix_PIXPOS(pot8.pot4s[i].pot,W,H);
-		fix_PIXPOS(pot8.pot4a[i].pot,W,H);
+		fix_PIXPOS(pots8.pot4s[i].pot,W,H);
+		fix_PIXPOS(pots8.pot4a[i].pot,W,H);
 		i++;
 	}
 }
@@ -140,10 +140,6 @@ bool Rbmp::init_image()
 	//int lineBYTE = (bmpWidth * biBitCount/8+3)/4*4;
 	//int lineBYTE = (bmpWidth * biBitCount + 31)/32*4;
 
-	//申请位图数据所需要的空间，读位图数据进内存
-	//pBmpBuf = new unsigned char[lineBYTE * bmpHeight];
-	//fread(pBmpBuf,1,lineBYTE * bmpHeight,fp);
-
 	//灰度图像有颜色表，且颜色表表项为256
 	if(biBitCount ==  8)
 	{
@@ -173,34 +169,41 @@ Rbmp::~Rbmp()
 		delete []pBmpBuf;
 	if(biBitCount == 8 && pColorTable)
 		delete []pColorTable;
+	if(fp)
+		fclose(fp);
 	cout << "delete a Rbmp ...." << endl;
 }
 
 PIXPOT Rbmp::get_pot(PIXPOS pixel)
 {
-	PIXPOT pixpot;
-	if(pixel.pix_X >= bmpWidth || pixel.pix_Y >= bmpHeight ||
-			pixel.pix_X < 0 || pixel.pix_Y < 0)
+	PIXPOT ppot;
+	memset(&ppot,0,sizeof(PIXPOT));
+	try
+	{
+		if(out_range_error(pixel))
+			throw 0;
+	}
+	catch(...)
 	{
 		printf("In get_pot, You set (x,y) is out Range!\n");
-		exit(1);
+		return ppot;
 	}
-	pixpot.pot.pix_X = pixel.pix_X;
-	pixpot.pot.pix_Y = pixel.pix_Y;
+	ppot.pot.pix_X = pixel.pix_X;
+	ppot.pot.pix_Y = pixel.pix_Y;
 #ifdef ONLY
-	pixpot.pot.bEdge = isEdge(pixel,bmpWidth,bmpHeight);
+	ppot.pot.bEdge = isEdge(pixel,bmpWidth,bmpHeight);
 #else
-	pixpot.pot.bEdge = pixel.isEdge(pixel,bmpWidth,bmpHeight);
+	ppot.pot.bEdge = pixel.isEdge(pixel,bmpWidth,bmpHeight);
 #endif
 
 	int lineByte = (bmpWidth * biBitCount + 31)/32*4;
 	fseek(fp,bfOffBits + lineByte*(bmpHeight-pixel.pix_Y-1),0); //左上原点
 	//	printf("坐标为(%d,%d)的像素\n",pixel.pix_X,pixel.pix_Y);
 
-	BYTE8 *data = new BYTE8[lineByte];//一行像素的字节数(一个像素4个字节)
+	BYTE8 *linedata = new BYTE8[lineByte];//一行像素的字节数(一个像素4个字节)
 	//	printf("lineByte:%d\n",lineByte);
-	fread(data,lineByte,1,fp);//读取一行的所有数据
-	//fread(data,1,lineByte,fp);//读取一行的所有数据
+	fread(linedata,lineByte,1,fp);//读取一行的所有数据
+	//fread(linedata,1,lineByte,fp);//读取一行的所有数据
 	int rgbsite;
 	int tablesite;
 	switch(biBitCount)
@@ -208,19 +211,19 @@ PIXPOT Rbmp::get_pot(PIXPOS pixel)
 		case 24://OK
 			//			printf("24位图\n");
 			rgbsite = pixel.pix_X*3;
-			pixpot.prgb.rgbBlue  = data[rgbsite];
-			pixpot.prgb.rgbGreen = data[rgbsite+1];
-			pixpot.prgb.rgbRed   = data[rgbsite+2];
+			ppot.prgb.rgbBlue  = linedata[rgbsite];
+			ppot.prgb.rgbGreen = linedata[rgbsite+1];
+			ppot.prgb.rgbRed   = linedata[rgbsite+2];
 			break;
 		case 8:
 			//			printf("8位图\n");
 			rgbsite= pixel.pix_X;
-			tablesite = data[rgbsite];
-			//printf("%03d\n",data[k]);
+			tablesite = linedata[rgbsite];
+			//printf("%03d\n",linedata[k]);
 			//printf("颜色表位置:%d\n",tablesite);
-			pixpot.prgb.rgbRed   = pColorTable[tablesite].rgbRed;
-			pixpot.prgb.rgbGreen = pColorTable[tablesite].rgbGreen;
-			pixpot.prgb.rgbBlue  = pColorTable[tablesite].rgbBlue;
+			ppot.prgb.rgbRed   = pColorTable[tablesite].rgbRed;
+			ppot.prgb.rgbGreen = pColorTable[tablesite].rgbGreen;
+			ppot.prgb.rgbBlue  = pColorTable[tablesite].rgbBlue;
 			break;
 		case 4:
 			printf("4位图\n");
@@ -235,19 +238,22 @@ PIXPOT Rbmp::get_pot(PIXPOS pixel)
 			break;
 	}
 	//	show_PIXPOT(pixpot);
-	return pixpot;
+	delete []linedata;
+	return ppot;
 }
 //get 8 point position(x,y)
 PIXPOT8 Rbmp::get_pos8(PIXPOT8& pots8, PIXPOS pixel)
 {
-	/*
-	   if(pixel.pix_X >= bmpWidth || pixel.pix_Y >= bmpHeight ||
-	   pixel.pix_X < 0 || pixel.pix_Y < 0)
-	   {
-	   printf("In get_pos8 ,You set (x,y) is out Range!\n");
-	   exit(1);
-	   }
-	   */
+	try
+	{
+		if(out_range_error(pixel))
+			throw 0;
+	}
+	catch(...)
+	{
+		printf("In get_pos8 ,You set (x,y) is out Range!\n");
+		return pots8;
+	}
 	//get 4 side point position(x,y)
 	memcpy(&pots8.pot4s[0].pot,&pixel,sizeof(PIXPOS));
 	pots8.pot4s[0].pot.pix_Y-=1;
@@ -300,21 +306,25 @@ PIXPOT8 Rbmp::get_pos8(PIXPOT8& pots8, PIXPOS pixel)
 //get the 8 point rgb value
 PIXPOT8 Rbmp::get_pot8(PIXPOS pixel)
 {
-	if(pixel.pix_X >= bmpWidth || pixel.pix_Y >= bmpHeight ||
-			pixel.pix_X < 0 || pixel.pix_Y < 0)
-	{
-		printf("In get_pot8 ,You set (x,y) is out Range!\n");
-		exit(1);
-	}
 	PIXPOT8 pots8;
 	memset(&pots8,0,sizeof(PIXPOT8));
+	try
+	{
+		if(out_range_error(pixel))
+			throw 0;
+	}
+	catch(...)
+	{
+		printf("In get_pot8 ,You set (x,y) is out Range!\n");
+		return pots8;
+	}
 	//get the 8 point right position(x,y)
 	get_pos8(pots8,pixel);
 	pots8.fcspot   = get_pot(pixel);
 #ifdef ONLY
 	show_PIXPOT(pots8.fcspot);
 #else
-	pots8.show_PIXPOT(pots8.fcspot);
+	pots8.fcspot.show_PIXPOT();
 #endif
 	printf("\n");
 	//get the 8 point rgb value
@@ -348,27 +358,26 @@ bool Rbmp::read_image()
 {
 	if(fp ==  NULL) 
 		return false;
-	get_image_msg();
 	int lineByte;
 	lineByte = (bmpWidth * biBitCount + 31)/32*4;
-	BYTE8 *data = new BYTE8[lineByte * bmpHeight];
+	BYTE8 *linedata = new BYTE8[lineByte * bmpHeight];
 	BYTE8 Color[1300][3];
 	fseek(fp,54,0);//sizeof(BITMAPFILEHEADER + BITMAPINFOHEADER)
 	int k, m;
 	for(int i = bmpHeight-1; i >= 0; i--)//左上为原点
 		//for(int i = 0; i < bmpHeight; i++)//左下为原点
 	{  
-		fread(data,1,lineByte,fp);  
+		fread(linedata,1,lineByte,fp);
 		cout<<"第"<< i <<"行[B, G, R]:" << endl;
 		for(k = 0;k < bmpWidth*3; k++)
 		{
-			printf("%03d ",data[k]);
+			printf("%03d ",linedata[k]);
 			if(k%3 == 2)
 			{
 				m = k/3;	
-				Color[m][0] = data[k-2];//b
-				Color[m][1] = data[k-1];//g
-				Color[m][2] = data[k-0];//r
+				Color[m][0] = linedata[k-2];//b
+				Color[m][1] = linedata[k-1];//g
+				Color[m][2] = linedata[k-0];//r
 				printf("[%03d,%03d,%03d]\n",Color[m][0], Color[m][1], Color[m][2]);
 			}
 		}
@@ -376,8 +385,74 @@ bool Rbmp::read_image()
 	}
 	//关闭文件
 	fclose(fp);
-	delete []data;
-	return 1;
+	delete []linedata;
+	return true;
+}
+/*函数名称readIline()*/
+bool Rbmp::readIline()
+{
+	if(fp ==  NULL)
+		return false;
+	int lineByte;
+	lineByte = (bmpWidth * biBitCount + 31)/32*4;
+	printf("kkkkk:%d\n",lineByte);
+	BYTE8 *linedata = new BYTE8[lineByte];
+	PIXPOT *lineppot = new PIXPOT[bmpWidth];
+	fseek(fp,bfOffBits,0); //左上原点
+	int k;
+	int x = 0;
+	int tablesite;
+	for(int y = bmpHeight-1; y >= 0; y--)//左上为原点
+//	for(int i = 0; i < bmpHeight; i++)//左下为原点
+	{
+		fread(linedata,1,lineByte,fp);
+		for(k = 0;x < bmpWidth/*k < lineByte*/; k++)
+		{
+			printf("%03d ",linedata[k]);
+			switch(biBitCount)
+			{
+				case 24://OK
+					lineppot[x].prgb.rgbBlue  = linedata[k];
+					lineppot[x].prgb.rgbGreen = linedata[++k];
+					lineppot[x].prgb.rgbRed   = linedata[++k];
+					lineppot[x].pot.pix_X = x;
+					lineppot[x].pot.pix_Y = y;
+					if(isEdge(lineppot[x].pot,bmpWidth,bmpHeight))
+						lineppot[x].pot.bEdge = true;
+					else
+						lineppot[x].pot.bEdge = false;
+					break;
+				case 8:
+					tablesite = linedata[k];
+					//printf("%03d\n",linedata[k]);
+					//printf("颜色表位置:%d\n",tablesite);
+					lineppot[x].prgb.rgbRed   = pColorTable[tablesite].rgbRed;
+					lineppot[x].prgb.rgbGreen = pColorTable[tablesite].rgbGreen;
+					lineppot[x].prgb.rgbBlue  = pColorTable[tablesite].rgbBlue;
+					lineppot[x].pot.pix_X = x;
+					lineppot[x].pot.pix_Y = y;
+					if(isEdge(lineppot[x].pot,bmpWidth,bmpHeight))
+						lineppot[x].pot.bEdge = true;
+					else
+						lineppot[x].pot.bEdge = false;
+					break;
+				default:
+					break;
+			}
+#ifdef ONLY
+			show_PIXPOT(lineppot[x]);
+#else
+			lineppot[x].show_PIXPOT();
+#endif
+			printf("\n");
+			x++;
+		}
+		x = 0;
+		cout << endl;
+	}
+	delete []linedata;
+	delete []lineppot;
+	return true;
 }
 /*函数名称：save_image()函数参数：char *bmppath文件名字及路径;
   unsigned char *imgBuf待存盘的位图数据;
@@ -482,4 +557,15 @@ void Rbmp::show_info_head(BITMAPINFOHEADER &infohead)
 	cout << "\tY 方向分辨率: " << infohead.biYPelsPerMeter << endl;    
 	cout << "\t使用的颜色数: " << infohead.biClrUsed << endl;    
 	cout << "\t重要颜色数  : " << infohead.biClrImportant << endl;    
+}
+bool Rbmp::out_range_error(PIXPOS pixel)
+{
+	if((pixel.pix_X >= bmpWidth) |
+			(pixel.pix_Y >= bmpHeight) |
+			(pixel.pix_X < 0) |
+			(pixel.pix_Y < 0) )
+		return true;
+	else
+		return false;
+
 }

@@ -66,7 +66,7 @@ typedef struct tagBITMAP
 } BITMAPFILE;
 
 #endif // pixel marco :[]
-//#define ONLY
+#define ONLY
 #ifdef ONLY
 // pixel position
 typedef struct Ipixpos
