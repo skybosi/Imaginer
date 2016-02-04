@@ -6,6 +6,9 @@
 #include <string.h>
 #include "ibmp.h"
 #include "image.h"
+#ifndef ONLY
+	#include "ipoint.h"
+#endif
 using namespace std;
 //class Rbmp: public Image
 class Rbmp

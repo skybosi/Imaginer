@@ -66,7 +66,8 @@ typedef struct tagBITMAP
 } BITMAPFILE;
 
 #endif // pixel marco :[]
-
+//#define ONLY
+#ifdef ONLY
 // pixel position
 typedef struct Ipixpos
 {
@@ -81,7 +82,6 @@ typedef struct Ipixpot
 	PIXPOS pot;
 	RGBQUAD prgb;
 } PIXPOT;
-
 // border 8 point pixel
 typedef struct Ipixpot8
 {
@@ -91,6 +91,7 @@ typedef struct Ipixpot8
 	RGBQUAD diff4s[4];			// 4 side point rgb value diff with the fcspot
 	RGBQUAD diff4a[4];			// 4 angle point rgb value diff with the fcspot
 } PIXPOT8;
+#endif
 
 #pragma pack(pop)
 

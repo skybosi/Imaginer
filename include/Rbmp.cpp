@@ -1,4 +1,6 @@
 #include "Rbmp.h"
+
+#ifdef ONLY
 void show_PIXPOT(PIXPOT pots);
 void show_PIXPOS(PIXPOS pixel);
 bool isEdge(PIXPOS pixel, int W,int H);
@@ -7,6 +9,94 @@ void fix_PIXPOS8(PIXPOT8& pot8,int W,int H);//fix up the 8 point position
 RGBQUAD get_diff8RGB(PIXPOT& fcspot,PIXPOT& ppot8);
 void show_PIXPOT8diffRGB(RGBQUAD diffRgb);
 void show_PIXPOT8(PIXPOT8 pots8);
+///////////////////////////////////////////////////////
+
+void show_PIXPOT8(PIXPOT8 pots8)
+{
+	int i = 0;
+	while(i<4)
+	{
+		show_PIXPOT(pots8.pot4s[i]);
+		show_PIXPOT8diffRGB(pots8.diff4s[i]);
+		show_PIXPOT(pots8.pot4a[i]);
+		show_PIXPOT8diffRGB(pots8.diff4a[i]);
+		i++;
+	}
+}
+void show_PIXPOT(PIXPOT pots)
+{
+	printf("X: %-3d Y: %-3d Edge: %d \t[R,G,B]:(%03d,%03d,%03d)\t",
+			pots.pot.pix_X,
+			pots.pot.pix_Y,
+			pots.pot.bEdge,
+			pots.prgb.rgbRed,
+			pots.prgb.rgbGreen,
+			pots.prgb.rgbBlue);
+}
+
+void show_PIXPOT8diffRGB(RGBQUAD diffRgb)
+{
+	printf("diff:(%03d,%03d,%03d)\n",
+			diffRgb.rgbRed,
+			diffRgb.rgbGreen,
+			diffRgb.rgbBlue);
+}
+void show_PIXPOS(PIXPOS pixel)
+{
+	printf("X: %-3d Y: %-3d edge:%d\n",
+			pixel.pix_X,
+			pixel.pix_Y,
+			pixel.bEdge);
+}
+bool isEdge(PIXPOS pixel, int W,int H)
+{
+	if((pixel.pix_X <= 0) | (pixel.pix_X >= W-1) |
+			(pixel.pix_Y <= 0) | (pixel.pix_Y >= H-1))
+		return true;
+	else
+		return false;
+}
+//fix up the point position,if the point is edge point
+void fix_PIXPOS(PIXPOS& pixel,int W,int H)
+{
+	if(isEdge(pixel,W,H))
+	{
+		pixel.bEdge = true;
+		if(pixel.pix_X < 0)
+			pixel.pix_X += W;
+		if(pixel.pix_Y < 0)
+			pixel.pix_Y += H;
+		if(pixel.pix_X >= W)
+			pixel.pix_X -= W;
+		if(pixel.pix_Y >= H)
+			pixel.pix_Y -= H;
+	}
+	else
+		pixel.bEdge = false;
+
+}
+//get the diff RGB between the focus point with other 8 point
+RGBQUAD get_diff8RGB(PIXPOT& fcspot,PIXPOT& ppot8)
+{
+	RGBQUAD diffRgb;
+	diffRgb.rgbRed = fcspot.prgb.rgbRed - ppot8.prgb.rgbRed;
+	diffRgb.rgbGreen = fcspot.prgb.rgbGreen - ppot8.prgb.rgbGreen;
+	diffRgb.rgbBlue = fcspot.prgb.rgbBlue - ppot8.prgb.rgbBlue;
+	diffRgb.rgbReserved = 0;
+	return diffRgb;
+}
+void fix_PIXPOS8(PIXPOT8& pot8,int W,int H)
+{
+	int i = 0;
+	while(i<4)
+	{
+		fix_PIXPOS(pot8.pot4s[i].pot,W,H);
+		fix_PIXPOS(pot8.pot4a[i].pot,W,H);
+		i++;
+	}
+}
+#endif
+
 Rbmp::Rbmp(const char* bmpname):bmppath(bmpname),pBmpBuf(NULL),pColorTable(NULL)
 {
 	//二进制读方式打开指定的图像文件
@@ -61,17 +151,17 @@ bool Rbmp::init_image()
 		pColorTable = new RGBQUAD[256];
 		fread(pColorTable,sizeof(RGBQUAD),256,fp);
 		/*
-		int i = 0;
-		printf("颜色表:\n");
-		while(i < 256)
-		{
-			printf("$%d %d ",i,pColorTable[i]);
-			printf("r:%d ",pColorTable[i].rgbRed);
-			printf("g:%d ",pColorTable[i].rgbGreen);
-			printf("b:%d\n",pColorTable[i].rgbBlue);
-			i++;
-		}
-		*/
+		   int i = 0;
+		   printf("颜色表:\n");
+		   while(i < 256)
+		   {
+		   printf("$%d %d ",i,pColorTable[i]);
+		   printf("r:%d ",pColorTable[i].rgbRed);
+		   printf("g:%d ",pColorTable[i].rgbGreen);
+		   printf("b:%d\n",pColorTable[i].rgbBlue);
+		   i++;
+		   }
+		   */
 	}
 	rewind(fp);
 	return true;
@@ -97,14 +187,18 @@ PIXPOT Rbmp::get_pot(PIXPOS pixel)
 	}
 	pixpot.pot.pix_X = pixel.pix_X;
 	pixpot.pot.pix_Y = pixel.pix_Y;
+#ifdef ONLY
 	pixpot.pot.bEdge = isEdge(pixel,bmpWidth,bmpHeight);
+#else
+	pixpot.pot.bEdge = pixel.isEdge(pixel,bmpWidth,bmpHeight);
+#endif
 
 	int lineByte = (bmpWidth * biBitCount + 31)/32*4;
 	fseek(fp,bfOffBits + lineByte*(bmpHeight-pixel.pix_Y-1),0); //左上原点
-//	printf("坐标为(%d,%d)的像素\n",pixel.pix_X,pixel.pix_Y);
+	//	printf("坐标为(%d,%d)的像素\n",pixel.pix_X,pixel.pix_Y);
 
 	BYTE8 *data = new BYTE8[lineByte];//一行像素的字节数(一个像素4个字节)
-//	printf("lineByte:%d\n",lineByte);
+	//	printf("lineByte:%d\n",lineByte);
 	fread(data,lineByte,1,fp);//读取一行的所有数据
 	//fread(data,1,lineByte,fp);//读取一行的所有数据
 	int rgbsite;
@@ -112,14 +206,14 @@ PIXPOT Rbmp::get_pot(PIXPOS pixel)
 	switch(biBitCount)
 	{
 		case 24://OK
-//			printf("24位图\n");
+			//			printf("24位图\n");
 			rgbsite = pixel.pix_X*3;
 			pixpot.prgb.rgbBlue  = data[rgbsite];
 			pixpot.prgb.rgbGreen = data[rgbsite+1];
 			pixpot.prgb.rgbRed   = data[rgbsite+2];
 			break;
 		case 8:
-//			printf("8位图\n");
+			//			printf("8位图\n");
 			rgbsite= pixel.pix_X;
 			tablesite = data[rgbsite];
 			//printf("%03d\n",data[k]);
@@ -140,20 +234,20 @@ PIXPOT Rbmp::get_pot(PIXPOS pixel)
 		default:
 			break;
 	}
-//	show_PIXPOT(pixpot);
+	//	show_PIXPOT(pixpot);
 	return pixpot;
 }
 //get 8 point position(x,y)
 PIXPOT8 Rbmp::get_pos8(PIXPOT8& pots8, PIXPOS pixel)
 {
 	/*
-	if(pixel.pix_X >= bmpWidth || pixel.pix_Y >= bmpHeight ||
-			pixel.pix_X < 0 || pixel.pix_Y < 0)
-	{
-		printf("In get_pos8 ,You set (x,y) is out Range!\n");
-		exit(1);
-	}
-	*/
+	   if(pixel.pix_X >= bmpWidth || pixel.pix_Y >= bmpHeight ||
+	   pixel.pix_X < 0 || pixel.pix_Y < 0)
+	   {
+	   printf("In get_pos8 ,You set (x,y) is out Range!\n");
+	   exit(1);
+	   }
+	   */
 	//get 4 side point position(x,y)
 	memcpy(&pots8.pot4s[0].pot,&pixel,sizeof(PIXPOS));
 	pots8.pot4s[0].pot.pix_Y-=1;
@@ -177,26 +271,30 @@ PIXPOT8 Rbmp::get_pos8(PIXPOT8& pots8, PIXPOS pixel)
 	pots8.pot4a[3].pot.pix_X-=1;
 	pots8.pot4a[3].pot.pix_Y+=1;
 	/*
-	int i = 0;
-	while(i<4)
-	{
-		show_PIXPOT(pots8.pot4s[i]);
-		show_PIXPOT(pots8.pot4a[i]);
-		i++;
-	}
-	*/
+	   int i = 0;
+	   while(i<4)
+	   {
+	   show_PIXPOT(pots8.pot4s[i]);
+	   show_PIXPOT(pots8.pot4a[i]);
+	   i++;
+	   }
+	   */
 	//fix the 8 point's position
+#ifdef ONLY
 	fix_PIXPOS8(pots8,bmpWidth,bmpHeight);
+#else
+	pots8.fix_PIXPOS8(pots8,bmpWidth,bmpHeight);
+#endif
 	/*
-	printf("===========================\n");
-	int i = 0;
-	while(i<4)
-	{
-		show_PIXPOT(pots8.pot4s[i]);
-		show_PIXPOT(pots8.pot4a[i]);
-		i++;
-	}
-	*/
+	   printf("===========================\n");
+	   int i = 0;
+	   while(i<4)
+	   {
+	   show_PIXPOT(pots8.pot4s[i]);
+	   show_PIXPOT(pots8.pot4a[i]);
+	   i++;
+	   }
+	   */
 	return pots8;
 }
 //get the 8 point rgb value
@@ -213,43 +311,38 @@ PIXPOT8 Rbmp::get_pot8(PIXPOS pixel)
 	//get the 8 point right position(x,y)
 	get_pos8(pots8,pixel);
 	pots8.fcspot   = get_pot(pixel);
+#ifdef ONLY
 	show_PIXPOT(pots8.fcspot);
+#else
+	pots8.show_PIXPOT(pots8.fcspot);
+#endif
 	printf("\n");
 	//get the 8 point rgb value
 	int i = 0;
 	while(i<4)
 	{
+#ifdef ONLY
 		pots8.pot4s[i] = get_pot(pots8.pot4s[i].pot);
 		pots8.diff4s[i] = get_diff8RGB(pots8.fcspot,pots8.pot4s[i]);
-		
+
 		pots8.pot4a[i]  = get_pot(pots8.pot4a[i].pot);
 		pots8.diff4a[i] = get_diff8RGB(pots8.fcspot,pots8.pot4a[i]);
+#else
+		pots8.pot4s[i] = get_pot(pots8.pot4s[i].pot);
+		pots8.diff4s[i] = pots8.get_diff8RGB(pots8.fcspot,pots8.pot4s[i]);
+
+		pots8.pot4a[i]  = get_pot(pots8.pot4a[i].pot);
+		pots8.diff4a[i] = pots8.get_diff8RGB(pots8.fcspot,pots8.pot4a[i]);
+#endif
 		i++;
 	}
+#ifdef ONLY
 	show_PIXPOT8(pots8);
+#else
+	pots8.show_PIXPOT8(pots8);
+#endif
 	return pots8;
 }
-//get the diff RGB between the focus point with other 8 point
-RGBQUAD get_diff8RGB(PIXPOT& fcspot,PIXPOT& ppot8)
-{
-	RGBQUAD diffRgb;
-	diffRgb.rgbRed = fcspot.prgb.rgbRed - ppot8.prgb.rgbRed;
-	diffRgb.rgbGreen = fcspot.prgb.rgbGreen - ppot8.prgb.rgbGreen;
-	diffRgb.rgbBlue = fcspot.prgb.rgbBlue - ppot8.prgb.rgbBlue;
-	diffRgb.rgbReserved = 0;
-	return diffRgb;
-}
-void fix_PIXPOS8(PIXPOT8& pot8,int W,int H)
-{
-	int i = 0;
-	while(i<4)
-	{
-		fix_PIXPOS(pot8.pot4s[i].pot,W,H);
-		fix_PIXPOS(pot8.pot4a[i].pot,W,H);
-		i++;
-	}
-}
-
 /*函数名称read_image()*/
 bool Rbmp::read_image()
 {
@@ -389,69 +482,4 @@ void Rbmp::show_info_head(BITMAPINFOHEADER &infohead)
 	cout << "\tY 方向分辨率: " << infohead.biYPelsPerMeter << endl;    
 	cout << "\t使用的颜色数: " << infohead.biClrUsed << endl;    
 	cout << "\t重要颜色数  : " << infohead.biClrImportant << endl;    
-}   
-void show_PIXPOT8(PIXPOT8 pots8)
-{
-	int i = 0;
-	while(i<4)
-	{
-		show_PIXPOT(pots8.pot4s[i]);
-		show_PIXPOT8diffRGB(pots8.diff4s[i]);
-		show_PIXPOT(pots8.pot4a[i]);
-		show_PIXPOT8diffRGB(pots8.diff4a[i]);
-		i++;
-	}
-}
-void show_PIXPOT(PIXPOT pots)
-{
-	printf("X: %-3d Y: %-3d Edge: %d \t[R,G,B]:(%03d,%03d,%03d)\t",
-	//printf("X:%d Y:%d\t:(%03d,%03d,%03d)\n",
-	pots.pot.pix_X,
-	pots.pot.pix_Y,
-	pots.pot.bEdge,
-	pots.prgb.rgbRed,
-	pots.prgb.rgbGreen,
-	pots.prgb.rgbBlue
-	);
-}
-
-void show_PIXPOT8diffRGB(RGBQUAD diffRgb)
-{
-	printf("diff:(%03d,%03d,%03d)\n",
-		diffRgb.rgbRed,
-		diffRgb.rgbGreen,
-		diffRgb.rgbBlue);
-}
-void show_PIXPOS(PIXPOS pixel)
-{
-	printf("X: %-3d Y: %-3d edge:%d\n",
-	pixel.pix_X,
-	pixel.pix_Y,
-	pixel.bEdge);
-}
-bool isEdge(PIXPOS pixel, int W,int H)
-{
-	if((pixel.pix_X <= 0) | (pixel.pix_X >= W-1) |
-	   (pixel.pix_Y <= 0) | (pixel.pix_Y >= H-1))
-		return true;
-	else
-		return false;
-}
-//fix up the point position,if the point is edge point 
-void fix_PIXPOS(PIXPOS& pixel,int W,int H)
-{
-	if(isEdge(pixel,W,H))
-	{
-		pixel.bEdge = true;
-		if(pixel.pix_X < 0)
-			pixel.pix_X += W;
-		if(pixel.pix_Y < 0)
-			pixel.pix_Y += H;
-		if(pixel.pix_X >= W)
-			pixel.pix_X -= W;
-		if(pixel.pix_Y >= H)
-			pixel.pix_Y -= H;
-	}
-	else
-		pixel.bEdge = false;
 }

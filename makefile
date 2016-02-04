@@ -3,7 +3,7 @@
 #Third library is libsys.a to print the log while the project runing
 #
 SRC = src/bmp.cpp  
-ISRC = include/Rbmp.cpp
+ISRC = include/*.cpp
 LIB = ./sdk/lib/
 OBJ =  
 HEADERS = 
