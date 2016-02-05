@@ -1,11 +1,12 @@
+#include <unistd.h>
 #include "Rbmp.h"
 
 #ifdef ONLY
 void show_PIXPOT(PIXPOT pots);
-void show_PIXPOS(PIXPOS pixel);
-bool isEdge(PIXPOS pixel, int W,int H);
-void fix_PIXPOS(PIXPOS& pixel,int W,int H);//fix up the point position
-void fix_PIXPOS8(PIXPOT8& pot8,int W,int H);//fix up the 8 point position
+void show_PIXELS(PIXELS pixel);
+bool isEdge(PIXELS& pixel, int W,int H);
+void fix_PIXELS(PIXELS& pixel,int W,int H);//fix up the point position
+void fix_PIXELS8(PIXPOT8& pot8,int W,int H);//fix up the 8 point position
 RGBQUAD get_diff8RGB(PIXPOT& fcspot,PIXPOT& ppot8);
 void show_PIXPOT8diffRGB(RGBQUAD diffRgb);
 void show_PIXPOT8(PIXPOT8 pots8);
@@ -41,27 +42,32 @@ void show_PIXPOT8diffRGB(RGBQUAD diffRgb)
 			diffRgb.rgbGreen,
 			diffRgb.rgbBlue);
 }
-void show_PIXPOS(PIXPOS pixel)
+void show_PIXELS(PIXELS pixel)
 {
 	printf("X: %-3d Y: %-3d edge:%d\n",
 			pixel.pix_X,
 			pixel.pix_Y,
 			pixel.bEdge);
 }
-bool isEdge(PIXPOS pixel, int W,int H)
+bool isEdge(PIXELS& pixel, int W,int H)
 {
 	if((pixel.pix_X <= 0) | (pixel.pix_X >= W-1) |
 			(pixel.pix_Y <= 0) | (pixel.pix_Y >= H-1))
+	{
+		pixel.bEdge = true;
 		return true;
+	}
 	else
+	{
+		pixel.bEdge = false;
 		return false;
+	}
 }
 //fix up the point position,if the point is edge point
-void fix_PIXPOS(PIXPOS& pixel,int W,int H)
+void fix_PIXELS(PIXELS& pixel,int W,int H)
 {
 	if(isEdge(pixel,W,H))
 	{
-		pixel.bEdge = true;
 		if(pixel.pix_X < 0)
 			pixel.pix_X += W;
 		if(pixel.pix_Y < 0)
@@ -71,9 +77,6 @@ void fix_PIXPOS(PIXPOS& pixel,int W,int H)
 		if(pixel.pix_Y >= H)
 			pixel.pix_Y -= H;
 	}
-	else
-		pixel.bEdge = false;
-
 }
 //get the diff RGB between the focus point with other 8 point
 RGBQUAD get_diff8RGB(PIXPOT& fcspot,PIXPOT& pot)
@@ -85,13 +88,13 @@ RGBQUAD get_diff8RGB(PIXPOT& fcspot,PIXPOT& pot)
 	diffRgb.rgbReserved = 0;
 	return diffRgb;
 }
-void fix_PIXPOS8(PIXPOT8& pots8,int W,int H)
+void fix_PIXELS8(PIXPOT8& pots8,int W,int H)
 {
 	int i = 0;
 	while(i<4)
 	{
-		fix_PIXPOS(pots8.pot4s[i].pot,W,H);
-		fix_PIXPOS(pots8.pot4a[i].pot,W,H);
+		fix_PIXELS(pots8.pot4s[i].pot,W,H);
+		fix_PIXELS(pots8.pot4a[i].pot,W,H);
 		i++;
 	}
 }
@@ -147,17 +150,17 @@ bool Rbmp::init_image()
 		pColorTable = new RGBQUAD[256];
 		fread(pColorTable,sizeof(RGBQUAD),256,fp);
 		/*
-		   int i = 0;
-		   printf("颜色表:\n");
-		   while(i < 256)
-		   {
-		   printf("$%d %d ",i,pColorTable[i]);
-		   printf("r:%d ",pColorTable[i].rgbRed);
-		   printf("g:%d ",pColorTable[i].rgbGreen);
-		   printf("b:%d\n",pColorTable[i].rgbBlue);
-		   i++;
-		   }
-		   */
+			 int i = 0;
+			 printf("颜色表:\n");
+			 while(i < 256)
+			 {
+			 printf("$%d %d ",i,pColorTable[i]);
+			 printf("r:%d ",pColorTable[i].rgbRed);
+			 printf("g:%d ",pColorTable[i].rgbGreen);
+			 printf("b:%d\n",pColorTable[i].rgbBlue);
+			 i++;
+			 }
+			 */
 	}
 	rewind(fp);
 	return true;
@@ -174,10 +177,10 @@ Rbmp::~Rbmp()
 	cout << "delete a Rbmp ...." << endl;
 }
 
-PIXPOT Rbmp::get_pot(PIXPOS pixel)
+PIXELS Rbmp::get_pix(PIXELS pixel)
 {
-	PIXPOT ppot;
-	memset(&ppot,0,sizeof(PIXPOT));
+	PIXELS ppot;
+	memset(&ppot,0,sizeof(PIXELS));
 	try
 	{
 		if(out_range_error(pixel))
@@ -185,15 +188,15 @@ PIXPOT Rbmp::get_pot(PIXPOS pixel)
 	}
 	catch(...)
 	{
-		printf("In get_pot, You set (x,y) is out Range!\n");
+		printf("In get_pix, You set (x,y) is out Range!\n");
 		return ppot;
 	}
-	ppot.pot.pix_X = pixel.pix_X;
-	ppot.pot.pix_Y = pixel.pix_Y;
+	ppot.pix_X = pixel.pix_X;
+	ppot.pix_Y = pixel.pix_Y;
 #ifdef ONLY
 	ppot.pot.bEdge = isEdge(pixel,bmpWidth,bmpHeight);
 #else
-	ppot.pot.bEdge = pixel.isEdge(pixel,bmpWidth,bmpHeight);
+	ppot.bEdge = pixel.isEdge(pixel,bmpWidth,bmpHeight);
 #endif
 
 	int lineByte = (bmpWidth * biBitCount + 31)/32*4;
@@ -237,12 +240,12 @@ PIXPOT Rbmp::get_pot(PIXPOS pixel)
 		default:
 			break;
 	}
-	//	show_PIXPOT(pixpot);
+	//	show_PIXELS(PIXELS);
 	delete []linedata;
 	return ppot;
 }
 //get 8 point position(x,y)
-PIXPOT8 Rbmp::get_pos8(PIXPOT8& pots8, PIXPOS pixel)
+PIXPOT Rbmp::get_pos8(PIXPOT& pots8, PIXELS pixel)
 {
 	try
 	{
@@ -255,59 +258,59 @@ PIXPOT8 Rbmp::get_pos8(PIXPOT8& pots8, PIXPOS pixel)
 		return pots8;
 	}
 	//get 4 side point position(x,y)
-	memcpy(&pots8.pot4s[0].pot,&pixel,sizeof(PIXPOS));
-	pots8.pot4s[0].pot.pix_Y-=1;
-	memcpy(&pots8.pot4s[1].pot,&pixel,sizeof(PIXPOS));
-	pots8.pot4s[1].pot.pix_X+=1;
-	memcpy(&pots8.pot4s[2].pot,&pixel,sizeof(PIXPOS));
-	pots8.pot4s[2].pot.pix_Y+=1;
-	memcpy(&pots8.pot4s[3].pot,&pixel,sizeof(PIXPOS));
-	pots8.pot4s[3].pot.pix_X-=1;
+	memcpy(&pots8.pot4s[0],&pixel,sizeof(PIXELS));
+	pots8.pot4s[0].pix_Y-=1;
+	memcpy(&pots8.pot4s[1],&pixel,sizeof(PIXELS));
+	pots8.pot4s[1].pix_X+=1;
+	memcpy(&pots8.pot4s[2],&pixel,sizeof(PIXELS));
+	pots8.pot4s[2].pix_Y+=1;
+	memcpy(&pots8.pot4s[3],&pixel,sizeof(PIXELS));
+	pots8.pot4s[3].pix_X-=1;
 	//get 4 angle point position(x,y)
-	memcpy(&pots8.pot4a[0].pot,&pixel,sizeof(PIXPOS));
-	pots8.pot4a[0].pot.pix_X-=1;
-	pots8.pot4a[0].pot.pix_Y-=1;
-	memcpy(&pots8.pot4a[1].pot,&pixel,sizeof(PIXPOS));
-	pots8.pot4a[1].pot.pix_X+=1;
-	pots8.pot4a[1].pot.pix_Y-=1;
-	memcpy(&pots8.pot4a[2].pot,&pixel,sizeof(PIXPOS));
-	pots8.pot4a[2].pot.pix_X+=1;
-	pots8.pot4a[2].pot.pix_Y+=1;
-	memcpy(&pots8.pot4a[3].pot,&pixel,sizeof(PIXPOS));
-	pots8.pot4a[3].pot.pix_X-=1;
-	pots8.pot4a[3].pot.pix_Y+=1;
+	memcpy(&pots8.pot4a[0],&pixel,sizeof(PIXELS));
+	pots8.pot4a[0].pix_X-=1;
+	pots8.pot4a[0].pix_Y-=1;
+	memcpy(&pots8.pot4a[1],&pixel,sizeof(PIXELS));
+	pots8.pot4a[1].pix_X+=1;
+	pots8.pot4a[1].pix_Y-=1;
+	memcpy(&pots8.pot4a[2],&pixel,sizeof(PIXELS));
+	pots8.pot4a[2].pix_X+=1;
+	pots8.pot4a[2].pix_Y+=1;
+	memcpy(&pots8.pot4a[3],&pixel,sizeof(PIXELS));
+	pots8.pot4a[3].pix_X-=1;
+	pots8.pot4a[3].pix_Y+=1;
 	/*
-	   int i = 0;
-	   while(i<4)
-	   {
-	   show_PIXPOT(pots8.pot4s[i]);
-	   show_PIXPOT(pots8.pot4a[i]);
-	   i++;
-	   }
-	   */
+		 int i = 0;
+		 while(i<4)
+		 {
+		 show_PIXPOT(pots8.pot4s[i]);
+		 show_PIXPOT(pots8.pot4a[i]);
+		 i++;
+		 }
+		 */
 	//fix the 8 point's position
 #ifdef ONLY
-	fix_PIXPOS8(pots8,bmpWidth,bmpHeight);
+	fix_PIXELS8(pots8,bmpWidth,bmpHeight);
 #else
-	pots8.fix_PIXPOS8(pots8,bmpWidth,bmpHeight);
+	pots8.fix_PIXPOT(pots8,bmpWidth,bmpHeight);
 #endif
 	/*
-	   printf("===========================\n");
-	   int i = 0;
-	   while(i<4)
-	   {
-	   show_PIXPOT(pots8.pot4s[i]);
-	   show_PIXPOT(pots8.pot4a[i]);
-	   i++;
-	   }
-	   */
+		 printf("===========================\n");
+		 int i = 0;
+		 while(i<4)
+		 {
+		 show_PIXPOT(pots8.pot4s[i]);
+		 show_PIXPOT(pots8.pot4a[i]);
+		 i++;
+		 }
+		 */
 	return pots8;
 }
 //get the 8 point rgb value
-PIXPOT8 Rbmp::get_pot8(PIXPOS pixel)
+PIXPOT Rbmp::get_pot(PIXELS pixel)
 {
-	PIXPOT8 pots8;
-	memset(&pots8,0,sizeof(PIXPOT8));
+	PIXPOT pots8;
+	memset(&pots8,0,sizeof(PIXPOT));
 	try
 	{
 		if(out_range_error(pixel))
@@ -315,16 +318,16 @@ PIXPOT8 Rbmp::get_pot8(PIXPOS pixel)
 	}
 	catch(...)
 	{
-		printf("In get_pot8 ,You set (x,y) is out Range!\n");
+		printf("In get_pot ,You set (x,y) is out Range!\n");
 		return pots8;
 	}
 	//get the 8 point right position(x,y)
 	get_pos8(pots8,pixel);
-	pots8.fcspot   = get_pot(pixel);
+	pots8.pot   = get_pix(pixel);
 #ifdef ONLY
 	show_PIXPOT(pots8.fcspot);
 #else
-	pots8.fcspot.show_PIXPOT();
+	//pots8.show_PIXPOT();
 #endif
 	printf("\n");
 	//get the 8 point rgb value
@@ -332,64 +335,29 @@ PIXPOT8 Rbmp::get_pot8(PIXPOS pixel)
 	while(i<4)
 	{
 #ifdef ONLY
-		pots8.pot4s[i] = get_pot(pots8.pot4s[i].pot);
+		pots8.pot4s[i] = get_pix(pots8.pot4s[i].pot);
 		pots8.diff4s[i] = get_diff8RGB(pots8.fcspot,pots8.pot4s[i]);
 
-		pots8.pot4a[i]  = get_pot(pots8.pot4a[i].pot);
+		pots8.pot4a[i]  = get_pix(pots8.pot4a[i].pot);
 		pots8.diff4a[i] = get_diff8RGB(pots8.fcspot,pots8.pot4a[i]);
 #else
-		pots8.pot4s[i] = get_pot(pots8.pot4s[i].pot);
-		pots8.diff4s[i] = pots8.get_diff8RGB(pots8.fcspot,pots8.pot4s[i]);
+		pots8.pot4s[i] = get_pix(pots8.pot4s[i]);
+		pots8.diff4s[i] = pots8.get_diff8RGB(pots8.pot,pots8.pot4s[i]);
 
-		pots8.pot4a[i]  = get_pot(pots8.pot4a[i].pot);
-		pots8.diff4a[i] = pots8.get_diff8RGB(pots8.fcspot,pots8.pot4a[i]);
+		pots8.pot4a[i]  = get_pix(pots8.pot4a[i]);
+		pots8.diff4a[i] = pots8.get_diff8RGB(pots8.pot,pots8.pot4a[i]);
 #endif
 		i++;
 	}
 #ifdef ONLY
 	show_PIXPOT8(pots8);
 #else
-	pots8.show_PIXPOT8(pots8);
+	pots8.show_PIXPOT(pots8);
 #endif
 	return pots8;
 }
-/*函数名称read_image()*/
-bool Rbmp::read_image()
-{
-	if(fp ==  NULL) 
-		return false;
-	int lineByte;
-	lineByte = (bmpWidth * biBitCount + 31)/32*4;
-	BYTE8 *linedata = new BYTE8[lineByte * bmpHeight];
-	BYTE8 Color[1300][3];
-	fseek(fp,54,0);//sizeof(BITMAPFILEHEADER + BITMAPINFOHEADER)
-	int k, m;
-	for(int i = bmpHeight-1; i >= 0; i--)//左上为原点
-		//for(int i = 0; i < bmpHeight; i++)//左下为原点
-	{  
-		fread(linedata,1,lineByte,fp);
-		cout<<"第"<< i <<"行[B, G, R]:" << endl;
-		for(k = 0;k < bmpWidth*3; k++)
-		{
-			printf("%03d ",linedata[k]);
-			if(k%3 == 2)
-			{
-				m = k/3;	
-				Color[m][0] = linedata[k-2];//b
-				Color[m][1] = linedata[k-1];//g
-				Color[m][2] = linedata[k-0];//r
-				printf("[%03d,%03d,%03d]\n",Color[m][0], Color[m][1], Color[m][2]);
-			}
-		}
-		cout << endl;
-	}
-	//关闭文件
-	fclose(fp);
-	delete []linedata;
-	return true;
-}
 /*函数名称readIline()*/
-bool Rbmp::readIline()
+bool Rbmp::read_image()
 {
 	if(fp ==  NULL)
 		return false;
@@ -397,30 +365,25 @@ bool Rbmp::readIline()
 	lineByte = (bmpWidth * biBitCount + 31)/32*4;
 	printf("kkkkk:%d\n",lineByte);
 	BYTE8 *linedata = new BYTE8[lineByte];
-	PIXPOT *lineppot = new PIXPOT[bmpWidth];
+	PIXELS *lineppot = new PIXELS[bmpWidth];
 	fseek(fp,bfOffBits,0); //左上原点
-	int k;
-	int x = 0;
+	int k, x = 0 ,y = bmpHeight - 1;
 	int tablesite;
-	for(int y = bmpHeight-1; y >= 0; y--)//左上为原点
-//	for(int i = 0; i < bmpHeight; i++)//左下为原点
+//	for(;y >= 0;y--)//左上为原点
+		//	for(int i = 0; i < bmpHeight; i++)//左下为原点
 	{
 		fread(linedata,1,lineByte,fp);
 		for(k = 0;x < bmpWidth/*k < lineByte*/; k++)
 		{
-			printf("%03d ",linedata[k]);
+			//printf("%03d ",linedata[k]);
 			switch(biBitCount)
 			{
-				case 24://OK
 					lineppot[x].prgb.rgbBlue  = linedata[k];
 					lineppot[x].prgb.rgbGreen = linedata[++k];
 					lineppot[x].prgb.rgbRed   = linedata[++k];
-					lineppot[x].pot.pix_X = x;
-					lineppot[x].pot.pix_Y = y;
-					if(isEdge(lineppot[x].pot,bmpWidth,bmpHeight))
-						lineppot[x].pot.bEdge = true;
-					else
-						lineppot[x].pot.bEdge = false;
+					lineppot[x].pix_X = x;
+					lineppot[x].pix_Y = y;
+					lineppot[x].isEdge(bmpWidth,bmpHeight);
 					break;
 				case 8:
 					tablesite = linedata[k];
@@ -429,24 +392,24 @@ bool Rbmp::readIline()
 					lineppot[x].prgb.rgbRed   = pColorTable[tablesite].rgbRed;
 					lineppot[x].prgb.rgbGreen = pColorTable[tablesite].rgbGreen;
 					lineppot[x].prgb.rgbBlue  = pColorTable[tablesite].rgbBlue;
-					lineppot[x].pot.pix_X = x;
-					lineppot[x].pot.pix_Y = y;
-					if(isEdge(lineppot[x].pot,bmpWidth,bmpHeight))
-						lineppot[x].pot.bEdge = true;
-					else
-						lineppot[x].pot.bEdge = false;
+					lineppot[x].pix_X = x;
+					lineppot[x].pix_Y = y;
+					lineppot[x].isEdge(bmpWidth,bmpHeight);
 					break;
 				default:
 					break;
 			}
+			/*
 #ifdef ONLY
 			show_PIXPOT(lineppot[x]);
 #else
 			lineppot[x].show_PIXPOT();
 #endif
 			printf("\n");
+			*/
 			x++;
 		}
+		isBoundary(lineppot);
 		x = 0;
 		cout << endl;
 	}
@@ -454,13 +417,27 @@ bool Rbmp::readIline()
 	delete []lineppot;
 	return true;
 }
+//is Boundary 
+//	PIXPOT *lineppot = new PIXPOT[bmpWidth];
+bool Rbmp::isBoundary(PIXELS* lineppot)
+{
+	PIXPOT pots8;
+	int x = 0;
+	for(;x < bmpWidth; x++)
+	{
+		pots8 = get_pot(lineppot[x]);
+		printf("=======================\n");
+	}
+
+	return true; 
+}
 /*函数名称：save_image()函数参数：char *bmppath文件名字及路径;
-  unsigned char *imgBuf待存盘的位图数据;
-  int biBitCount每像素所占位数;
-  RGBQUAD *pColorTable颜色表指针
-  返回值：0为失败，1为成功.
-  说明：给定一个图像位图数据、宽、高、颜色表指针及每像素所占的位数等信息，
-  将其写到指定文件中*/
+	unsigned char *imgBuf待存盘的位图数据;
+	int biBitCount每像素所占位数;
+	RGBQUAD *pColorTable颜色表指针
+	返回值：0为失败，1为成功.
+	说明：给定一个图像位图数据、宽、高、颜色表指针及每像素所占的位数等信息，
+	将其写到指定文件中*/
 
 bool Rbmp::save_image(char *bmppath,unsigned char *imgBuf,int width,int height, int biBitCount, RGBQUAD *pColorTable)
 {
@@ -558,7 +535,7 @@ void Rbmp::show_info_head(BITMAPINFOHEADER &infohead)
 	cout << "\t使用的颜色数: " << infohead.biClrUsed << endl;    
 	cout << "\t重要颜色数  : " << infohead.biClrImportant << endl;    
 }
-bool Rbmp::out_range_error(PIXPOS pixel)
+bool Rbmp::out_range_error(PIXELS pixel)
 {
 	if((pixel.pix_X >= bmpWidth) |
 			(pixel.pix_Y >= bmpHeight) |

@@ -8,13 +8,12 @@ int main(int argc,char* argv[])
 		return 0;
 	}
 	Rbmp bmp(argv[1]);
-//	bmp.read_image();
-	PIXPOS tmp = {0};
+	PIXELS tmp;
 	tmp.pix_X = atoi(argv[2]);
 	tmp.pix_Y = atoi(argv[3]);
 	bmp.get_image_msg();
 	//bmp.get_pot8(tmp);
-	bmp.readIline();
+	bmp.read_image();
 	//输出图像的信息
 	cout<<endl;
 	return 0;

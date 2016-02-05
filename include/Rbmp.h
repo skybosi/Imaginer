@@ -29,19 +29,19 @@ class Rbmp
 		Rbmp(const char* bmpname);
 		~Rbmp();
 		//get a point info.
-		PIXPOT get_pot(PIXPOS pixel);
+		PIXELS get_pix(PIXELS pixel);
 		//get the 8 point info. around a point
-		PIXPOT8 get_pot8(PIXPOS pixel);
+		PIXPOT get_pot(PIXELS pixel);
 		void get_image_msg();
 		bool read_image();
-		bool readIline();
+		bool isBoundary(PIXELS* lineppot);
 		bool write_image(){return true;};
 		bool save_image(char *bmppath,unsigned char *imgBuf,int width,int height, int biBitCount, RGBQUAD *pColorTable);
 	private:
 		bool init_image();
-		bool out_range_error(PIXPOS pixel);
+		bool out_range_error(PIXELS pixel);
 		//get the 8 point position
-		PIXPOT8 get_pos8(PIXPOT8& pots8, PIXPOS pixel);
+		PIXPOT get_pos8(PIXPOT& pots8, PIXELS pixel);
 		void show_bmp_head(BITMAPFILEHEADER &head);
 		void show_info_head(BITMAPINFOHEADER &infohead);
 
