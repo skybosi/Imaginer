@@ -1,6 +1,5 @@
 #include "ipoint.h"
 
-#ifndef ONLY
 //fix up the point position,if the point is edge point 
 void PIXELS::fix_PIXELS(int W,int H)
 {
@@ -36,18 +35,6 @@ RGBQUAD PIXPOT::get_diff8RGB(PIXELS& fcspot,PIXELS& ppot)
 	diffRgb.rgbReserved = 0;
 	return diffRgb;
 }
-void PIXPOT::show_PIXPOT(PIXPOT pots8)
-{
-	int i = 0;
-	while(i<4)
-	{
-		pots8.pot4s[i].show_PIXELS();
-		show_PIXPOT8diffRGB(pots8.diff4s[i]);
-		pots8.pot4a[i].show_PIXELS();
-		show_PIXPOT8diffRGB(pots8.diff4a[i]);
-		i++;
-	}
-}
 void PIXPOT::show_PIXPOT8diffRGB(RGBQUAD diffRgb)
 {
 	printf("diff:(%03d,%03d,%03d)\n",
@@ -62,6 +49,7 @@ PIXPOT::PIXPOT()
 void PIXPOT::show_PIXPOT()
 {
 	pot.show_PIXELS();
+	printf("\n");
 	int i = 0;
 	while(i<4)
 	{
@@ -79,7 +67,7 @@ void PIXPOT::show_PIXPOT()
 		*/
 }
 //mix two color
-PIXELS PIXPOT::mix(PIXELS& ppot1,PIXELS& ppot2,U8 weight)
+PIXELS PIXELS::mix(PIXELS& ppot1,PIXELS& ppot2,U8 weight)
 {
 	PIXELS ppot3;
 	ppot3.prgb.rgbRed = (((ppot1.prgb.rgbRed * weight) + (ppot1.prgb.rgbRed *(1 - weight))) >> 2)/100;
@@ -219,4 +207,19 @@ PIXELS PIXELS::setXY(int x,int y)
 	pix_Y = y;
 	return *this;
 }
-#endif //not ONLY
+void PIXELS::setX(int x)
+{
+	pix_X = x;
+}
+void PIXELS::setY(int y)
+{
+	pix_Y = y;
+}
+int PIXELS::getX()
+{
+	return pix_X;
+}
+int PIXELS::getY()
+{
+	return pix_Y;
+}

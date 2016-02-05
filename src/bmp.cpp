@@ -9,8 +9,7 @@ int main(int argc,char* argv[])
 	}
 	Rbmp bmp(argv[1]);
 	PIXELS tmp;
-	tmp.pix_X = atoi(argv[2]);
-	tmp.pix_Y = atoi(argv[3]);
+	tmp.setXY(atoi(argv[2]),atoi(argv[3]));
 	bmp.get_image_msg();
 	//bmp.get_pot8(tmp);
 	bmp.read_image();
