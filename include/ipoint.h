@@ -9,7 +9,7 @@ using namespace std;
 // pixel position
 class PIXELS
 {
-	public:
+	private:
 		int pix_X;
 		int pix_Y;
 		RGBQUAD prgb;
@@ -27,10 +27,11 @@ class PIXELS
 		//set (x,y)
 		PIXELS setXY(PIXELS pixel);
 		PIXELS setXY(int x, int y);
-		void setX(int x);
-		void setY(int y);
+		PIXELS resetXY(int x,int y);
 		U8 set_threshold(PIXELS ppot);
+		RGBQUAD get_diff8RGB(PIXELS ppot);
 	public:
+		PIXELS& operator=(const PIXELS& pixel);
 		//mix two color
 		PIXELS mix(PIXELS& ppot1,PIXELS& ppot2,U8 weight = 50);
 		int getX();
@@ -42,12 +43,11 @@ class PIXELS
 		void toBin();
 		PIXELS toBin(PIXELS& ppot);
 		void fix_PIXELS(int W,int H);//fix up the point position
-		//friend class PIXPOT;
 };
 // pixel point
 class PIXPOT
 {
-	public:
+	private:
 		PIXELS pot;
 		PIXELS pot4s[4];				// 4 side point
 		PIXELS pot4a[4];				// 4 angle point
@@ -58,6 +58,7 @@ class PIXPOT
 		void show_PIXPOT();
 		void show_PIXPOT8diffRGB(RGBQUAD diffRgb);
 		void fix_PIXPOT(PIXPOT& pots8,int W,int H);//fix up the 8 point position
-		RGBQUAD get_diff8RGB(PIXELS& fcspot,PIXELS& ppot);
+		PIXPOT get_pos8(PIXELS pixel,int W,int H);
+		friend class Rbmp;
 };
 #endif // ipoint.h :[]

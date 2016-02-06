@@ -26,13 +26,13 @@ void PIXPOT::fix_PIXPOT(PIXPOT& pots8,int W,int H)
 	}
 }
 //get the diff RGB between the focus point with other 8 point
-RGBQUAD PIXPOT::get_diff8RGB(PIXELS& fcspot,PIXELS& ppot)
+RGBQUAD PIXELS::get_diff8RGB(PIXELS pixel)
 {
 	RGBQUAD diffRgb;
-	diffRgb.rgbRed = fcspot.prgb.rgbRed - ppot.prgb.rgbRed;
-	diffRgb.rgbGreen = fcspot.prgb.rgbGreen - ppot.prgb.rgbGreen;
-	diffRgb.rgbBlue = fcspot.prgb.rgbBlue - ppot.prgb.rgbBlue;
-	diffRgb.rgbReserved = 0;
+	diffRgb.rgbRed = prgb.rgbRed - pixel.prgb.rgbRed;
+	diffRgb.rgbGreen = prgb.rgbGreen - pixel.prgb.rgbGreen;
+	diffRgb.rgbBlue = prgb.rgbBlue - pixel.prgb.rgbBlue;
+	diffRgb.rgbReserved = prgb.rgbReserved - pixel.prgb.rgbReserved;
 	return diffRgb;
 }
 void PIXPOT::show_PIXPOT8diffRGB(RGBQUAD diffRgb)
@@ -65,6 +65,29 @@ void PIXPOT::show_PIXPOT()
 		prgb.rgbGreen,
 		prgb.rgbBlue);
 		*/
+}
+//get 8 point position(x,y)
+PIXPOT PIXPOT::get_pos8(PIXELS pixel,int W,int H)
+{
+	int i = 0;
+	while(i<4)
+	{
+		//get 4 side point position(x,y)
+		pot4s[i] = pixel;
+		//get 4 angle point position(x,y)
+		pot4a[i] = pixel;
+	}
+	pot4s[0].resetXY(0,-1);
+	pot4s[1].resetXY(1,0);
+	pot4s[2].resetXY(0,1);
+	pot4s[3].resetXY(-1,0);
+
+	pot4a[0].resetXY(-1,-1);
+	pot4a[1].resetXY(1,-1);
+	pot4a[2].resetXY(1,1);
+	pot4a[3].resetXY(-1,1);
+	fix_PIXPOT(*this,W,H);
+	return *this;
 }
 //mix two color
 PIXELS PIXELS::mix(PIXELS& ppot1,PIXELS& ppot2,U8 weight)
@@ -207,13 +230,11 @@ PIXELS PIXELS::setXY(int x,int y)
 	pix_Y = y;
 	return *this;
 }
-void PIXELS::setX(int x)
+PIXELS PIXELS::resetXY(int x,int y)
 {
-	pix_X = x;
-}
-void PIXELS::setY(int y)
-{
-	pix_Y = y;
+	pix_X += x;
+	pix_Y += y;
+	return *this;
 }
 int PIXELS::getX()
 {
@@ -222,4 +243,15 @@ int PIXELS::getX()
 int PIXELS::getY()
 {
 	return pix_Y;
+}
+//just copy the position
+PIXELS& PIXELS::operator=(const PIXELS& pixel)
+{
+	if(this == &pixel)
+		return *this;
+	pix_X = pixel.pix_X;
+	pix_Y = pixel.pix_Y;
+	memcpy(&prgb,&pixel.prgb,sizeof(RGBQUAD));
+	rgb_threshold = pixel.rgb_threshold;
+	return *this;
 }

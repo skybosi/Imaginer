@@ -38,8 +38,6 @@ class Rbmp
 	private:
 		bool init_image();
 		bool out_range_error(PIXELS pixel);
-		//get the 8 point position
-		PIXPOT get_pos8(PIXPOT& pots8, PIXELS pixel);
 		void show_bmp_head(BITMAPFILEHEADER &head);
 		void show_info_head(BITMAPINFOHEADER &infohead);
 

@@ -134,69 +134,10 @@ PIXELS Rbmp::get_pix(PIXELS pixel)
 	delete []linedata;
 	return ppot;
 }
-//get 8 point position(x,y)
-PIXPOT Rbmp::get_pos8(PIXPOT& pots8, PIXELS pixel)
-{
-	try
-	{
-		if(out_range_error(pixel))
-			throw 0;
-	}
-	catch(...)
-	{
-		printf("In get_pos8 ,You set (x,y) is out Range!\n");
-		return pots8;
-	}
-	//get 4 side point position(x,y)
-	memcpy(&pots8.pot4s[0],&pixel,sizeof(PIXELS));
-	pots8.pot4s[0].pix_Y-=1;
-	memcpy(&pots8.pot4s[1],&pixel,sizeof(PIXELS));
-	pots8.pot4s[1].pix_X+=1;
-	memcpy(&pots8.pot4s[2],&pixel,sizeof(PIXELS));
-	pots8.pot4s[2].pix_Y+=1;
-	memcpy(&pots8.pot4s[3],&pixel,sizeof(PIXELS));
-	pots8.pot4s[3].pix_X-=1;
-	//get 4 angle point position(x,y)
-	memcpy(&pots8.pot4a[0],&pixel,sizeof(PIXELS));
-	pots8.pot4a[0].pix_X-=1;
-	pots8.pot4a[0].pix_Y-=1;
-	memcpy(&pots8.pot4a[1],&pixel,sizeof(PIXELS));
-	pots8.pot4a[1].pix_X+=1;
-	pots8.pot4a[1].pix_Y-=1;
-	memcpy(&pots8.pot4a[2],&pixel,sizeof(PIXELS));
-	pots8.pot4a[2].pix_X+=1;
-	pots8.pot4a[2].pix_Y+=1;
-	memcpy(&pots8.pot4a[3],&pixel,sizeof(PIXELS));
-	pots8.pot4a[3].pix_X-=1;
-	pots8.pot4a[3].pix_Y+=1;
-	/*
-		 int i = 0;
-		 while(i<4)
-		 {
-		 show_PIXPOT(pots8.pot4s[i]);
-		 show_PIXPOT(pots8.pot4a[i]);
-		 i++;
-		 }
-		 */
-	//fix the 8 point's position
-	pots8.fix_PIXPOT(pots8,bmpWidth,bmpHeight);
-	/*
-		 printf("===========================\n");
-		 int i = 0;
-		 while(i<4)
-		 {
-		 show_PIXPOT(pots8.pot4s[i]);
-		 show_PIXPOT(pots8.pot4a[i]);
-		 i++;
-		 }
-		 */
-	return pots8;
-}
 //get the 8 point rgb value
 PIXPOT Rbmp::get_pot(PIXELS pixel)
 {
 	PIXPOT pots8;
-	memset(&pots8,0,sizeof(PIXPOT));
 	try
 	{
 		if(out_range_error(pixel))
@@ -208,17 +149,16 @@ PIXPOT Rbmp::get_pot(PIXELS pixel)
 		return pots8;
 	}
 	//get the 8 point right position(x,y)
-	get_pos8(pots8,pixel);
-	pots8.pot   = get_pix(pixel);
+	pots8.get_pos8(pixel,bmpWidth,bmpHeight);
+	pots8.pot = get_pix(pixel);
 	//get the 8 point rgb value
 	int i = 0;
 	while(i<4)
 	{
 		pots8.pot4s[i] = get_pix(pots8.pot4s[i]);
-		pots8.diff4s[i] = pots8.get_diff8RGB(pots8.pot,pots8.pot4s[i]);
-
-		pots8.pot4a[i]  = get_pix(pots8.pot4a[i]);
-		pots8.diff4a[i] = pots8.get_diff8RGB(pots8.pot,pots8.pot4a[i]);
+		pots8.diff4s[i] = pots8.pot4s[i].get_diff8RGB(pots8.pot);
+		pots8.pot4a[i] = get_pix(pots8.pot4a[i]);
+		pots8.diff4a[i] = pots8.pot4a[i].get_diff8RGB(pots8.pot);
 		i++;
 	}
 	pots8.show_PIXPOT();
@@ -235,34 +175,28 @@ bool Rbmp::read_image()
 	BYTE8 *linedata = new BYTE8[lineByte];
 	PIXELS *lineppot = new PIXELS[bmpWidth];
 	fseek(fp,bfOffBits,0); //左上原点
-	int k, x = 0 ,y = bmpHeight - 1;
+	int k = 0, x = 0 ,y = bmpHeight - 1;
 	int tablesite;
 //	for(;y >= 0;y--)//左上为原点
 		//	for(int i = 0; i < bmpHeight; i++)//左下为原点
 	{
 		fread(linedata,1,lineByte,fp);
-		for(k = 0;x < bmpWidth/*k < lineByte*/; k++)
+		for(;x < bmpWidth/*k < lineByte*/; k++)
 		{
 			printf("%03d ",linedata[k]);
 			switch(biBitCount)
 			{
 				case 24:
-					lineppot[x].prgb.rgbBlue  = linedata[k];
-					lineppot[x].prgb.rgbGreen = linedata[++k];
-					lineppot[x].prgb.rgbRed   = linedata[++k];
-					lineppot[x].pix_X = x;
-					lineppot[x].pix_Y = y;
+					lineppot[x].setRGB(linedata[++k],linedata[k-1],linedata[++k]);
+					lineppot[x].setXY(x,y);
 					lineppot[x].isEdge(bmpWidth,bmpHeight);
 					break;
 				case 8:
 					tablesite = linedata[k];
 					//printf("%03d\n",linedata[k]);
 					//printf("颜色表位置:%d\n",tablesite);
-					lineppot[x].prgb.rgbRed   = pColorTable[tablesite].rgbRed;
-					lineppot[x].prgb.rgbGreen = pColorTable[tablesite].rgbGreen;
-					lineppot[x].prgb.rgbBlue  = pColorTable[tablesite].rgbBlue;
-					lineppot[x].pix_X = x;
-					lineppot[x].pix_Y = y;
+					lineppot[x].setRGB(pColorTable[tablesite]);
+					lineppot[x].setXY(x,y);
 					lineppot[x].isEdge(bmpWidth,bmpHeight);
 					break;
 				default:
@@ -400,10 +334,9 @@ void Rbmp::show_info_head(BITMAPINFOHEADER &infohead)
 }
 bool Rbmp::out_range_error(PIXELS pixel)
 {
-	if((pixel.pix_X >= bmpWidth) |
-			(pixel.pix_Y >= bmpHeight) |
-			(pixel.pix_X < 0) |
-			(pixel.pix_Y < 0) )
+	int x = pixel.getX();
+	int y = pixel.getY();
+	if((x >= bmpWidth) | (y >= bmpHeight) | (x < 0) | (y < 0) )
 		return true;
 	else
 		return false;
