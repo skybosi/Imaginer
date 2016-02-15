@@ -67,7 +67,7 @@ void PIXPOT::show_PIXPOT()
 		*/
 }
 //get 8 point position(x,y)
-PIXPOT PIXPOT::get_pos8(PIXELS pixel,int W,int H)
+PIXELS* PIXPOT::get_pos8(PIXELS pixel,PIXELS* pos8,int W,int H)
 {
 	int i = 0;
 	while(i<4)
@@ -76,6 +76,7 @@ PIXPOT PIXPOT::get_pos8(PIXELS pixel,int W,int H)
 		pot4s[i] = pixel;
 		//get 4 angle point position(x,y)
 		pot4a[i] = pixel;
+		i++;
 	}
 	pot4s[0].resetXY(0,-1);
 	pot4s[1].resetXY(1,0);
@@ -87,6 +88,37 @@ PIXPOT PIXPOT::get_pos8(PIXELS pixel,int W,int H)
 	pot4a[2].resetXY(1,1);
 	pot4a[3].resetXY(-1,1);
 	fix_PIXPOT(*this,W,H);
+	pos8[0] = pixel;
+//	pos8[0].show_PIXELS();
+//	printf("\n");
+	i = 1;
+	while(i < 5)
+	{
+		pos8[i] = pot4s[i-1];
+//		pos8[i].show_PIXELS();
+//		printf("\n");
+		pos8[i+4] = pot4a[i-1];
+//		pos8[i+4].show_PIXELS();
+//		printf("\n");
+		i++;
+	}
+//	printf("???????????????\n");
+//	show_PIXPOT();
+	return pos8;
+}
+PIXPOT PIXPOT::set_pots8(PIXELS* pos8)
+{
+	pot  = pos8[0];
+	int i = 0;
+	while(i< 4)
+	{
+		pot4s[i] = pos8[i+1];
+		diff4s[i] = pot4s[i].get_diff8RGB(pos8[0]);
+		pot4a[i] = pos8[i+5];
+		diff4a[i] = pot4a[i].get_diff8RGB(pos8[0]);
+		i++;
+	}
+	//show_PIXPOT();
 	return *this;
 }
 //mix two color
@@ -203,7 +235,6 @@ bool PIXELS::isEdge(int W,int H)
 		return false;
 	}
 }
-//void PIXELS::show_PIXELS(PIXELS pixel)
 void PIXELS::show_PIXELS()
 {
 	printf("X: %-3d Y: %-3d edge:%d\t",

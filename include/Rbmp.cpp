@@ -94,9 +94,8 @@ PIXELS Rbmp::get_pix(PIXELS pixel)
 	ppot.setXY(pixel);
 
 	int lineByte = (bmpWidth * biBitCount + 31)/32*4;
-	fseek(fp,bfOffBits + lineByte*(bmpHeight-pixel.getX()-1),0); //左上原点
-	//	printf("坐标为(%d,%d)的像素\n",pixel.pix_X,pixel.pix_Y);
-
+	fseek(fp,bfOffBits + lineByte*(bmpHeight-pixel.getY()-1),0); //左上原点 very important
+	//	printf("坐标为(%d,%d)的像素\n",pixel.getX(),pixel.getY());
 	BYTE8 *linedata = new BYTE8[lineByte];//一行像素的字节数(一个像素4个字节)
 	//	printf("lineByte:%d\n",lineByte);
 	fread(linedata,lineByte,1,fp);//读取一行的所有数据
@@ -130,7 +129,7 @@ PIXELS Rbmp::get_pix(PIXELS pixel)
 		default:
 			break;
 	}
-	//	show_PIXELS(PIXELS);
+	//ppot.show_PIXELS();
 	delete []linedata;
 	return ppot;
 }
@@ -138,6 +137,7 @@ PIXELS Rbmp::get_pix(PIXELS pixel)
 PIXPOT Rbmp::get_pot(PIXELS pixel)
 {
 	PIXPOT pots8;
+	PIXELS* pos8;
 	try
 	{
 		if(out_range_error(pixel))
@@ -148,20 +148,36 @@ PIXPOT Rbmp::get_pot(PIXELS pixel)
 		printf("In get_pot ,You set (x,y) is out Range!\n");
 		return pots8;
 	}
+	pos8 = new PIXELS[9];
 	//get the 8 point right position(x,y)
-	pots8.get_pos8(pixel,bmpWidth,bmpHeight);
-	pots8.pot = get_pix(pixel);
+	pos8 = pots8.get_pos8(pixel,pos8,bmpWidth,bmpHeight);
+	/*
+	printf("------------------------\n");
+	int i = 0;
+	while(i<9)
+	{
+		pos8[i].show_PIXELS();
+		printf("\n");
+		i++;
+	}
+	printf("------------------------\n");
+	*/
+	pos8[0] = get_pix(pos8[0]);
 	//get the 8 point rgb value
 	int i = 0;
 	while(i<4)
 	{
-		pots8.pot4s[i] = get_pix(pots8.pot4s[i]);
-		pots8.diff4s[i] = pots8.pot4s[i].get_diff8RGB(pots8.pot);
-		pots8.pot4a[i] = get_pix(pots8.pot4a[i]);
-		pots8.diff4a[i] = pots8.pot4a[i].get_diff8RGB(pots8.pot);
+		pos8[i+1] = get_pix(pos8[i+1]);
+		pos8[i+5] = get_pix(pos8[i+5]);
 		i++;
 	}
+	//set the 8 point message
+	pots8.set_pots8(pos8);
 	pots8.show_PIXPOT();
+	if(pos8)
+	{
+		delete []pos8;
+	}
 	return pots8;
 }
 /*函数名称readIline()*/
@@ -177,8 +193,8 @@ bool Rbmp::read_image()
 	fseek(fp,bfOffBits,0); //左上原点
 	int k = 0, x = 0 ,y = bmpHeight - 1;
 	int tablesite;
-//	for(;y >= 0;y--)//左上为原点
-		//	for(int i = 0; i < bmpHeight; i++)//左下为原点
+	for(;y >= 0;y--)//左上为原点
+	//	for(int y = 0; y < bmpHeight; y++)//左下为原点
 	{
 		fread(linedata,1,lineByte,fp);
 		for(;x < bmpWidth/*k < lineByte*/; k++)
@@ -203,6 +219,8 @@ bool Rbmp::read_image()
 					break;
 			}
 			lineppot[x].show_PIXELS();
+			printf("\n");
+			get_pot(lineppot[x]);
 			x++;
 			printf("\n");
 		}

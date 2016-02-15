@@ -31,17 +31,17 @@ class PIXELS
 		U8 set_threshold(PIXELS ppot);
 		RGBQUAD get_diff8RGB(PIXELS ppot);
 	public:
-		PIXELS& operator=(const PIXELS& pixel);
-		//mix two color
-		PIXELS mix(PIXELS& ppot1,PIXELS& ppot2,U8 weight = 50);
 		int getX();
 		int getY();
-		//opposition the point color
-		PIXELS opposition();
-		PIXELS opposition(PIXELS& ppot);
 		//binaryzation image
 		void toBin();
 		PIXELS toBin(PIXELS& ppot);
+		//opposition the point color
+		PIXELS opposition();
+		PIXELS opposition(PIXELS& ppot);
+		PIXELS& operator=(const PIXELS& pixel);
+		//mix two color
+		PIXELS mix(PIXELS& ppot1,PIXELS& ppot2,U8 weight = 50);
 		void fix_PIXELS(int W,int H);//fix up the point position
 };
 // pixel point
@@ -58,7 +58,7 @@ class PIXPOT
 		void show_PIXPOT();
 		void show_PIXPOT8diffRGB(RGBQUAD diffRgb);
 		void fix_PIXPOT(PIXPOT& pots8,int W,int H);//fix up the 8 point position
-		PIXPOT get_pos8(PIXELS pixel,int W,int H);
-		friend class Rbmp;
+		PIXELS* get_pos8(PIXELS pixel,PIXELS* pos8,int W,int H);
+		PIXPOT set_pots8(PIXELS* pos8);
 };
 #endif // ipoint.h :[]
