@@ -177,7 +177,8 @@ PIXELS PIXELS::toBin(PIXELS& ppot)
 }
 
 //set rgb with r g b
-PIXELS PIXELS::setRGB(U8 r,U8 g,U8 b)
+PIXELS PIXELS::setRGB(U8 b,U8 g,U8 r)
+//PIXELS PIXELS::setRGB(U8 r,U8 g,U8 b)
 {
 	prgb.rgbRed = r;
 	prgb.rgbGreen = g;

@@ -51,17 +51,17 @@ bool Rbmp::init_image()
 		pColorTable = new RGBQUAD[256];
 		fread(pColorTable,sizeof(RGBQUAD),256,fp);
 		/*
-			 int i = 0;
-			 printf("颜色表:\n");
-			 while(i < 256)
-			 {
-			 printf("$%d %d ",i,pColorTable[i]);
-			 printf("r:%d ",pColorTable[i].rgbRed);
-			 printf("g:%d ",pColorTable[i].rgbGreen);
-			 printf("b:%d\n",pColorTable[i].rgbBlue);
-			 i++;
-			 }
-			 */
+		   int i = 0;
+		   printf("颜色表:\n");
+		   while(i < 256)
+		   {
+		   printf("$%d %d ",i,pColorTable[i]);
+		   printf("r:%d ",pColorTable[i].rgbRed);
+		   printf("g:%d ",pColorTable[i].rgbGreen);
+		   printf("b:%d\n",pColorTable[i].rgbBlue);
+		   i++;
+		   }
+		   */
 	}
 	rewind(fp);
 	return true;
@@ -78,6 +78,14 @@ Rbmp::~Rbmp()
 	cout << "delete a Rbmp ...." << endl;
 }
 
+PIXELS Rbmp::get_pix(int x,int y)
+{
+	printf("In get_pix(x,y)\n");
+	PIXELS ppot;
+	ppot.setXY(x,y);
+	get_pix(ppot);
+	return ppot;
+}
 PIXELS Rbmp::get_pix(PIXELS pixel)
 {
 	PIXELS ppot;
@@ -88,13 +96,13 @@ PIXELS Rbmp::get_pix(PIXELS pixel)
 	}
 	catch(...)
 	{
-		printf("In get_pix, You set (x,y) is out Range!\n");
+		printf("In get_pix(pixel) ,You set (x,y):(%d,%d) is out Range!\n",pixel.getX(),pixel.getY());
 		return ppot;
 	}
 	ppot.setXY(pixel);
 
 	int lineByte = (bmpWidth * biBitCount + 31)/32*4;
-	fseek(fp,bfOffBits + lineByte*(bmpHeight-pixel.getY()-1),0); //左上原点 very important
+	fseek(fp,bfOffBits + lineByte*(bmpHeight-1-pixel.getY()),0); //左上原点 very important
 	//	printf("坐标为(%d,%d)的像素\n",pixel.getX(),pixel.getY());
 	BYTE8 *linedata = new BYTE8[lineByte];//一行像素的字节数(一个像素4个字节)
 	//	printf("lineByte:%d\n",lineByte);
@@ -107,7 +115,8 @@ PIXELS Rbmp::get_pix(PIXELS pixel)
 		case 24://OK
 			//			printf("24位图\n");
 			rgbsite = pixel.getX()*3;
-			ppot.setRGB(linedata[rgbsite+2],linedata[rgbsite+1],linedata[rgbsite]);
+			ppot.setRGB(linedata[rgbsite],linedata[rgbsite+1],linedata[rgbsite+2]);
+			//ppot.setRGB(linedata[rgbsite+2],linedata[rgbsite+1],linedata[rgbsite]);
 			break;
 		case 8:
 			//			printf("8位图\n");
@@ -129,8 +138,9 @@ PIXELS Rbmp::get_pix(PIXELS pixel)
 		default:
 			break;
 	}
-	//ppot.show_PIXELS();
+	ppot.show_PIXELS();
 	delete []linedata;
+	rewind(fp);
 	return ppot;
 }
 //get the 8 point rgb value
@@ -145,23 +155,25 @@ PIXPOT Rbmp::get_pot(PIXELS pixel)
 	}
 	catch(...)
 	{
-		printf("In get_pot ,You set (x,y) is out Range!\n");
+		printf("In get_pot ,You set (x,y):(%d,%d) is out Range!\n",pixel.getX(),pixel.getY());
 		return pots8;
 	}
 	pos8 = new PIXELS[9];
-	//get the 8 point right position(x,y)
+	//get the 8 point right position(x,y),if isEdge will be fixup
 	pos8 = pots8.get_pos8(pixel,pos8,bmpWidth,bmpHeight);
 	/*
-	printf("------------------------\n");
-	int i = 0;
-	while(i<9)
-	{
-		pos8[i].show_PIXELS();
-		printf("\n");
-		i++;
-	}
-	printf("------------------------\n");
-	*/
+	 * put the point and the 8 point arond into a array;
+	 *
+	 printf("------------------------\n");
+	 int i = 0;
+	 while(i<9)
+	 {
+	 pos8[i].show_PIXELS();
+	 printf("\n");
+	 i++;
+	 }
+	 printf("------------------------\n");
+	 */
 	pos8[0] = get_pix(pos8[0]);
 	//get the 8 point rgb value
 	int i = 0;
@@ -180,7 +192,7 @@ PIXPOT Rbmp::get_pot(PIXELS pixel)
 	}
 	return pots8;
 }
-/*函数名称readIline()*/
+/*函数名称read_image()*/
 bool Rbmp::read_image()
 {
 	if(fp ==  NULL)
@@ -194,18 +206,20 @@ bool Rbmp::read_image()
 	int k = 0, x = 0 ,y = bmpHeight - 1;
 	int tablesite;
 	for(;y >= 0;y--)//左上为原点
-	//	for(int y = 0; y < bmpHeight; y++)//左下为原点
+		//	for(int y = 0; y < bmpHeight; y++)//左下为原点
 	{
 		fread(linedata,1,lineByte,fp);
-		for(;x < bmpWidth/*k < lineByte*/; k++)
+		for(;x < bmpWidth/*k < lineByte*/; k++,x++)
 		{
 			printf("%03d ",linedata[k]);
 			switch(biBitCount)
 			{
 				case 24:
-					lineppot[x].setRGB(linedata[++k],linedata[k-1],linedata[++k]);
+					lineppot[x].setRGB(linedata[k],linedata[k+1],linedata[k+2]);
+					//lineppot[x].setRGB(linedata[k+2],linedata[k+1],linedata[k]);
 					lineppot[x].setXY(x,y);
 					lineppot[x].isEdge(bmpWidth,bmpHeight);
+					k+=2;
 					break;
 				case 8:
 					tablesite = linedata[k];
@@ -221,15 +235,15 @@ bool Rbmp::read_image()
 			lineppot[x].show_PIXELS();
 			printf("\n");
 			get_pot(lineppot[x]);
-			x++;
 			printf("\n");
 		}
-	//	isBoundary(lineppot);
+		//	isBoundary(lineppot);
 		x = 0;
 		cout << endl;
 	}
 	delete []linedata;
 	delete []lineppot;
+	rewind(fp);
 	return true;
 }
 //is Boundary 
@@ -246,13 +260,115 @@ bool Rbmp::isBoundary(PIXELS* lineppot)
 
 	return true; 
 }
+/*函数名称readIline()*/
+PIXELS* Rbmp::readIline(int beginY,int rows)
+{
+	if(fp ==  NULL)
+		return NULL;
+	try
+	{
+		if((beginY < 0) | (beginY >= bmpHeight))
+			throw 0;
+	}
+	catch(...)
+	{
+		printf("In readIline ,You set beginY:%d is out Range!\n",beginY);
+		return NULL;
+	}
+	if(rows == 0)
+	{
+		read_image();
+	}
+	else
+	{
+		int lineByte;
+		lineByte = (bmpWidth * biBitCount + 31)/32*4;
+		//printf("kkkkk:%d\n",lineByte);
+		int rows2 = ABS(rows);
+		BYTE8 *linedata = new BYTE8[lineByte];
+		PIXELS *lineppot = new PIXELS[bmpWidth*rows2];
+		int y = 0;
+		if(rows < 0)
+		{
+			fseek(fp,bfOffBits + lineByte*(bmpHeight-1-beginY),0); //左上原点 very important
+			//printf("rows: %d\n",rows);
+			if(beginY + rows <= 0)
+			{
+				rows2 = beginY+1;//dealwith rows2
+				printf("You set rows2 change %d\n",rows2);
+			}
+			y = beginY;
+		}
+		else
+		{
+			fseek(fp,bfOffBits + lineByte*(bmpHeight-1-(beginY+rows-1)),0); //左上原点 very important
+			//printf("rows: %d\n",rows);
+			if(beginY + rows >= bmpHeight)
+			{
+				rows2 = bmpHeight-beginY;//dealwith rows2
+				printf("You set rows2 change %d\n",rows2);
+			}
+			y = beginY+rows2-1;
+		}
+		//printf("here2:%ld\n",ftell(fp));
+		int k = 0, x = 0 ;
+		int tablesite;
+		for(; rows2-- ;y--)//左上为原点
+		{
+			fread(linedata,1,lineByte,fp);
+			//printf("line %d row:%d\n",y,rows2);
+			//printf("here%d:%ld\n",y,ftell(fp));
+			for(;x < bmpWidth; k++,x++)
+			{
+				printf("%03d ",linedata[k]);
+				switch(biBitCount)
+				{
+					case 24:
+						lineppot[x].setRGB(linedata[k],linedata[k+1],linedata[k+2]);
+						//lineppot[x].setRGB(linedata[k+2],linedata[k+1],linedata[k]);
+						lineppot[x].setXY(x,y);
+						lineppot[x].isEdge(bmpWidth,bmpHeight);
+						k+=2;
+						break;
+					case 8:
+						tablesite = linedata[k];
+						//printf("%03d\n",linedata[k]);
+						//printf("颜色表位置:%d\n",tablesite);
+						lineppot[x].setRGB(pColorTable[tablesite]);
+						lineppot[x].setXY(x,y);
+						lineppot[x].isEdge(bmpWidth,bmpHeight);
+						break;
+					default:
+						break;
+				}
+				lineppot[x].show_PIXELS();
+				//printf("\n");
+				//get_pot(lineppot[x]);
+				printf("\n");
+			}
+			x = 0;
+			/*
+			if(rows<0)
+				y--;
+			else
+				y--;
+			*/
+			k=0;
+			cout << endl;
+		}
+		delete []linedata;
+		delete []lineppot;
+	}
+	rewind(fp);
+	return NULL;
+}
 /*函数名称：save_image()函数参数：char *bmppath文件名字及路径;
-	unsigned char *imgBuf待存盘的位图数据;
-	int biBitCount每像素所占位数;
-	RGBQUAD *pColorTable颜色表指针
-	返回值：0为失败，1为成功.
-	说明：给定一个图像位图数据、宽、高、颜色表指针及每像素所占的位数等信息，
-	将其写到指定文件中*/
+  unsigned char *imgBuf待存盘的位图数据;
+  int biBitCount每像素所占位数;
+  RGBQUAD *pColorTable颜色表指针
+  返回值：0为失败，1为成功.
+  说明：给定一个图像位图数据、宽、高、颜色表指针及每像素所占的位数等信息，
+  将其写到指定文件中*/
 
 bool Rbmp::save_image(char *bmppath,unsigned char *imgBuf,int width,int height, int biBitCount, RGBQUAD *pColorTable)
 {
@@ -358,5 +474,4 @@ bool Rbmp::out_range_error(PIXELS pixel)
 		return true;
 	else
 		return false;
-
 }

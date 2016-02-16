@@ -8,6 +8,7 @@
 #include "ibmp.h"
 #include "image.h"
 #include "ipoint.h"
+#define ABS(x) ((x) < 0 ? (-x) : (x));
 using namespace std;
 //class Rbmp: public Image
 class Rbmp
@@ -28,10 +29,12 @@ class Rbmp
 		~Rbmp();
 		//get a point info.
 		PIXELS get_pix(PIXELS pixel);
+		PIXELS get_pix(int x,int y);
 		//get the 8 point info. around a point
 		PIXPOT get_pot(PIXELS pixel);
 		void get_image_msg();
 		bool read_image();
+		PIXELS* readIline(int beginY=0,int rows=0);
 		bool isBoundary(PIXELS* lineppot);
 		bool write_image(){return true;};
 		bool save_image(char *bmppath,unsigned char *imgBuf,int width,int height, int biBitCount, RGBQUAD *pColorTable);
