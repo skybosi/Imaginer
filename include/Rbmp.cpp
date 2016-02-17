@@ -5,7 +5,7 @@ Rbmp::Rbmp(const char* bmpname):bmppath(bmpname),pBmpBuf(NULL),pColorTable(NULL)
 {
 	//二进制读方式打开指定的图像文件
 	fp = fopen(bmppath.c_str(),"rb");
-	if(init_image())
+	if(initRimage())
 		cout << "init bmp image is OK!" << endl;
 	else
 	{
@@ -14,9 +14,9 @@ Rbmp::Rbmp(const char* bmpname):bmppath(bmpname),pBmpBuf(NULL),pColorTable(NULL)
 	}
 	cout << "create a Rbmp ....\n" << endl;
 }
-bool Rbmp::init_image()
+bool Rbmp::initRimage()
 {
-	if(fp ==  NULL) 
+	if(NULL == fp)
 		return false;
 	U16	BM;
 	fread(&BM,sizeof(U16),1,fp);
@@ -63,6 +63,16 @@ bool Rbmp::init_image()
 		   }
 		   */
 	}
+	rewind(fp);
+	return true;
+}
+bool Rbmp::initWimage()
+{
+	if(NULL == fp)
+		return false;
+	allhead = new U8[bfOffBits];
+	//printf("bfOffBits:%d\n",bfOffBits);
+	fread(allhead, bfOffBits,1,fp);
 	rewind(fp);
 	return true;
 }
@@ -138,7 +148,7 @@ PIXELS Rbmp::get_pix(PIXELS pixel)
 		default:
 			break;
 	}
-	ppot.show_PIXELS();
+	//ppot.show_PIXELS();
 	delete []linedata;
 	rewind(fp);
 	return ppot;
@@ -195,11 +205,10 @@ PIXPOT Rbmp::get_pot(PIXELS pixel)
 /*函数名称read_image()*/
 bool Rbmp::read_image()
 {
-	if(fp ==  NULL)
+	if(NULL == fp) 
 		return false;
 	int lineByte;
 	lineByte = (bmpWidth * biBitCount + 31)/32*4;
-	printf("kkkkk:%d\n",lineByte);
 	BYTE8 *linedata = new BYTE8[lineByte];
 	PIXELS *lineppot = new PIXELS[bmpWidth];
 	fseek(fp,bfOffBits,0); //左上原点
@@ -211,7 +220,7 @@ bool Rbmp::read_image()
 		fread(linedata,1,lineByte,fp);
 		for(;x < bmpWidth/*k < lineByte*/; k++,x++)
 		{
-			printf("%03d ",linedata[k]);
+			//printf("%03d ",linedata[k]);
 			switch(biBitCount)
 			{
 				case 24:
@@ -232,14 +241,12 @@ bool Rbmp::read_image()
 				default:
 					break;
 			}
-			lineppot[x].show_PIXELS();
-			printf("\n");
-			get_pot(lineppot[x]);
-			printf("\n");
+			//lineppot[x].show_PIXELS();
+			//printf("\n");
+			//get_pot(lineppot[x]);
+			//printf("\n");
 		}
-		//	isBoundary(lineppot);
-		x = 0;
-		cout << endl;
+		k = x = 0;
 	}
 	delete []linedata;
 	delete []lineppot;
@@ -311,56 +318,63 @@ PIXELS* Rbmp::readIline(int beginY,int rows)
 			y = beginY+rows2-1;
 		}
 		//printf("here2:%ld\n",ftell(fp));
-		int k = 0, x = 0 ;
+		int k = 0, x = 0 ,i=0;
 		int tablesite;
+		int rows3 = rows2;
 		for(; rows2-- ;y--)//左上为原点
 		{
 			fread(linedata,1,lineByte,fp);
 			//printf("line %d row:%d\n",y,rows2);
 			//printf("here%d:%ld\n",y,ftell(fp));
-			for(;x < bmpWidth; k++,x++)
+			for(;x < bmpWidth; k++,x++,i++)
 			{
-				printf("%03d ",linedata[k]);
+				//printf("%03d ",linedata[k]);
 				switch(biBitCount)
 				{
 					case 24:
-						lineppot[x].setRGB(linedata[k],linedata[k+1],linedata[k+2]);
+						lineppot[i].setRGB(linedata[k],linedata[k+1],linedata[k+2]);
 						//lineppot[x].setRGB(linedata[k+2],linedata[k+1],linedata[k]);
-						lineppot[x].setXY(x,y);
-						lineppot[x].isEdge(bmpWidth,bmpHeight);
+						lineppot[i].setXY(x,y);
+						lineppot[i].isEdge(bmpWidth,bmpHeight);
 						k+=2;
 						break;
 					case 8:
 						tablesite = linedata[k];
 						//printf("%03d\n",linedata[k]);
 						//printf("颜色表位置:%d\n",tablesite);
-						lineppot[x].setRGB(pColorTable[tablesite]);
-						lineppot[x].setXY(x,y);
-						lineppot[x].isEdge(bmpWidth,bmpHeight);
+						lineppot[i].setRGB(pColorTable[tablesite]);
+						lineppot[i].setXY(x,y);
+						lineppot[i].isEdge(bmpWidth,bmpHeight);
 						break;
 					default:
 						break;
 				}
-				lineppot[x].show_PIXELS();
-				//printf("\n");
-				//get_pot(lineppot[x]);
+				lineppot[i].show_PIXELS();
 				printf("\n");
+				//get_pot(lineppot[x]);
+				//printf("\n");
 			}
-			x = 0;
-			/*
-			if(rows<0)
-				y--;
-			else
-				y--;
-			*/
-			k=0;
+			k = x =0;
 			cout << endl;
 		}
 		delete []linedata;
-		delete []lineppot;
+		printf("===========================\n");
+		for(int i=0;i< bmpWidth*rows3 ;i++)
+		{
+			//printf("hang:%d,lie:%d\t",i/bmpWidth,i%bmpWidth);
+			lineppot[i].show_PIXELS();
+			printf("\n");
+		}
+		printf("===========================\n");
+		delReadIline(lineppot);
 	}
 	rewind(fp);
 	return NULL;
+}
+void Rbmp::delReadIline(PIXELS* lineppot)
+{
+	if(lineppot)
+		delete []lineppot;
 }
 /*函数名称：save_image()函数参数：char *bmppath文件名字及路径;
   unsigned char *imgBuf待存盘的位图数据;
@@ -433,7 +447,79 @@ bool Rbmp::save_image(char *bmppath,unsigned char *imgBuf,int width,int height, 
 	//关闭文件fclose(fp);
 	return 1;
 }
-
+bool Rbmp::write_image(const char* outpath)
+{
+	if(!initWimage())
+	{
+		return false;
+	}
+	else
+	{
+		//FILE* fpo = fopen(outpath,"wb");
+		fpo = fopen(outpath,"wb");
+		fwrite(allhead,bfOffBits,1,fpo);
+		deal_image();
+	}
+	fclose(fpo);
+	fpo = NULL;
+	delete []allhead;
+	return true;
+}
+bool Rbmp::deal_image()
+{
+	if(NULL == fp) 
+		return false;
+	int lineByte;
+	lineByte = (bmpWidth * biBitCount + 31)/32*4;
+	BYTE8 *linedata = new BYTE8[lineByte];
+	PIXELS *lineppot = new PIXELS[bmpWidth];
+	fseek(fp,bfOffBits,0); //左上原点
+	int k = 0, x = 0 ,y = bmpHeight - 1;
+	int tablesite;
+	for(;y >= 0;y--)//左上为原点
+		//	for(int y = 0; y < bmpHeight; y++)//左下为原点
+	{
+		fread(linedata,1,lineByte,fp);
+		for(;x < bmpWidth/*k < lineByte*/; k++,x++)
+		{
+			//printf("%03d ",linedata[k]);
+			switch(biBitCount)
+			{
+				case 24:
+					lineppot[x].setRGB(linedata[k],linedata[k+1],linedata[k+2]);
+					//lineppot[x].setRGB(linedata[k+2],linedata[k+1],linedata[k]);
+					lineppot[x].setXY(x,y);
+					lineppot[x].isEdge(bmpWidth,bmpHeight);
+					lineppot[x].get3Color(Red);
+					lineppot[x].setData(linedata[k],linedata[k+1],linedata[k+2]);
+					k+=2;
+					break;
+				case 8:
+					tablesite = linedata[k];
+					//printf("%03d\n",linedata[k]);
+					//printf("颜色表位置:%d\n",tablesite);
+					lineppot[x].setRGB(pColorTable[tablesite]);
+					lineppot[x].setXY(x,y);
+					lineppot[x].isEdge(bmpWidth,bmpHeight);
+					break;
+				default:
+					break;
+			}
+			//lineppot[x].show_PIXELS();
+			//printf("\n");
+			//get_pot(lineppot[x]);
+			//printf("\n");
+		}
+		fwrite(linedata,lineByte,1,fpo);
+		k = x = 0;
+		//	isBoundary(lineppot);
+		//cout << endl;
+	}
+	delete []linedata;
+	delete []lineppot;
+	rewind(fp);
+	return true;
+}
 void Rbmp::get_image_msg()
 {
 	//显示位图文件头结构BITMAPFILEHEADER

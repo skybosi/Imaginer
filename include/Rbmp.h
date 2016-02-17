@@ -8,7 +8,6 @@
 #include "ibmp.h"
 #include "image.h"
 #include "ipoint.h"
-#define ABS(x) ((x) < 0 ? (-x) : (x));
 using namespace std;
 //class Rbmp: public Image
 class Rbmp
@@ -18,12 +17,14 @@ class Rbmp
 		int bmpHeight;//图像的高
 		int biBitCount;//图像类型，每像素位数
 		FILE* fp;
+		FILE* fpo;
 		string bmppath;//图像的路径
 		unsigned char *pBmpBuf;//读入图像数据的指针
 		RGBQUAD *pColorTable;//颜色表指针
 		int bfOffBits;
 		BITMAPFILEHEADER head;
 		BITMAPINFOHEADER infohead;
+		U8* allhead;
 	public:
 		Rbmp(const char* bmpname);
 		~Rbmp();
@@ -35,11 +36,14 @@ class Rbmp
 		void get_image_msg();
 		bool read_image();
 		PIXELS* readIline(int beginY=0,int rows=0);
+		void delReadIline(PIXELS* lineppot);
 		bool isBoundary(PIXELS* lineppot);
-		bool write_image(){return true;};
+		bool deal_image();
+		bool write_image(const char* outpath);
 		bool save_image(char *bmppath,unsigned char *imgBuf,int width,int height, int biBitCount, RGBQUAD *pColorTable);
 	private:
-		bool init_image();
+		bool initRimage();
+		bool initWimage();
 		bool out_range_error(PIXELS pixel);
 		void show_bmp_head(BITMAPFILEHEADER &head);
 		void show_info_head(BITMAPINFOHEADER &infohead);

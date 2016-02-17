@@ -33,14 +33,31 @@ RGBQUAD PIXELS::get_diff8RGB(PIXELS pixel)
 	diffRgb.rgbGreen = prgb.rgbGreen - pixel.prgb.rgbGreen;
 	diffRgb.rgbBlue = prgb.rgbBlue - pixel.prgb.rgbBlue;
 	diffRgb.rgbReserved = prgb.rgbReserved - pixel.prgb.rgbReserved;
+	//diffRgb.rgbRed = pixel.prgb.rgbRed - prgb.rgbRed ;
+	//diffRgb.rgbGreen = pixel.prgb.rgbGreen - prgb.rgbGreen;
+	//diffRgb.rgbBlue = pixel.prgb.rgbBlue - prgb.rgbBlue ;
+	//diffRgb.rgbReserved = pixel.prgb.rgbReserved - prgb.rgbReserved ;
 	return diffRgb;
 }
 void PIXPOT::show_PIXPOT8diffRGB(RGBQUAD diffRgb)
 {
-	printf("diff:(%03d,%03d,%03d)\n",
-		diffRgb.rgbRed,
-		diffRgb.rgbGreen,
-		diffRgb.rgbBlue);
+	printf("diff:(%03d,%03d,%03d)\taverage:%-3.3f\t",
+		(char)diffRgb.rgbRed,
+		(char)diffRgb.rgbGreen,
+		(char)diffRgb.rgbBlue,
+		((char)diffRgb.rgbBlue + (char)diffRgb.rgbGreen + (char)diffRgb.rgbRed)/3.0);
+	char min = MIN(MIN((char)diffRgb.rgbRed,(char)diffRgb.rgbGreen),(char)diffRgb.rgbBlue);
+	char max = MAX(MAX((char)diffRgb.rgbRed,(char)diffRgb.rgbGreen),(char)diffRgb.rgbBlue);
+	char diff;
+	if((min < 0 && max < 0))
+		diff = min - 0;
+	else if( (min > 0 && max > 0))
+		diff = 0 - max;
+	else
+	{
+		diff = min - max;
+	}
+	printf("色差:%d\n",ABS(diff));
 }
 PIXPOT::PIXPOT()
 {
@@ -59,12 +76,6 @@ void PIXPOT::show_PIXPOT()
 		show_PIXPOT8diffRGB(diff4a[i]);
 		i++;
 	}
-	/*
-	printf("[R,G,B]:(%03d,%03d,%03d)\t",
-		prgb.rgbRed,
-		prgb.rgbGreen,
-		prgb.rgbBlue);
-		*/
 }
 //get 8 point position(x,y)
 PIXELS* PIXPOT::get_pos8(PIXELS pixel,PIXELS* pos8,int W,int H)
@@ -175,6 +186,26 @@ PIXELS PIXELS::toBin(PIXELS& ppot)
 	ppot.toBin();
 	return ppot;
 }
+void PIXELS::get3Color(colorType color)
+{
+	switch(color)
+	{
+		case Red:
+			prgb.rgbGreen = 0;
+			prgb.rgbBlue = 0;
+			break;
+		case Green:
+			prgb.rgbRed = 0;
+			prgb.rgbBlue = 0;
+			break;
+		case Blue:
+			prgb.rgbRed = 0;
+			prgb.rgbGreen = 0;
+			break;
+		default:
+			break;
+	}
+}
 
 //set rgb with r g b
 PIXELS PIXELS::setRGB(U8 b,U8 g,U8 r)
@@ -184,6 +215,13 @@ PIXELS PIXELS::setRGB(U8 b,U8 g,U8 r)
 	prgb.rgbGreen = g;
 	prgb.rgbBlue = b;
 	return *this;
+}
+bool PIXELS::setData(BYTE8& b,BYTE8& g,BYTE8& r)
+{
+	b = prgb.rgbBlue;
+	g = prgb.rgbGreen;
+	r = prgb.rgbRed;
+	return true;
 }
 //set rgb with RGBQUAD
 PIXELS PIXELS::setRGB(RGBQUAD rgb)
@@ -207,6 +245,7 @@ PIXELS PIXELS::setRGB(PIXELS ppot)
 PIXELS::PIXELS()
 {
 	memset(this,0,sizeof(PIXELS));
+	//rgb_threshold  = 0;
 }
 bool PIXELS::isEdge(PIXELS& pixel, int W,int H)
 {
