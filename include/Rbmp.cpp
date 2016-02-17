@@ -315,58 +315,67 @@ bool Rbmp::write_image(const char* outpath)
 }
 bool Rbmp::deal_image()
 {
-	if(NULL == fp) 
-		return false;
+	PIXELS** imageData;
+	imageData = imageTransfer(UR);
 	int lineByte;
 	lineByte = (bmpWidth * biBitCount + 31)/32*4;
 	BYTE8 *linedata = new BYTE8[lineByte];
-	PIXELS *lineppot = new PIXELS[bmpWidth];
-	fseek(fp,bfOffBits,0); //左上原点
-	int k = 0, x = 0 ,y = bmpHeight - 1;
-	int tablesite;
-	for(;y >= 0;y--)//左上为原点
-		//	for(int y = 0; y < bmpHeight; y++)//左下为原点
+	int x , k;
+	//for(int y = 0; y < bmpHeight;y++)//上下颠倒
+	for(int y = (bmpHeight-1); y >= 0;y--)
 	{
-		fread(linedata,1,lineByte,fp);
-		for(;x < bmpWidth/*k < lineByte*/; k++,x++)
+		k = 0;
+		//for(x = bmpWidth-1;x > 0;x--,k++)//左右颠倒
+		for(x = 0;x < bmpWidth;x++,k++)
 		{
-			//printf("%03d ",linedata[k]);
-			switch(biBitCount)
-			{
-				case 24:
-					lineppot[x].setRGB(linedata[k],linedata[k+1],linedata[k+2]);
-					//lineppot[x].setRGB(linedata[k+2],linedata[k+1],linedata[k]);
-					lineppot[x].setXY(x,y);
-					lineppot[x].isEdge(bmpWidth,bmpHeight);
-					lineppot[x].get3Color(Red);
-					lineppot[x].setData(linedata[k],linedata[k+1],linedata[k+2]);
-					k+=2;
-					break;
-				case 8:
-					tablesite = linedata[k];
-					//printf("%03d\n",linedata[k]);
-					//printf("颜色表位置:%d\n",tablesite);
-					lineppot[x].setRGB(pColorTable[tablesite]);
-					lineppot[x].setXY(x,y);
-					lineppot[x].isEdge(bmpWidth,bmpHeight);
-					break;
-				default:
-					break;
-			}
-			//lineppot[x].show_PIXELS();
-			//printf("\n");
-			//get_pot(lineppot[x]);
-			//printf("\n");
+			imageData[y][x].get3Color(Red);
+			imageData[y][x].setData(linedata[k],linedata[k+1],linedata[k+2]);
+			k+=2;
 		}
 		fwrite(linedata,lineByte,1,fpo);
-		k = x = 0;
-		//	isBoundary(lineppot);
-		//cout << endl;
 	}
-	delete []linedata;
-	delete []lineppot;
-	rewind(fp);
 	return true;
+}
+PIXELS** Rbmp::imageTransfer(Method method)
+{
+	PIXELS** imageData;
+	imageData = new PIXELS*[bmpWidth];
+	switch(method)
+	{
+		case UD://up down change
+			for(int y = 0; y < bmpHeight;y++)
+			{
+				imageData[y] = new PIXELS[bmpWidth];
+				for(int x = 0;x < bmpWidth;x++)
+				{
+					imageData[y][x] = allData[bmpHeight-1-y][x];
+				}
+			}
+			break;
+		case LR://left right change
+			for(int y = 0; y < bmpHeight;y++)
+			{
+				imageData[y] = new PIXELS[bmpWidth];
+				for(int x = 0;x < bmpWidth;x++)
+				{
+					imageData[y][x] = allData[y][bmpWidth-1-x];
+				}
+			}
+			break;
+		case UR://up down & left right change
+			for(int y = 0; y < bmpHeight;y++)
+			{
+				imageData[y] = new PIXELS[bmpWidth];
+				for(int x = 0;x < bmpWidth;x++)
+				{
+					imageData[y][x] = allData[bmpHeight-1-y][bmpWidth-1-x];
+				}
+			}
+			break;
+		default:
+			break;
+	}
+	return imageData;
 }
 void Rbmp::get_image_msg()
 {

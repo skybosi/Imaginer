@@ -12,6 +12,12 @@ using namespace std;
 //class Rbmp: public Image
 class Rbmp
 {
+	enum Method
+	{
+		UD,
+		LR,
+		UR
+	};
 	private:
 		FILE* fp;
 		FILE* fpo;
@@ -48,6 +54,7 @@ class Rbmp
 		bool out_range_error(PIXELS pixel);
 		void show_bmp_head(BITMAPFILEHEADER &head);
 		void show_info_head(BITMAPINFOHEADER &infohead);
+		PIXELS** imageTransfer(Method method);
 };
 
 #endif
