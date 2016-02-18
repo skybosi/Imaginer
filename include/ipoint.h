@@ -39,6 +39,7 @@ class PIXELS
 	public:
 		int getX();
 		int getY();
+		RGBQUAD getRGB();
 		//binaryzation image
 		void toBin();
 		PIXELS toBin(PIXELS& ppot);

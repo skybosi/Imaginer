@@ -315,6 +315,10 @@ int PIXELS::getY()
 {
 	return pix_Y;
 }
+RGBQUAD PIXELS::getRGB()
+{
+	return prgb;
+}
 //just copy the position
 PIXELS& PIXELS::operator=(const PIXELS& pixel)
 {

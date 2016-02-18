@@ -1,7 +1,7 @@
 #include <unistd.h>
 #include "Rbmp.h"
-
-Rbmp::Rbmp(const char* bmpname):bmppath(bmpname),pBmpBuf(NULL),pColorTable(NULL)
+static int globalI = 0;
+Rbmp::Rbmp(const char* bmpname):fp(NULL),fpo(NULL),bmppath(bmpname),pBmpBuf(NULL),pColorTable(NULL)
 {
 	//二进制读方式打开指定的图像文件
 	fp = fopen(bmppath.c_str(),"rb");
@@ -53,17 +53,17 @@ bool Rbmp::init_image()
 		pColorTable = new RGBQUAD[256];
 		fread(pColorTable,sizeof(RGBQUAD),256,fp);
 		/*
-		   int i = 0;
-		   printf("颜色表:\n");
-		   while(i < 256)
-		   {
-		   printf("$%d %d ",i,pColorTable[i]);
-		   printf("r:%d ",pColorTable[i].rgbRed);
-		   printf("g:%d ",pColorTable[i].rgbGreen);
-		   printf("b:%d\n",pColorTable[i].rgbBlue);
-		   i++;
-		   }
-		   */
+		int i = 0;
+		printf("颜色表:\n");
+		while(i < 256)
+		{
+			printf("$%d %3d ",i,pColorTable[i]);
+			printf("r:%3d ",pColorTable[i].rgbRed);
+			printf("g:%3d ",pColorTable[i].rgbGreen);
+			printf("b:%3d\n",pColorTable[i].rgbBlue);
+			i++;
+		}
+		*/
 	}
 	//printf("here1111:%ld\n",ftell(fp));
 	//fseek(fp,bfOffBits,0); //左上原点
@@ -111,26 +111,56 @@ bool Rbmp::initWimage()
 {
 	if(NULL == fp)
 		return false;
-	allhead = new U8[bfOffBits];
-	//printf("bfOffBits:%d\n",bfOffBits);
-	fread(allhead, bfOffBits,1,fp);
-	rewind(fp);
+	if(biBitCount == 24)
+	{
+		allhead = new U8[bfOffBits];
+		//printf("bfOffBits:%d\n",bfOffBits);
+		fread(allhead, bfOffBits,1,fp);
+		rewind(fp);
+	}
+	else if(biBitCount == 8)
+	{
+		allhead = new U8[54];
+		fread(allhead, 54,1,fp);
+	}
+	else;
+
 	return true;
 }
 
 Rbmp::~Rbmp()
 {
 	if(pBmpBuf)
+	{
 		delete []pBmpBuf;
+		pBmpBuf = NULL;
+	}
 	if(biBitCount == 8 && pColorTable)
+	{
 		delete []pColorTable;
-	if(fp)
-		fclose(fp);
+		pColorTable = NULL;
+	}
 	if(allData)
 	{
 		for(int i = 0; i < bmpHeight; i++)   
 			delete []allData[i];   
 		delete []allData; 
+		allData = NULL;
+	}
+	if(allhead)
+	{
+		delete []allhead;
+		allhead = NULL;
+	}
+	if(fp)
+	{
+		fclose(fp);
+		fp = NULL;
+	}
+	if(fpo)
+	{
+		fclose(fpo);
+		fpo = NULL;
 	}
 	cout << "delete a Rbmp ...." << endl;
 }
@@ -289,7 +319,7 @@ void Rbmp::delReadIline(PIXELS** lineppot,int rows)
 {
 	if(lineppot)
 	{
-		for(int i = 0; i < ABS(rows)-1; i++)   
+		for(int i = 0; i < ABS(rows); i++)
 			delete []lineppot[i];   
 		delete []lineppot; 
 	}
@@ -305,36 +335,95 @@ bool Rbmp::write_image(const char* outpath)
 	{
 		//FILE* fpo = fopen(outpath,"wb");
 		fpo = fopen(outpath,"wb");
-		fwrite(allhead,bfOffBits,1,fpo);
+		switch(biBitCount)
+		{
+			case 24:
+				fwrite(allhead,bfOffBits,1,fpo);
+				break;
+			case 8:
+				//申请颜色表所需要的空间，读颜色表进内存
+				//fread(pColorTable,sizeof(RGBQUAD),256,fp);
+				fwrite(allhead,54,1,fpo);
+				fwrite(pColorTable,sizeof(RGBQUAD)*256,1,fpo);
+				break;
+			default:
+				break;
+		}
 		deal_image();
 	}
-	fclose(fpo);
-	fpo = NULL;
-	delete []allhead;
 	return true;
 }
 bool Rbmp::deal_image()
 {
-	PIXELS** imageData;
-	imageData = imageTransfer(UR);
+	PIXELS** imageData = allData;
+	imageData = imageTransfer(UD);
+	//imageData = imageMove(10,10);
 	int lineByte;
 	lineByte = (bmpWidth * biBitCount + 31)/32*4;
 	BYTE8 *linedata = new BYTE8[lineByte];
+	if(pColorTable)
+	{
+		memset(pColorTable,0,sizeof(RGBQUAD)*256);
+	}
+	int state;
 	int x , k;
-	//for(int y = 0; y < bmpHeight;y++)//上下颠倒
 	for(int y = (bmpHeight-1); y >= 0;y--)
 	{
-		k = 0;
-		//for(x = bmpWidth-1;x > 0;x--,k++)//左右颠倒
-		for(x = 0;x < bmpWidth;x++,k++)
+		for(x = 0,k = 0;x < bmpWidth;x++,k++)
 		{
-			imageData[y][x].get3Color(Red);
-			imageData[y][x].setData(linedata[k],linedata[k+1],linedata[k+2]);
-			k+=2;
+			switch(biBitCount)
+			{
+				case 24:
+					imageData[y][x].get3Color(Red);
+					imageData[y][x].setData(linedata[k],linedata[k+1],linedata[k+2]);
+					k+=2;
+					break;
+				case 8:
+					imageData[y][x].get3Color(Red);
+					state = addColorTable(imageData[y][x],linedata[k]);
+					if(state != -1)
+						linedata[k] = state;
+					break;
+				default:
+					break;
+			}
 		}
 		fwrite(linedata,lineByte,1,fpo);
 	}
+	//free memory
+	if(imageData && imageData != allData)
+	{
+		for(int i = 0; i < bmpHeight; i++)
+			delete []imageData[i];
+		delete []imageData;
+	}
+	if(linedata)
+		delete []linedata;
 	return true;
+}
+//return value = -1:the color is exist
+int Rbmp::addColorTable(PIXELS pixel,BYTE8& linedata)
+{
+	int i = 0;
+	while(i < 256)
+	{
+		//pColorTable[i++] ==  pixel.getRGB()
+		if(pColorTable[i].rgbBlue == pixel.getRGB().rgbBlue &&
+				pColorTable[i].rgbRed == pixel.getRGB().rgbRed &&
+				pColorTable[i].rgbGreen == pixel.getRGB().rgbGreen)
+		{
+			linedata = i;
+			return -1;
+		}
+		i++;
+	}
+	/*
+	pColorTable[globalI] = pixel.getRGB();
+	printf("new颜色表:%d ",globalI);
+	pixel.show_PIXELS();
+	printf("\n");
+	globalI++;*/
+	return globalI-1;
 }
 PIXELS** Rbmp::imageTransfer(Method method)
 {
@@ -372,8 +461,36 @@ PIXELS** Rbmp::imageTransfer(Method method)
 				}
 			}
 			break;
-		default:
+		default://NONE
+			for(int y = 0; y < bmpHeight;y++)
+			{
+				imageData[y] = new PIXELS[bmpWidth];
+				for(int x = 0;x < bmpWidth;x++)
+				{
+					imageData[y][x] = allData[y][x];
+				}
+			}
 			break;
+	}
+	return imageData;
+}
+//move the image:x>0,y>0 ->right down ;x<0 y<0 -> left up
+PIXELS** Rbmp::imageMove(int mx,int my)
+{
+#define MOVEX(Mx,x) ((Mx)>0 ? (x <= Mx) : (x > bmpWidth-1+Mx))
+#define MOVEY(My,y) ((My)>0 ? (y <= My) : (y > bmpHeight-1+My))
+	PIXELS** imageData;
+	imageData = new PIXELS*[bmpWidth];
+	for(int y = 0; y < bmpHeight;y++)
+	{
+		imageData[y] = new PIXELS[bmpWidth];
+		for(int x = 0;x < bmpWidth;x++)
+		{
+			if((MOVEY(my,y) || MOVEX(mx,x)))
+				imageData[y][x].setRGB(255,255,255);
+			else
+				imageData[y][x] = allData[y-my][x-mx];
+		}
 	}
 	return imageData;
 }

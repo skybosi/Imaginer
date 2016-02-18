@@ -18,8 +18,8 @@ int main(int argc,char* argv[])
 	//bmp.get_pot(tmp);
 	//bmp.read_image();
 	//printf("\n%d %d\n",beginY,rows);
-	PIXELS** line = bmp.readIline(atoi(argv[2]),atoi(argv[3]));
-	bmp.delReadIline(line,atoi(argv[3]));
+	//PIXELS** line = bmp.readIline(atoi(argv[2]),atoi(argv[3]));
+	//bmp.delReadIline(line,atoi(argv[3]));
 	//输出图像的信息
 	bmp.write_image(argv[4]);
 	cout<<endl;

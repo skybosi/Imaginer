@@ -16,7 +16,8 @@ class Rbmp
 	{
 		UD,
 		LR,
-		UR
+		UR,
+		NONE
 	};
 	private:
 		FILE* fp;
@@ -54,7 +55,10 @@ class Rbmp
 		bool out_range_error(PIXELS pixel);
 		void show_bmp_head(BITMAPFILEHEADER &head);
 		void show_info_head(BITMAPINFOHEADER &infohead);
-		PIXELS** imageTransfer(Method method);
+		PIXELS** imageTransfer(Method method = NONE);
+		PIXELS** imageMove(int mx = 0,int my = 0);
+		int addColorTable(PIXELS pixel,BYTE8& linedata);
+
 };
 
 #endif
