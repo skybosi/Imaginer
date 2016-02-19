@@ -186,7 +186,7 @@ PIXELS PIXELS::toBin(PIXELS& ppot)
 	ppot.toBin();
 	return ppot;
 }
-void PIXELS::get3Color(colorType color)
+PIXELS PIXELS::get3Color(colorType color)
 {
 	switch(color)
 	{
@@ -205,6 +205,7 @@ void PIXELS::get3Color(colorType color)
 		default:
 			break;
 	}
+	return *this;
 }
 
 //set rgb with r g b
@@ -314,6 +315,10 @@ int PIXELS::getX()
 int PIXELS::getY()
 {
 	return pix_Y;
+}
+bool PIXELS::getEdge()
+{
+	return bEdge;
 }
 RGBQUAD PIXELS::getRGB()
 {

@@ -19,6 +19,8 @@ class Rbmp
 		UR,
 		NONE
 	};
+	typedef PIXELS** (*Tfun)(Method);
+	typedef PIXELS** (*Mfun)(int,int);
 	private:
 		FILE* fp;
 		FILE* fpo;
@@ -43,9 +45,12 @@ class Rbmp
 		//get the 8 point info. around a point
 		PIXPOT get_pot(PIXELS pixel);
 	public:
-		bool deal_image();
+		bool deal_image(PIXELS**& imageData);
+		//bool deal_image(Tfun udlf);
+		//bool deal_image(Mfun move);
+		bool writeAllData(PIXELS** imageData);
 		PIXELS** readIline(int beginY=0,int rows=0);
-		void delReadIline(PIXELS** lineppoti,int rows);
+		void delReadIline(PIXELS** lineppot,int rows);
 		bool isBoundary(PIXELS* lineppot);
 		bool write_image(const char* outpath);
 		void show_allData();
@@ -55,9 +60,14 @@ class Rbmp
 		bool out_range_error(PIXELS pixel);
 		void show_bmp_head(BITMAPFILEHEADER &head);
 		void show_info_head(BITMAPINFOHEADER &infohead);
-		PIXELS** imageTransfer(Method method = NONE);
-		PIXELS** imageMove(int mx = 0,int my = 0);
 		int addColorTable(PIXELS pixel,BYTE8& linedata);
+		bool isNew(PIXELS** imageData);
+		PIXELS** imageDatadup2(PIXELS** imageData,PIXELS**& tmpimageData);
+		bool delImageData(PIXELS** imageData);
+	public:
+		PIXELS** imageMove(PIXELS**& imageData,int mx = 0,int my = 0);
+		PIXELS** imageMirror(PIXELS**& imageData,Method method = NONE);
+		PIXELS** getImage3Color(PIXELS** imageData,colorType color = Pricolor);
 
 };
 

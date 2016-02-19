@@ -142,6 +142,7 @@ Rbmp::~Rbmp()
 	}
 	if(allData)
 	{
+		printf("jjjjjjjjjjjjjjj\n");
 		for(int i = 0; i < bmpHeight; i++)   
 			delete []allData[i];   
 		delete []allData; 
@@ -349,15 +350,34 @@ bool Rbmp::write_image(const char* outpath)
 			default:
 				break;
 		}
-		deal_image();
+		PIXELS** imageData = NULL;
+		//malloc some memroy
+		imageData = new PIXELS*[bmpWidth];
+		for(int y = 0; y < bmpHeight;y++)
+		{
+			imageData[y] = new PIXELS[bmpWidth];
+		}
+		if(deal_image(imageData))
+			writeAllData(imageData);
+		delImageData(imageData);
 	}
 	return true;
 }
-bool Rbmp::deal_image()
+bool Rbmp::isNew(PIXELS** imageData)
 {
-	PIXELS** imageData = allData;
-	imageData = imageTransfer(UD);
-	//imageData = imageMove(10,10);
+    if((imageData[0][1].getY() != 0)            ||
+       (imageData[0][1].getY() != 0)            ||
+       (imageData[0][1].getEdge() != 0)         ||
+       (imageData[0][1].getRGB().rgbRed != 0)   ||
+       (imageData[0][1].getRGB().rgbGreen != 0) ||
+       (imageData[0][1].getRGB().rgbBlue != 0) )
+	{
+		return false;
+	}
+	return true;
+}
+bool Rbmp::writeAllData(PIXELS** imageData)
+{
 	int lineByte;
 	lineByte = (bmpWidth * biBitCount + 31)/32*4;
 	BYTE8 *linedata = new BYTE8[lineByte];
@@ -374,7 +394,7 @@ bool Rbmp::deal_image()
 			switch(biBitCount)
 			{
 				case 24:
-					imageData[y][x].get3Color(Red);
+					//imageData[y][x].get3Color(Red);
 					imageData[y][x].setData(linedata[k],linedata[k+1],linedata[k+2]);
 					k+=2;
 					break;
@@ -391,15 +411,10 @@ bool Rbmp::deal_image()
 		fwrite(linedata,lineByte,1,fpo);
 	}
 	//free memory
-	if(imageData && imageData != allData)
-	{
-		for(int i = 0; i < bmpHeight; i++)
-			delete []imageData[i];
-		delete []imageData;
-	}
 	if(linedata)
 		delete []linedata;
 	return true;
+
 }
 //return value = -1:the color is exist
 int Rbmp::addColorTable(PIXELS pixel,BYTE8& linedata)
@@ -425,74 +440,161 @@ int Rbmp::addColorTable(PIXELS pixel,BYTE8& linedata)
 	globalI++;*/
 	return globalI-1;
 }
-PIXELS** Rbmp::imageTransfer(Method method)
+bool Rbmp::deal_image(PIXELS**& imageData)
 {
-	PIXELS** imageData;
-	imageData = new PIXELS*[bmpWidth];
+	imageData = imageMirror(imageData,UR);
+	imageData = imageMove(imageData,10,10);
+	imageData = getImage3Color(imageData);
+	return true;
+}
+//PIXELS** Rbmp::imageTransfer(Method method,PIXELS** imageData)
+PIXELS** Rbmp::imageMirror(PIXELS**& imageData,Method method)
+{
+	PIXELS** tmpimageData;
+	if(isNew(imageData))
+	{
+		tmpimageData = imageDatadup2(allData,tmpimageData);
+	}
+	else
+	{
+		tmpimageData = imageDatadup2(imageData,tmpimageData);
+	}
 	switch(method)
 	{
 		case UD://up down change
 			for(int y = 0; y < bmpHeight;y++)
 			{
-				imageData[y] = new PIXELS[bmpWidth];
 				for(int x = 0;x < bmpWidth;x++)
 				{
-					imageData[y][x] = allData[bmpHeight-1-y][x];
+					imageData[y][x] = tmpimageData[bmpHeight-1-y][x];
 				}
 			}
 			break;
 		case LR://left right change
 			for(int y = 0; y < bmpHeight;y++)
 			{
-				imageData[y] = new PIXELS[bmpWidth];
 				for(int x = 0;x < bmpWidth;x++)
 				{
-					imageData[y][x] = allData[y][bmpWidth-1-x];
+					imageData[y][x] = tmpimageData[y][bmpWidth-1-x];
 				}
 			}
 			break;
 		case UR://up down & left right change
 			for(int y = 0; y < bmpHeight;y++)
 			{
-				imageData[y] = new PIXELS[bmpWidth];
 				for(int x = 0;x < bmpWidth;x++)
 				{
-					imageData[y][x] = allData[bmpHeight-1-y][bmpWidth-1-x];
+					imageData[y][x] = tmpimageData[bmpHeight-1-y][bmpWidth-1-x];
 				}
 			}
 			break;
 		default://NONE
 			for(int y = 0; y < bmpHeight;y++)
 			{
-				imageData[y] = new PIXELS[bmpWidth];
 				for(int x = 0;x < bmpWidth;x++)
 				{
-					imageData[y][x] = allData[y][x];
+					imageData[y][x] = tmpimageData[y][x];
 				}
 			}
 			break;
 	}
+	delImageData(tmpimageData);
+	return imageData;
+}
+PIXELS** Rbmp::getImage3Color(PIXELS** imageData,colorType color)
+{
+	PIXELS** tmpimageData;
+	if(isNew(imageData))
+	{
+		tmpimageData = imageDatadup2(allData,tmpimageData);
+	}
+	else
+	{
+		tmpimageData = imageDatadup2(imageData,tmpimageData);
+	}
+	switch(color)
+	{
+		case Red:
+			for(int y = 0; y < bmpHeight;y++)
+			{
+				for(int x = 0;x < bmpWidth;x++)
+				{
+					imageData[y][x] = tmpimageData[y][x].get3Color(Red);
+				}
+			}
+			break;
+		case Green:
+			for(int y = 0; y < bmpHeight;y++)
+			{
+				for(int x = 0;x < bmpWidth;x++)
+				{
+					imageData[y][x] = tmpimageData[y][x].get3Color(Green);
+				}
+			}
+			break;
+		case Blue:
+			for(int y = 0; y < bmpHeight;y++)
+			{
+				for(int x = 0;x < bmpWidth;x++)
+				{
+					imageData[y][x] = tmpimageData[y][x].get3Color(Blue);
+				}
+			}
+			break;
+		default:
+			break;
+	}
+	delImageData(tmpimageData);
 	return imageData;
 }
 //move the image:x>0,y>0 ->right down ;x<0 y<0 -> left up
-PIXELS** Rbmp::imageMove(int mx,int my)
+//PIXELS** Rbmp::imageMove(int mx,int my,PIXELS** imageData)
+PIXELS** Rbmp::imageMove(PIXELS**& imageData,int mx,int my)
 {
 #define MOVEX(Mx,x) ((Mx)>0 ? (x <= Mx) : (x > bmpWidth-1+Mx))
 #define MOVEY(My,y) ((My)>0 ? (y <= My) : (y > bmpHeight-1+My))
-	PIXELS** imageData;
-	imageData = new PIXELS*[bmpWidth];
+	PIXELS** tmpimageData;
+	if(isNew(imageData))
+	{
+		tmpimageData = imageDatadup2(allData,tmpimageData);
+	}
+	else
+	{
+		tmpimageData = imageDatadup2(imageData,tmpimageData);
+	}
 	for(int y = 0; y < bmpHeight;y++)
 	{
-		imageData[y] = new PIXELS[bmpWidth];
 		for(int x = 0;x < bmpWidth;x++)
 		{
 			if((MOVEY(my,y) || MOVEX(mx,x)))
 				imageData[y][x].setRGB(255,255,255);
 			else
-				imageData[y][x] = allData[y-my][x-mx];
+				imageData[y][x] = tmpimageData[y-my][x-mx];
 		}
 	}
+	delImageData(tmpimageData);
 	return imageData;
+}
+PIXELS** Rbmp::imageDatadup2(PIXELS** imageData,PIXELS**& tmpimageData)
+{
+		tmpimageData = new PIXELS*[bmpWidth];
+		for(int y = 0; y < bmpHeight;y++)
+		{
+			tmpimageData[y] = new PIXELS[bmpWidth];
+			memcpy(tmpimageData[y],imageData[y],sizeof(PIXELS)*bmpWidth);
+		}
+		return tmpimageData;
+}
+bool Rbmp::delImageData(PIXELS** imageData)
+{
+	if(imageData)
+	{
+		for(int i = 0; i < bmpHeight; i++)   
+			delete []imageData[i];   
+		delete []imageData; 
+		imageData = NULL;
+	}
+	return true;
 }
 void Rbmp::get_image_msg()
 {

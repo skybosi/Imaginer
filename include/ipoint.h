@@ -5,12 +5,6 @@
 #include <string.h>
 #include <iostream>
 using namespace std;
-enum colorType
-{
-	Red,
-	Green,
-	Blue
-};
 // pixel position
 class PIXELS
 {
@@ -39,11 +33,12 @@ class PIXELS
 	public:
 		int getX();
 		int getY();
+		bool getEdge();
 		RGBQUAD getRGB();
 		//binaryzation image
 		void toBin();
 		PIXELS toBin(PIXELS& ppot);
-		void get3Color(colorType color);
+		PIXELS get3Color(colorType color);
 		//opposition the point color
 		PIXELS opposition();
 		PIXELS opposition(PIXELS& ppot);

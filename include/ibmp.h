@@ -70,6 +70,13 @@ typedef struct tagBITMAP
 #define ABS(x) ((x) < 0 ? (-x) : (x))
 #define MIN(x,y) (x)>(y)?(y):(x)
 #define MAX(x,y) (x)<(y)?(y):(x)
+enum colorType
+{
+	Red,
+	Green,
+	Blue,
+	Pricolor
+};
 
 
 #endif // ibmp.h :[]
