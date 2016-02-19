@@ -64,6 +64,11 @@ typedef struct tagBITMAP
 	BITMAPFILEHEADER bfHeader;
 	BITMAPINFO biInfo;
 } BITMAPFILE;
+typedef struct tagALLHEAD
+{
+	BITMAPFILEHEADER bmpHead;
+	BITMAPINFOHEADER infoHead;
+} BMPALLHEAD;
 
 #endif // pixel marco :[]
 #pragma pack(pop)

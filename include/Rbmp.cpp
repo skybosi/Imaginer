@@ -113,14 +113,14 @@ bool Rbmp::initWimage()
 		return false;
 	if(biBitCount == 24)
 	{
-		allhead = new U8[bfOffBits];
+		allhead = new BMPALLHEAD[bfOffBits];//54
 		//printf("bfOffBits:%d\n",bfOffBits);
 		fread(allhead, bfOffBits,1,fp);
 		rewind(fp);
 	}
 	else if(biBitCount == 8)
 	{
-		allhead = new U8[54];
+		allhead = new BMPALLHEAD[54];
 		fread(allhead, 54,1,fp);
 	}
 	else;
@@ -142,7 +142,6 @@ Rbmp::~Rbmp()
 	}
 	if(allData)
 	{
-		printf("jjjjjjjjjjjjjjj\n");
 		for(int i = 0; i < bmpHeight; i++)   
 			delete []allData[i];   
 		delete []allData; 
@@ -336,6 +335,15 @@ bool Rbmp::write_image(const char* outpath)
 	{
 		//FILE* fpo = fopen(outpath,"wb");
 		fpo = fopen(outpath,"wb");
+		fseek(fpo,54,0);//跳过allhead
+		PIXELS** imageData = NULL;
+		imageData = newImageData(imageData,bmpWidth,bmpHeight);
+		if(deal_image(imageData))
+		{
+			writeAllData(imageData);
+		}
+		delImageData(imageData);
+		rewind(fpo);
 		switch(biBitCount)
 		{
 			case 24:
@@ -350,16 +358,6 @@ bool Rbmp::write_image(const char* outpath)
 			default:
 				break;
 		}
-		PIXELS** imageData = NULL;
-		//malloc some memroy
-		imageData = new PIXELS*[bmpWidth];
-		for(int y = 0; y < bmpHeight;y++)
-		{
-			imageData[y] = new PIXELS[bmpWidth];
-		}
-		if(deal_image(imageData))
-			writeAllData(imageData);
-		delImageData(imageData);
 	}
 	return true;
 }
@@ -378,8 +376,10 @@ bool Rbmp::isNew(PIXELS** imageData)
 }
 bool Rbmp::writeAllData(PIXELS** imageData)
 {
+	int H = allhead->infoHead.biHeight;
+	int W = allhead->infoHead.biWidth;
 	int lineByte;
-	lineByte = (bmpWidth * biBitCount + 31)/32*4;
+	lineByte = (W * biBitCount + 31)/32*4;
 	BYTE8 *linedata = new BYTE8[lineByte];
 	if(pColorTable)
 	{
@@ -387,19 +387,18 @@ bool Rbmp::writeAllData(PIXELS** imageData)
 	}
 	int state;
 	int x , k;
-	for(int y = (bmpHeight-1); y >= 0;y--)
+	printf("WWW:%d HHH:%d\n",W,H);
+	for(int y = (H-1); y >= 0;y--)
 	{
-		for(x = 0,k = 0;x < bmpWidth;x++,k++)
+		for(x = 0,k = 0;x < W;x++,k++)
 		{
 			switch(biBitCount)
 			{
 				case 24:
-					//imageData[y][x].get3Color(Red);
 					imageData[y][x].setData(linedata[k],linedata[k+1],linedata[k+2]);
 					k+=2;
 					break;
 				case 8:
-					imageData[y][x].get3Color(Red);
 					state = addColorTable(imageData[y][x],linedata[k]);
 					if(state != -1)
 						linedata[k] = state;
@@ -409,7 +408,9 @@ bool Rbmp::writeAllData(PIXELS** imageData)
 			}
 		}
 		fwrite(linedata,lineByte,1,fpo);
+		//printf("y:%d\n",y);
 	}
+	printf("here000000:%ld\n",ftell(fpo));
 	//free memory
 	if(linedata)
 		delete []linedata;
@@ -442,9 +443,10 @@ int Rbmp::addColorTable(PIXELS pixel,BYTE8& linedata)
 }
 bool Rbmp::deal_image(PIXELS**& imageData)
 {
-	imageData = imageMirror(imageData,UR);
-	imageData = imageMove(imageData,10,10);
-	imageData = getImage3Color(imageData);
+	imageData = imageZoom(imageData,1,2);
+	//imageData = imageMirror(imageData,UR);
+	//imageData = imageMove(imageData,100,100);
+	//imageData = getImage3Color(imageData,Green);
 	return true;
 }
 //PIXELS** Rbmp::imageTransfer(Method method,PIXELS** imageData)
@@ -585,12 +587,80 @@ PIXELS** Rbmp::imageDatadup2(PIXELS** imageData,PIXELS**& tmpimageData)
 		}
 		return tmpimageData;
 }
-bool Rbmp::delImageData(PIXELS** imageData)
+PIXELS** Rbmp::imageZoom(PIXELS** imageData,int scalex,int scaley)
+{
+	int lineByte;
+	PIXELS** tmpimageData;
+	if(isNew(imageData))
+	{
+		tmpimageData = imageDatadup2(allData,tmpimageData);
+	}
+	else
+	{
+		tmpimageData = imageDatadup2(imageData,tmpimageData);
+	}
+	if(scalex > 0 && scaley > 0)//zoom up
+	{
+		int W = bmpWidth * scalex;
+		int H = bmpHeight * scaley;
+		delImageData(imageData);//free
+		if(imageData == NULL)//renew
+		{
+			imageData = newImageData(imageData,W,H);
+		}
+		printf("WWW:%d HHH:%d\n",W,H);
+		for(int y = 0; y < H ;y++)
+		{
+			printf("H(y):%d\n",y);
+			for(int x = 0; x < W ;x++)
+			{
+				printf("\tW(x):%d\n",x);
+				imageData[y][x] = tmpimageData[y/scaley][x/scalex];
+			}
+		}
+		//first free tmpimageData
+		delImageData(tmpimageData);
+		//then set allhead
+		allhead->infoHead.biWidth = W;
+		allhead->infoHead.biHeight = H;
+		lineByte = (W * biBitCount + 31)/32*4;
+		allhead->infoHead.biSizeImage = H * lineByte;
+		allhead->bmpHead.bfSize = H * lineByte + 54;
+	}
+	else if(scalex < 0 && scaley < 0)//zoom down
+	{
+	}
+	else//scalex = 0 || scaley = 0
+	{
+		printf("zoom number is 0,is wrong");
+		return NULL;
+	}
+	return imageData;
+}
+PIXELS** Rbmp::newImageData(PIXELS**& imageData,int W,int H)
+{
+	//malloc some memroy
+	imageData = new PIXELS*[W];
+	printf("new:(W,H):%d,%d\n",W,H);
+	int y;
+	for(y = 0;y < H;y++)
+	{
+		imageData[y] = new PIXELS[W];
+	}
+	printf("newyyyyy:%d ",y);
+	return imageData;
+}
+bool Rbmp::delImageData(PIXELS**& imageData)
 {
 	if(imageData)
 	{
-		for(int i = 0; i < bmpHeight; i++)   
+		int H = allhead->infoHead.biHeight;
+		printf("del:%d\n",H);
+		for(int i = 0; i < H; i++)
+		{
+		//	printf("del:%d ",i);
 			delete []imageData[i];   
+		}
 		delete []imageData; 
 		imageData = NULL;
 	}
