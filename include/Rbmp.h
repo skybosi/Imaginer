@@ -63,17 +63,13 @@ class Rbmp
 		int addColorTable(PIXELS pixel,BYTE8& linedata);
 		bool isNew(PIXELS** imageData);
 		PIXELS** imageDatadup2(PIXELS** imageData,PIXELS**& tmpimageData);
-		bool delImageData(PIXELS**& imageData);
+		bool delImageData(PIXELS**& imageData,int H);
 		PIXELS** newImageData(PIXELS**& imageData,int W,int H);
 	public:
 		PIXELS** imageMove(PIXELS**& imageData,int mx = 0,int my = 0);
 		PIXELS** imageMirror(PIXELS**& imageData,Method method = NONE);
 		PIXELS** getImage3Color(PIXELS** imageData,colorType color = Pricolor);
-		//bx by begin x,y; ex ey end x,y;
-		//-1 is the max size(x=bmpWidth,y=bmpHeight);
-		//scale + zoom up, - zoom down
-		PIXELS** imageZoom(PIXELS** imageData,int scalex = 1,int scaley = 1);
-		//PIXELS** imageZoom(PIXELS** imageData,int scale = 1,int bx = 0,int by = 0,int ex = -1, int ey = -1);
+		PIXELS** imageZoom(PIXELS** imageData,float scalex = 1.0,float scaley = 1.0);
 
 };
 

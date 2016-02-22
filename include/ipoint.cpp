@@ -327,10 +327,14 @@ RGBQUAD PIXELS::getRGB()
 //just copy the position
 PIXELS& PIXELS::operator=(const PIXELS& pixel)
 {
+	if(this == NULL)
+		printf("kaokao\n");
+	if(&pixel == NULL)
+		printf("TMDTMD\n");
 	if(this == &pixel)
 		return *this;
-	pix_X = pixel.pix_X;
-	pix_Y = pixel.pix_Y;
+	this->pix_X = pixel.pix_X;
+	this->pix_Y = pixel.pix_Y;
 	memcpy(&prgb,&pixel.prgb,sizeof(RGBQUAD));
 	rgb_threshold = pixel.rgb_threshold;
 	return *this;

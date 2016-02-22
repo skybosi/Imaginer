@@ -68,12 +68,14 @@ bool Rbmp::init_image()
 	//printf("here1111:%ld\n",ftell(fp));
 	//fseek(fp,bfOffBits,0); //左上原点
 	BYTE8 *linedata = new BYTE8[lineByte];
-	allData = new PIXELS*[bmpWidth];
+	//allData = new PIXELS*[bmpWidth];
+	allData  = (PIXELS**)calloc(bmpWidth,sizeof(PIXELS));
 	int k = 0, x = 0 ,y = bmpHeight - 1;
 	int tablesite;
 	for(; y >= 0; y--)//y is row number
 	{
-		allData[y] = new PIXELS[bmpWidth];
+		//allData[y] = new PIXELS[bmpWidth];
+		allData[y]  = (PIXELS*)calloc(bmpWidth,sizeof(PIXELS));
 		fread(linedata,1,lineByte,fp);
 		for(;x < bmpWidth/*k < lineByte*/; k++,x++)
 		{
@@ -140,12 +142,17 @@ Rbmp::~Rbmp()
 		delete []pColorTable;
 		pColorTable = NULL;
 	}
+	/*
 	if(allData)
 	{
 		for(int i = 0; i < bmpHeight; i++)   
 			delete []allData[i];   
 		delete []allData; 
 		allData = NULL;
+	}*/
+	if(!delImageData(allData,bmpHeight))
+	{
+		printf("allData free error!\n");
 	}
 	if(allhead)
 	{
@@ -322,6 +329,7 @@ void Rbmp::delReadIline(PIXELS** lineppot,int rows)
 		for(int i = 0; i < ABS(rows); i++)
 			delete []lineppot[i];   
 		delete []lineppot; 
+		lineppot = NULL;
 	}
 }
 
@@ -342,7 +350,6 @@ bool Rbmp::write_image(const char* outpath)
 		{
 			writeAllData(imageData);
 		}
-		delImageData(imageData);
 		rewind(fpo);
 		switch(biBitCount)
 		{
@@ -381,6 +388,7 @@ bool Rbmp::writeAllData(PIXELS** imageData)
 	int lineByte;
 	lineByte = (W * biBitCount + 31)/32*4;
 	BYTE8 *linedata = new BYTE8[lineByte];
+	memset(linedata,0,lineByte);
 	if(pColorTable)
 	{
 		memset(pColorTable,0,sizeof(RGBQUAD)*256);
@@ -414,6 +422,7 @@ bool Rbmp::writeAllData(PIXELS** imageData)
 	//free memory
 	if(linedata)
 		delete []linedata;
+	delImageData(imageData,H);
 	return true;
 
 }
@@ -443,7 +452,7 @@ int Rbmp::addColorTable(PIXELS pixel,BYTE8& linedata)
 }
 bool Rbmp::deal_image(PIXELS**& imageData)
 {
-	imageData = imageZoom(imageData,1,2);
+	imageData = imageZoom(imageData,0.1,0.1);
 	//imageData = imageMirror(imageData,UR);
 	//imageData = imageMove(imageData,100,100);
 	//imageData = getImage3Color(imageData,Green);
@@ -500,7 +509,7 @@ PIXELS** Rbmp::imageMirror(PIXELS**& imageData,Method method)
 			}
 			break;
 	}
-	delImageData(tmpimageData);
+	delImageData(tmpimageData,bmpHeight);
 	return imageData;
 }
 PIXELS** Rbmp::getImage3Color(PIXELS** imageData,colorType color)
@@ -546,7 +555,7 @@ PIXELS** Rbmp::getImage3Color(PIXELS** imageData,colorType color)
 		default:
 			break;
 	}
-	delImageData(tmpimageData);
+	delImageData(tmpimageData,bmpHeight);
 	return imageData;
 }
 //move the image:x>0,y>0 ->right down ;x<0 y<0 -> left up
@@ -574,20 +583,22 @@ PIXELS** Rbmp::imageMove(PIXELS**& imageData,int mx,int my)
 				imageData[y][x] = tmpimageData[y-my][x-mx];
 		}
 	}
-	delImageData(tmpimageData);
+	delImageData(tmpimageData,bmpHeight);
 	return imageData;
 }
 PIXELS** Rbmp::imageDatadup2(PIXELS** imageData,PIXELS**& tmpimageData)
 {
-		tmpimageData = new PIXELS*[bmpWidth];
+		//tmpimageData = new PIXELS*[bmpWidth];
+		tmpimageData  = (PIXELS**)calloc(bmpWidth,sizeof(PIXELS));
 		for(int y = 0; y < bmpHeight;y++)
 		{
-			tmpimageData[y] = new PIXELS[bmpWidth];
+			//tmpimageData[y] = new PIXELS[bmpWidth];
+			tmpimageData[y]  = (PIXELS*)calloc(bmpWidth,sizeof(PIXELS));
 			memcpy(tmpimageData[y],imageData[y],sizeof(PIXELS)*bmpWidth);
 		}
 		return tmpimageData;
 }
-PIXELS** Rbmp::imageZoom(PIXELS** imageData,int scalex,int scaley)
+PIXELS** Rbmp::imageZoom(PIXELS** imageData,float scalex,float scaley)
 {
 	int lineByte;
 	PIXELS** tmpimageData;
@@ -599,27 +610,37 @@ PIXELS** Rbmp::imageZoom(PIXELS** imageData,int scalex,int scaley)
 	{
 		tmpimageData = imageDatadup2(imageData,tmpimageData);
 	}
-	if(scalex > 0 && scaley > 0)//zoom up
+	if(scalex <= 0.0 || scaley <= 0.0)
+	{
+		printf("zoom number is <= 0 ,is wrong");
+		return NULL;
+	}
+	else
 	{
 		int W = bmpWidth * scalex;
 		int H = bmpHeight * scaley;
-		delImageData(imageData);//free
+		delImageData(imageData,bmpHeight);//free
 		if(imageData == NULL)//renew
 		{
-			imageData = newImageData(imageData,W,H);
+			newImageData(imageData,W,H);
+			//printf("new is ok\n");
 		}
-		printf("WWW:%d HHH:%d\n",W,H);
+		//printf("WWW:%d HHH:%d\n",W,H);
 		for(int y = 0; y < H ;y++)
 		{
-			printf("H(y):%d\n",y);
 			for(int x = 0; x < W ;x++)
 			{
-				printf("\tW(x):%d\n",x);
-				imageData[y][x] = tmpimageData[y/scaley][x/scalex];
+				int nx = (int)(x/scalex);
+				int ny = (int)(y/scaley);
+				imageData[y][x] = tmpimageData[ny][nx];
+				imageData[y][x].setXY(x,y);
+				//imageData[y][x].show_PIXELS();
+				//tmpimageData[y/scaley][x/scalex].show_PIXELS();
+				//printf("\n");
 			}
 		}
 		//first free tmpimageData
-		delImageData(tmpimageData);
+		delImageData(tmpimageData,bmpHeight);
 		//then set allhead
 		allhead->infoHead.biWidth = W;
 		allhead->infoHead.biHeight = H;
@@ -627,41 +648,37 @@ PIXELS** Rbmp::imageZoom(PIXELS** imageData,int scalex,int scaley)
 		allhead->infoHead.biSizeImage = H * lineByte;
 		allhead->bmpHead.bfSize = H * lineByte + 54;
 	}
-	else if(scalex < 0 && scaley < 0)//zoom down
-	{
-	}
-	else//scalex = 0 || scaley = 0
-	{
-		printf("zoom number is 0,is wrong");
-		return NULL;
-	}
 	return imageData;
 }
 PIXELS** Rbmp::newImageData(PIXELS**& imageData,int W,int H)
 {
 	//malloc some memroy
-	imageData = new PIXELS*[W];
-	printf("new:(W,H):%d,%d\n",W,H);
+	//imageData = new PIXELS*[W];
+	imageData  = (PIXELS**)calloc(W,sizeof(PIXELS));
+	//printf("new:(W,H):%d,%d\n",W,H);
 	int y;
 	for(y = 0;y < H;y++)
 	{
-		imageData[y] = new PIXELS[W];
+	//	imageData[y] = new PIXELS[W];
+		imageData[y]  = (PIXELS*)calloc(W,sizeof(PIXELS));
+		if(imageData[y] == NULL)
+			printf("new wrong!\n");
 	}
-	printf("newyyyyy:%d ",y);
 	return imageData;
 }
-bool Rbmp::delImageData(PIXELS**& imageData)
+bool Rbmp::delImageData(PIXELS**& imageData,int H)
 {
 	if(imageData)
 	{
-		int H = allhead->infoHead.biHeight;
-		printf("del:%d\n",H);
+		//printf("del:%d\n",H);
 		for(int i = 0; i < H; i++)
 		{
 		//	printf("del:%d ",i);
-			delete []imageData[i];   
+			//delete []imageData[i];
+			free(imageData[i]);
 		}
-		delete []imageData; 
+		//delete []imageData;
+		free(imageData);
 		imageData = NULL;
 	}
 	return true;
