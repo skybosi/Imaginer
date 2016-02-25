@@ -65,11 +65,14 @@ class Rbmp
 		PIXELS** imageDatadup2(PIXELS** imageData,PIXELS**& tmpimageData);
 		bool delImageData(PIXELS**& imageData,int H);
 		PIXELS** newImageData(PIXELS**& imageData,int W,int H);
-	public:
+	public://The function deal with the bmp image
 		PIXELS** imageMove(PIXELS**& imageData,int mx = 0,int my = 0);
 		PIXELS** imageMirror(PIXELS**& imageData,Method method = NONE);
 		PIXELS** getImage3Color(PIXELS** imageData,colorType color = Pricolor);
 		PIXELS** imageZoom(PIXELS** imageData,float scalex = 1.0,float scaley = 1.0);
+		//if radius = 0,will Adhered with bmpHeight and bmpWidth (oval)
+		//else will Adhered with a circle of radius
+		PIXELS** imageSpherize(PIXELS** imageData,float radius = 0.0);
 
 };
 

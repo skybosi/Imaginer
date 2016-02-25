@@ -1,4 +1,6 @@
 #include <unistd.h>
+#include <math.h>
+#define PI 3.14159
 #include "Rbmp.h"
 static int globalI = 0;
 Rbmp::Rbmp(const char* bmpname):fp(NULL),fpo(NULL),bmppath(bmpname),pBmpBuf(NULL),pColorTable(NULL)
@@ -452,7 +454,8 @@ int Rbmp::addColorTable(PIXELS pixel,BYTE8& linedata)
 }
 bool Rbmp::deal_image(PIXELS**& imageData)
 {
-	imageData = imageZoom(imageData,0.1,0.1);
+	imageData = imageSpherize(imageData);
+	//imageData = imageZoom(imageData,0.1,0.1);
 	//imageData = imageMirror(imageData,UR);
 	//imageData = imageMove(imageData,100,100);
 	//imageData = getImage3Color(imageData,Green);
@@ -648,6 +651,57 @@ PIXELS** Rbmp::imageZoom(PIXELS** imageData,float scalex,float scaley)
 		allhead->infoHead.biSizeImage = H * lineByte;
 		allhead->bmpHead.bfSize = H * lineByte + 54;
 	}
+	return imageData;
+}
+PIXELS** Rbmp::imageSpherize(PIXELS** imageData,float radius)
+{
+	PIXELS** tmpimageData;
+	int w = bmpWidth / 2;
+	int h = bmpHeight / 2;
+	if(isNew(imageData))
+	{
+		tmpimageData = imageDatadup2(allData,tmpimageData);
+	}
+	else
+	{
+		tmpimageData = imageDatadup2(imageData,tmpimageData);
+	}
+	if(radius <= 0.0)//oval
+	{
+		for(int y = 0; y < bmpHeight;y++)
+		{
+			int mx1 = w + (w* sqrt(h*h-(y-h)*(y-h)))/h;
+			int mx2 = w - (w* sqrt(h*h-(y-h)*(y-h)))/h;
+			//int mx2 = w - w/h * sqrt(h*h-(y-h)*(y-h));
+			float dealt = (mx1 - mx2)/ (bmpWidth*1.0);
+			printf("Y:%d, %d - %d ;%f\n",y,mx1,mx2,dealt);
+			for(int x = 0;x < bmpWidth;x++)
+			{
+				if(x < mx2 || x > mx1 || dealt == 0)
+					imageData[y][x].setRGB(255,255,255);
+				else
+					imageData[y][x] = tmpimageData[(int)(y)][(int)((x-mx2)/dealt)];
+			}
+		}
+	}
+	else//circle
+	{
+		for(int y = 0; y < bmpHeight;y++)
+		{
+			int mx1 = w + w/h * sqrt(h*h-(y-h)*(y-h));
+			int mx2 = w - w/h * sqrt(h*h-(y-h)*(y-h));
+			float dealt = (mx1 - mx2)/ (bmpWidth*1.0);
+			printf("Y:%d, %d - %d ;%f\n",y,mx1,mx2,dealt);
+			for(int x = 0;x < bmpWidth;x++)
+			{
+				if(x < mx2 | x > mx1)
+					imageData[y][x].setRGB(255,255,255);
+				else
+					imageData[y][x] = tmpimageData[(int)(y*dealt)][(int)((x-mx2)*dealt)];
+			}
+		}
+	}
+	delImageData(tmpimageData,bmpHeight);
 	return imageData;
 }
 PIXELS** Rbmp::newImageData(PIXELS**& imageData,int W,int H)
