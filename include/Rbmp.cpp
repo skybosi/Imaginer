@@ -454,7 +454,7 @@ int Rbmp::addColorTable(PIXELS pixel,BYTE8& linedata)
 }
 bool Rbmp::deal_image(PIXELS**& imageData)
 {
-	imageData = imageSpherize(imageData);
+	imageData = imageSpherize(imageData,300);
 	//imageData = imageZoom(imageData,0.1,0.1);
 	//imageData = imageMirror(imageData,UR);
 	//imageData = imageMove(imageData,100,100);
@@ -670,17 +670,16 @@ PIXELS** Rbmp::imageSpherize(PIXELS** imageData,float radius)
 	{
 		for(int y = 0; y < bmpHeight;y++)
 		{
-			int mx1 = w + (w* sqrt(h*h-(y-h)*(y-h)))/h;
-			int mx2 = w - (w* sqrt(h*h-(y-h)*(y-h)))/h;
-			//int mx2 = w - w/h * sqrt(h*h-(y-h)*(y-h));
+			int mx1 = w + (w* sqrt(2*h*y-y*y))/h;
+			int mx2 = w - (w* sqrt(2*h*y-y*y))/h;
 			float dealt = (mx1 - mx2)/ (bmpWidth*1.0);
-			printf("Y:%d, %d - %d ;%f\n",y,mx1,mx2,dealt);
+			printf("Y:%d, %d - %d %d ;%f\n",y,mx1,mx2,mx1-mx2,dealt);
 			for(int x = 0;x < bmpWidth;x++)
 			{
 				if(x < mx2 || x > mx1 || dealt == 0)
 					imageData[y][x].setRGB(255,255,255);
 				else
-					imageData[y][x] = tmpimageData[(int)(y)][(int)((x-mx2)/dealt)];
+					imageData[y][x] = tmpimageData[y][(int)((x-mx2)/dealt)];
 			}
 		}
 	}
@@ -688,16 +687,19 @@ PIXELS** Rbmp::imageSpherize(PIXELS** imageData,float radius)
 	{
 		for(int y = 0; y < bmpHeight;y++)
 		{
-			int mx1 = w + w/h * sqrt(h*h-(y-h)*(y-h));
-			int mx2 = w - w/h * sqrt(h*h-(y-h)*(y-h));
+			int mx1 = w + sqrt(radius*radius-(y-h)*(y-h));
+			//int mx1 = w + sqrt(2*h*y-y*y);
+			int mx2 = w - sqrt(radius*radius-(y-h)*(y-h));
+			//int mx2 = w - sqrt(2*h*y-y*y);
 			float dealt = (mx1 - mx2)/ (bmpWidth*1.0);
 			printf("Y:%d, %d - %d ;%f\n",y,mx1,mx2,dealt);
 			for(int x = 0;x < bmpWidth;x++)
 			{
-				if(x < mx2 | x > mx1)
+				//if(x < mx2 || x > mx1)
+				if(x < mx2 || x > mx1 || dealt == 0)
 					imageData[y][x].setRGB(255,255,255);
 				else
-					imageData[y][x] = tmpimageData[(int)(y*dealt)][(int)((x-mx2)*dealt)];
+					imageData[y][x] = tmpimageData[y][(int)((x-mx2)/dealt)];
 			}
 		}
 	}
