@@ -73,6 +73,9 @@ class Rbmp
 		//if radius = 0,will Adhered with bmpHeight and bmpWidth (oval)
 		//else will Adhered with a circle of radius
 		PIXELS** imageSpherize(PIXELS** imageData,float radius = 0.0);
+		//Antegrade and retrograde
+		PIXELS** imageTranspose(PIXELS** imageData,bool AR = true);
+		PIXELS** imageRevolution(PIXELS** imageData,int px = 0,int py = 0,float angle = 90.0);
 
 };
 
