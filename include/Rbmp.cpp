@@ -455,7 +455,8 @@ int Rbmp::addColorTable(PIXELS pixel, BYTE8 & linedata)
 
 bool Rbmp::deal_image(PIXELS ** &imageData)
 {
-	imageData = imageTranspose(imageData);
+	imageData = imageShear(imageData,true,-45.0);
+	//imageData = imageTranspose(imageData);
 	//imageData = imageRevolution(imageData,bmpWidth/2,bmpHeight/2,90);
 	//imageData = imageSpherize(imageData, bmpHeight / 2);
 	// imageData = imageZoom(imageData,0.1,0.1);
@@ -683,7 +684,7 @@ PIXELS **Rbmp::imageTranspose(PIXELS ** imageData,bool AR)
 		// printf("new is ok\n");
 	}
 	// printf("WWW:%d HHH:%d\n",W,H);
-	#define AorR(x,y) ((AR) ? (tmpimageData[x][H-1-y]) : (tmpimageData[W-1-x][y]))
+#define AorR(x,y) ((AR) ? (tmpimageData[x][H-1-y]) : (tmpimageData[W-1-x][y]))
 	for (int y = 0;y < H;y++)
 	{
 		for (int x = 0;x < W;x++)
@@ -692,27 +693,27 @@ PIXELS **Rbmp::imageTranspose(PIXELS ** imageData,bool AR)
 		}
 	}
 	/*
-	{
-		for (int y = 0;y < H;y++)
-		{
-			for (int x = 0;x < W;x++)
-			{
-				imageData[y][x] = tmpimageData[x][H-1-y];
-			}
-		}
-	}
-	else
-	{
-		for (int y = 0;y < H;y++)
-		{
-			for (int x = 0;x < W;x++)
-			{
-				imageData[y][x] = tmpimageData[W-1-x][y];
-			}
-		}
+	   {
+	   for (int y = 0;y < H;y++)
+	   {
+	   for (int x = 0;x < W;x++)
+	   {
+	   imageData[y][x] = tmpimageData[x][H-1-y];
+	   }
+	   }
+	   }
+	   else
+	   {
+	   for (int y = 0;y < H;y++)
+	   {
+	   for (int x = 0;x < W;x++)
+	   {
+	   imageData[y][x] = tmpimageData[W-1-x][y];
+	   }
+	   }
 
-	}
-	*/
+	   }
+	 */
 	// first free tmpimageData
 	delImageData(tmpimageData, bmpHeight);
 	// then set allhead
@@ -721,6 +722,57 @@ PIXELS **Rbmp::imageTranspose(PIXELS ** imageData,bool AR)
 	lineByte = (W * biBitCount + 31) / 32 * 4;
 	allhead->infoHead.biSizeImage = H * lineByte;
 	allhead->bmpHead.bfSize = H * lineByte + 54;
+	return imageData;
+}
+
+PIXELS **Rbmp::imageShear(PIXELS ** imageData,bool XorY,float angle)
+{
+	angle = D2R(angle);
+	PIXELS **tmpimageData;
+	int nx, ny;
+	int lineByte;
+	if (isNew(imageData))
+	{
+		tmpimageData = imageDatadup2(allData, tmpimageData);
+	}
+	else
+	{
+		tmpimageData = imageDatadup2(imageData, tmpimageData);
+	}
+	int H = XorY ? bmpHeight : (int)(bmpHeight + bmpWidth * ABS(tan(angle)));
+	int W = XorY ? (int)(bmpWidth + bmpHeight * ABS(tan(angle))) : bmpWidth;
+	printf("Shear after: W:%d H:%d\n",W,H);
+	delImageData(imageData, bmpHeight);	// free
+	if (imageData == NULL)	// renew
+	{
+		newImageData(imageData, W, H);
+		// printf("new is ok\n");
+	}
+	for (int y = 0; y < H; y++)
+	{	    
+		for (int x = 0; x < W; x++)
+		{
+		//right up
+			//nx = XorY ? x + tan(angle) * (y - bmpHeight): x;
+			//ny = XorY ? y : y + tan(angle) * (x - bmpWidth);
+		//left down 
+			//nx = XorY ? x - tan(angle) * (y - bmpHeight)- bmpHeight: x;
+			//ny = XorY ? y : y - tan(angle) * (x - bmpWidth) - bmpWidth;
+			nx = (XorY ? ((angle > 0) ? (x + tan(angle) * (y - bmpHeight)) : (x + tan(angle) * (y - bmpHeight) - bmpHeight)) : x);
+			ny = (XorY ? y : ((angle > 0) ? (y + tan(angle) * (x - bmpWidth)) :(y + tan(angle) * (x - bmpWidth) - bmpWidth)));
+			//printf("Shear after: x:%d nx:%d y:%d ny:%d\n",x,nx,y,ny);
+			if (nx < 0 || ny < 0 || nx >= bmpWidth || ny >= bmpHeight)
+				imageData[y][x].setRGB(255, 255, 255);
+			else
+				imageData[y][x] = tmpimageData[ny][nx];
+		}
+	}	// then set allhead
+	allhead->infoHead.biWidth = W;
+	allhead->infoHead.biHeight = H;
+	lineByte = (W * biBitCount + 31) / 32 * 4;
+	allhead->infoHead.biSizeImage = H * lineByte;
+	allhead->bmpHead.bfSize = H * lineByte + 54;
+	delImageData(tmpimageData, bmpHeight);
 	return imageData;
 }
 
@@ -741,6 +793,7 @@ PIXELS **Rbmp::imageRevolution(PIXELS ** imageData,int px,int py,float angle)
 	{
 		for (int x = 0; x < bmpWidth; x++)
 		{
+
 			nx = (x - px) * cos(angle) - (y - py) * sin(angle) + px;
 			ny = (x - px) * sin(angle) + (y - py) * cos(angle) + py;
 			//x0= (x - rx0)*cos(a)- (y - ry0)*sin(a) + rx0 ;

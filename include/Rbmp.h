@@ -76,6 +76,7 @@ class Rbmp
 		//Antegrade and retrograde
 		PIXELS** imageTranspose(PIXELS** imageData,bool AR = true);
 		PIXELS** imageRevolution(PIXELS** imageData,int px = 0,int py = 0,float angle = 90.0);
+		PIXELS** imageShear(PIXELS** imageData,bool XorY = true,float angle = 45.0);
 
 };
 
