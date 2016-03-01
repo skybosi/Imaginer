@@ -58,10 +58,15 @@ class PIXPOT
 		RGBQUAD diff4a[8];			// 4 angle point rgb value diff with the fcspot
 	public:
 		PIXPOT();
+		//show the PIXPOT(include focus point,the other 8 point)
 		void show_PIXPOT();
+		//show the diff between focus point with other 8 point
 		void show_PIXPOT8diffRGB(RGBQUAD diffRgb);
+		//fix the PIXPOT's postion (include 4 side point and 4 angle point) 
 		void fix_PIXPOT(PIXPOT& pots8,int W,int H);//fix up the 8 point position
+		//get the right point postion from resetXY
 		PIXELS* get_pos8(PIXELS pixel,PIXELS* pos8,int W,int H);
+		//set the right point postion
 		PIXPOT set_pots8(PIXELS* pos8);
 };
 #endif // ipoint.h :[]

@@ -5,8 +5,7 @@
 #define D2R(D) D*PI/180
 #include "Rbmp.h"
 static int globalI = 0;
-Rbmp::Rbmp(const char *bmpname):fp(NULL), fpo(NULL), bmppath(bmpname), pBmpBuf(NULL),
-	pColorTable(NULL)
+Rbmp::Rbmp(const char *bmpname):fp(NULL), fpo(NULL), bmppath(bmpname),allhead(NULL), pBmpBuf(NULL), pColorTable(NULL)
 {
 	// 二进制读方式打开指定的图像文件
 	fp = fopen(bmppath.c_str(), "rb");
@@ -455,9 +454,9 @@ int Rbmp::addColorTable(PIXELS pixel, BYTE8 & linedata)
 
 bool Rbmp::deal_image(PIXELS ** &imageData)
 {
-	imageData = imageShear(imageData,true,-45.0);
+	//imageData = imageShear(imageData,true,-45.0);
 	//imageData = imageTranspose(imageData);
-	//imageData = imageRevolution(imageData,bmpWidth/2,bmpHeight/2,90);
+	imageData = imageRevolution(imageData,bmpWidth/2,bmpHeight/2,-45);
 	//imageData = imageSpherize(imageData, bmpHeight / 2);
 	// imageData = imageZoom(imageData,0.1,0.1);
 	// imageData = imageMirror(imageData,UR);
