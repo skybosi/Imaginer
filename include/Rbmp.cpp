@@ -5,12 +5,14 @@
 #define D2R(D) D*PI/180
 #include "Rbmp.h"
 static int globalI = 0;
-Rbmp::Rbmp(const char *bmpname):fp(NULL), fpo(NULL), bmppath(bmpname),allhead(NULL), pBmpBuf(NULL), pColorTable(NULL)
+Rbmp::Rbmp(const char *bmpname):fp(NULL), fpo(NULL), bmppath(bmpname),allhead(NULL), pBmpBuf(NULL), allData(NULL), pColorTable(NULL)
 {
 	// 二进制读方式打开指定的图像文件
 	fp = fopen(bmppath.c_str(), "rb");
 	if (init_image())
+	{
 		cout << "init bmp image is OK!" << endl;
+	}
 	else
 	{
 		cout << "init bmp image is fair!" << endl;
@@ -18,7 +20,10 @@ Rbmp::Rbmp(const char *bmpname):fp(NULL), fpo(NULL), bmppath(bmpname),allhead(NU
 	}
 	cout << "create a Rbmp ....\n" << endl;
 }
-
+Rbmp::Rbmp(const char **bmpnamel):fp(NULL), fpo(NULL),bmppathl(bmpnamel),allhead(NULL),pBmpBuf(NULL),allData(NULL),pColorTable(NULL)
+{
+	cout << "create a Rbmp list ....\n" << endl;
+}
 bool Rbmp::init_image()
 {
 	if (NULL == fp)
@@ -66,14 +71,14 @@ bool Rbmp::init_image()
 	// printf("here1111:%ld\n",ftell(fp));
 	// fseek(fp,bfOffBits,0); //左上原点
 	BYTE8 *linedata = new BYTE8[lineByte];
-	// allData = new PIXELS*[bmpWidth];
-	allData = (PIXELS **) calloc(bmpWidth, sizeof(PIXELS));
+	// allData = new pPIXELS[bmpWidth];
+	allData = (ppPIXELS)calloc(bmpWidth, sizeof(PIXELS));
 	int k = 0, x = 0, y = bmpHeight - 1;
 	int tablesite;
 	for (; y >= 0; y--)			// y is row number
 	{
 		// allData[y] = new PIXELS[bmpWidth];
-		allData[y] = (PIXELS *) calloc(bmpWidth, sizeof(PIXELS));
+		allData[y] = (pPIXELS)calloc(bmpWidth, sizeof(PIXELS));
 		fread(linedata, 1, lineByte, fp);
 		for (; x < bmpWidth /* k < lineByte */ ; k++, x++)
 		{
@@ -128,6 +133,20 @@ bool Rbmp::initWimage()
 
 	return true;
 }
+bool Rbmp::initSpatialize(const char** imagePath)
+{
+	if(NULL == imagePath)
+		return  false;
+	for(int i = 0; i < 6; ++i)
+	{
+		//int to enum Position 
+		if(strcmp(imagePath[i],""))
+		{
+			rbmp.insert(pair<Position, string>((Position)i, imagePath[i]));
+		}
+	}
+	return true;
+}
 
 Rbmp::~Rbmp()
 {
@@ -136,17 +155,21 @@ Rbmp::~Rbmp()
 		delete[]pBmpBuf;
 		pBmpBuf = NULL;
 	}
-	if (biBitCount == 8 && pColorTable)
+	if (pColorTable && biBitCount == 8)
 	{
 		delete[]pColorTable;
 		pColorTable = NULL;
 	}
-	/* 
-	   if(allData) { for(int i = 0; i < bmpHeight; i++) delete []allData[i];
-	   delete []allData; allData = NULL; } */
-	if (!delImageData(allData, bmpHeight))
+	if (allData)
 	{
-		printf("allData free error!\n");
+		for (int i = 0; i < bmpHeight; i++)
+		{
+			// delete []imageData[i];
+			free(allData[i]);
+		}
+		// delete []imageData;
+		free(allData);
+		allData = NULL;
 	}
 	if (allhead)
 	{
@@ -163,7 +186,57 @@ Rbmp::~Rbmp()
 		fclose(fpo);
 		fpo = NULL;
 	}
-	cout << "delete a Rbmp ...." << endl;
+	cout << "delete a Rbmp ...." <<  endl;
+}
+bool Rbmp::deleteAll()
+{
+	if (pBmpBuf)
+	{
+		delete[]pBmpBuf;
+		pBmpBuf = NULL;
+	}
+	if (pColorTable && biBitCount == 8)
+	{
+		delete[]pColorTable;
+		pColorTable = NULL;
+	}
+	if (allData)
+	{
+		for (int i = 0; i < bmpHeight; i++)
+		{
+			// delete []imageData[i];
+			free(allData[i]);
+		}
+		// delete []imageData;
+		free(allData);
+		allData = NULL;
+	}
+	if (allhead)
+	{
+		delete[]allhead;
+		allhead = NULL;
+	}
+	if (fp)
+	{
+		fclose(fp);
+		fp = NULL;
+	}
+	if (fpo)
+	{
+		fclose(fpo);
+		fpo = NULL;
+	}
+	cout << "delete all data...." <<  endl;
+	return true;
+}
+int Rbmp::getW()
+{
+	return bmpWidth;
+}
+
+int Rbmp::getH()
+{
+	return bmpHeight;
 }
 
 PIXELS Rbmp::get_pix(int x, int y)
@@ -213,7 +286,7 @@ PIXELS Rbmp::get_pix(PIXELS pixel)
 PIXPOT Rbmp::get_pot(PIXELS pixel)
 {
 	PIXPOT pots8;
-	PIXELS *pos8;
+	pPIXELS pos8;
 	try
 	{
 		if (out_range_error(pixel))
@@ -263,7 +336,7 @@ void Rbmp::show_allData()
 
 // is Boundary 
 // PIXPOT *lineppot = new PIXPOT[bmpWidth];
-bool Rbmp::isBoundary(PIXELS * lineppot)
+bool Rbmp::isBoundary(pPIXELS  lineppot)
 {
 	PIXPOT pots8;
 	int x = 0;
@@ -277,7 +350,7 @@ bool Rbmp::isBoundary(PIXELS * lineppot)
 }
 
 /* 函数名称readIline() */
-PIXELS **Rbmp::readIline(int beginY, int rows)
+ppPIXELS Rbmp::readIline(int beginY, int rows)
 {
 #define DEAL(ROWS,Y) ((ROWS)>0?(Y++):(Y--))
 	try
@@ -308,7 +381,7 @@ PIXELS **Rbmp::readIline(int beginY, int rows)
 			printf("You set rows2 change %d\n", rows2);
 		}
 		int x, y = beginY;
-		PIXELS **lineppot = new PIXELS *[rows2];
+		ppPIXELS lineppot = new pPIXELS[rows2];
 		for (; rows2--; DEAL(rows, y))	// y is row number
 		{
 			lineppot[y] = new PIXELS[bmpWidth];
@@ -324,7 +397,7 @@ PIXELS **Rbmp::readIline(int beginY, int rows)
 	}
 }
 
-void Rbmp::delReadIline(PIXELS ** lineppot, int rows)
+void Rbmp::delReadIline(ppPIXELS  lineppot, int rows)
 {
 	if (lineppot)
 	{
@@ -346,7 +419,7 @@ bool Rbmp::write_image(const char *outpath)
 		// FILE* fpo = fopen(outpath,"wb");
 		fpo = fopen(outpath, "wb");
 		fseek(fpo, 54, 0);		// 跳过allhead
-		PIXELS **imageData = NULL;
+		ppPIXELS imageData = NULL;
 		imageData = newImageData(imageData, bmpWidth, bmpHeight);
 		if (deal_image(imageData))
 		{
@@ -371,7 +444,7 @@ bool Rbmp::write_image(const char *outpath)
 	return true;
 }
 
-bool Rbmp::isNew(PIXELS ** imageData)
+bool Rbmp::isNew(ppPIXELS imageData)
 {
 	if ((imageData[0][1].getY() != 0) ||
 			(imageData[0][1].getY() != 0) ||
@@ -384,7 +457,7 @@ bool Rbmp::isNew(PIXELS ** imageData)
 	return true;
 }
 
-bool Rbmp::writeAllData(PIXELS ** imageData)
+bool Rbmp::writeAllData(ppPIXELS imageData)
 {
 	int H = allhead->infoHead.biHeight;
 	int W = allhead->infoHead.biWidth;
@@ -452,23 +525,22 @@ int Rbmp::addColorTable(PIXELS pixel, BYTE8 & linedata)
 	return globalI - 1;
 }
 
-bool Rbmp::deal_image(PIXELS ** &imageData)
+bool Rbmp::deal_image(ppPIXELS  &imageData)
 {
 	//imageData = imageShear(imageData,true,-45.0);
 	//imageData = imageTranspose(imageData);
-	imageData = imageRevolution(imageData,bmpWidth/2,bmpHeight/2,-45);
+	//imageData = imageRevolution(imageData,bmpWidth/2,bmpHeight/2,-45);
 	//imageData = imageSpherize(imageData, bmpHeight / 2);
-	// imageData = imageZoom(imageData,0.1,0.1);
-	// imageData = imageMirror(imageData,UR);
-	// imageData = imageMove(imageData,100,100);
-	// imageData = getImage3Color(imageData,Green);
+	//imageData = imageZoom(imageData,0.5,0.5);
+	//imageData = imageMirror(imageData,UR);
+	//imageData = imageMove(imageData,100,100);
+	imageData = getImage3Color(imageData,Green);
 	return true;
 }
 
-// PIXELS** Rbmp::imageTransfer(Method method,PIXELS** imageData)
-PIXELS **Rbmp::imageMirror(PIXELS ** &imageData, Method method)
+ppPIXELS Rbmp::imageMirror(ppPIXELS &imageData, Method method)
 {
-	PIXELS **tmpimageData;
+	ppPIXELS tmpimageData;
 	if (isNew(imageData))
 	{
 		tmpimageData = imageDatadup2(allData, tmpimageData);
@@ -520,9 +592,9 @@ PIXELS **Rbmp::imageMirror(PIXELS ** &imageData, Method method)
 	return imageData;
 }
 
-PIXELS **Rbmp::getImage3Color(PIXELS ** imageData, colorType color)
+ppPIXELS Rbmp::getImage3Color(ppPIXELS  imageData, colorType color)
 {
-	PIXELS **tmpimageData;
+	ppPIXELS tmpimageData;
 	if (isNew(imageData))
 	{
 		tmpimageData = imageDatadup2(allData, tmpimageData);
@@ -568,12 +640,11 @@ PIXELS **Rbmp::getImage3Color(PIXELS ** imageData, colorType color)
 }
 
 // move the image:x>0,y>0 ->right down ;x<0 y<0 -> left up
-// PIXELS** Rbmp::imageMove(int mx,int my,PIXELS** imageData)
-PIXELS **Rbmp::imageMove(PIXELS ** &imageData, int mx, int my)
+ppPIXELS Rbmp::imageMove(ppPIXELS &imageData, int mx, int my)
 {
 #define MOVEX(Mx,x) ((Mx)>0 ? (x <= Mx) : (x > bmpWidth-1+Mx))
 #define MOVEY(My,y) ((My)>0 ? (y <= My) : (y > bmpHeight-1+My))
-	PIXELS **tmpimageData;
+	ppPIXELS tmpimageData;
 	if (isNew(imageData))
 	{
 		tmpimageData = imageDatadup2(allData, tmpimageData);
@@ -596,23 +667,23 @@ PIXELS **Rbmp::imageMove(PIXELS ** &imageData, int mx, int my)
 	return imageData;
 }
 
-PIXELS **Rbmp::imageDatadup2(PIXELS ** imageData, PIXELS ** &tmpimageData)
+ppPIXELS Rbmp::imageDatadup2(ppPIXELS imageData, ppPIXELS &tmpimageData)
 {
-	// tmpimageData = new PIXELS*[bmpWidth];
-	tmpimageData = (PIXELS **) calloc(bmpWidth, sizeof(PIXELS));
+	// tmpimageData = new pPIXELS[bmpWidth];
+	tmpimageData = (ppPIXELS)calloc(bmpWidth, sizeof(PIXELS));
 	for (int y = 0; y < bmpHeight; y++)
 	{
 		// tmpimageData[y] = new PIXELS[bmpWidth];
-		tmpimageData[y] = (PIXELS *) calloc(bmpWidth, sizeof(PIXELS));
+		tmpimageData[y] = (pPIXELS)calloc(bmpWidth, sizeof(PIXELS));
 		memcpy(tmpimageData[y], imageData[y], sizeof(PIXELS) * bmpWidth);
 	}
 	return tmpimageData;
 }
 
-PIXELS **Rbmp::imageZoom(PIXELS ** imageData, float scalex, float scaley)
+ppPIXELS Rbmp::imageZoom(ppPIXELS imageData, float scalex, float scaley)
 {
 	int lineByte;
-	PIXELS **tmpimageData;
+	ppPIXELS tmpimageData;
 	if (isNew(imageData))
 	{
 		tmpimageData = imageDatadup2(allData, tmpimageData);
@@ -662,10 +733,10 @@ PIXELS **Rbmp::imageZoom(PIXELS ** imageData, float scalex, float scaley)
 	return imageData;
 }
 
-PIXELS **Rbmp::imageTranspose(PIXELS ** imageData,bool AR)
+ppPIXELS Rbmp::imageTranspose(ppPIXELS imageData,bool AR)
 {
 	int lineByte;
-	PIXELS **tmpimageData;
+	ppPIXELS tmpimageData;
 	if (isNew(imageData))
 	{
 		tmpimageData = imageDatadup2(allData, tmpimageData);
@@ -724,10 +795,10 @@ PIXELS **Rbmp::imageTranspose(PIXELS ** imageData,bool AR)
 	return imageData;
 }
 
-PIXELS **Rbmp::imageShear(PIXELS ** imageData,bool XorY,float angle)
+ppPIXELS Rbmp::imageShear(ppPIXELS imageData,bool XorY,float angle)
 {
 	angle = D2R(angle);
-	PIXELS **tmpimageData;
+	ppPIXELS tmpimageData;
 	int nx, ny;
 	int lineByte;
 	if (isNew(imageData))
@@ -775,10 +846,10 @@ PIXELS **Rbmp::imageShear(PIXELS ** imageData,bool XorY,float angle)
 	return imageData;
 }
 
-PIXELS **Rbmp::imageRevolution(PIXELS ** imageData,int px,int py,float angle)
+ppPIXELS Rbmp::imageRevolution(ppPIXELS  imageData,int px,int py,float angle)
 {
 	angle = D2R(angle);
-	PIXELS **tmpimageData;
+	ppPIXELS tmpimageData;
 	int nx, ny;
 	if (isNew(imageData))
 	{
@@ -808,9 +879,9 @@ PIXELS **Rbmp::imageRevolution(PIXELS ** imageData,int px,int py,float angle)
 	return imageData;
 }
 
-PIXELS **Rbmp::imageSpherize(PIXELS ** imageData, float radius)
+ppPIXELS Rbmp::imageSpherize(ppPIXELS imageData, float radius)
 {
-	PIXELS **tmpimageData;
+	ppPIXELS tmpimageData;
 	int w = bmpWidth / 2;
 	int h = bmpHeight / 2;
 	int mx1, mx2, nx;
@@ -878,25 +949,52 @@ PIXELS **Rbmp::imageSpherize(PIXELS ** imageData, float radius)
 	delImageData(tmpimageData, bmpHeight);
 	return imageData;
 }
+ppPIXELS Rbmp::imageSpatialize()
+{
+	if (initSpatialize(bmppathl))
+	{
+		cout << "init bmp list image is OK!" << endl;
+		show_6path(rbmp);
+	}
+	else
+	{
+		cout << "init bmp list image is fair!" << endl;
+	}
+	map<Position,string>::iterator it;
+	for(it = rbmp.begin(); it != rbmp.end() ; ++it)
+	{
+		cout<<"key: " << it->first <<" (" << Pos2str(it->first) 
+			  << ")" << "\tvalue: " << it->second << endl;
+		bmppath = it->second;
+		fp = fopen(bmppath.c_str(), "rb");
+		if (init_image())
+		{
+			cout << "init bmp image is OK!" << endl;
+		}
+		get_image_msg();
+		deleteAll();
+	}
+	return NULL;
+}
 
-PIXELS **Rbmp::newImageData(PIXELS ** &imageData, int W, int H)
+ppPIXELS Rbmp::newImageData(ppPIXELS &imageData, int W, int H)
 {
 	// malloc some memroy
-	// imageData = new PIXELS*[W];
-	imageData = (PIXELS **) calloc(W, sizeof(PIXELS));
+	// imageData = new pPIXELS[W];
+	imageData = (ppPIXELS)calloc(W, sizeof(PIXELS));
 	// printf("new:(W,H):%d,%d\n",W,H);
 	int y;
 	for (y = 0; y < H; y++)
 	{
 		// imageData[y] = new PIXELS[W];
-		imageData[y] = (PIXELS *) calloc(W, sizeof(PIXELS));
+		imageData[y] = (pPIXELS)calloc(W, sizeof(PIXELS));
 		if (imageData[y] == NULL)
 			printf("new wrong!\n");
 	}
 	return imageData;
 }
 
-bool Rbmp::delImageData(PIXELS ** &imageData, int H)
+bool Rbmp::delImageData(ppPIXELS& imageData, int H)
 {
 	if (imageData)
 	{
@@ -956,4 +1054,40 @@ bool Rbmp::out_range_error(PIXELS pixel)
 		return true;
 	else
 		return false;
+}
+void Rbmp::show_6path(map<Position,string> pathl)
+{
+	map<Position,string>::iterator it;
+	for(it = pathl.begin(); it != pathl.end() ; ++it)
+	{
+		cout<<"key: " << it->first <<" (" << Pos2str(it->first) 
+			  << ")" << "\tvalue: " << it->second << endl;
+	}
+}
+string Rbmp::Pos2str(Position pos)
+{
+	switch(pos)
+	{
+		case Up:
+			return "Up";
+			break;
+		case Down:
+			return "Down";
+			break;
+		case Left:
+			return "Left";
+			break;
+		case Right:
+			return "Right";
+			break;
+		case Front:
+			return "Front";
+			break;
+		case Back:
+			return "Back";
+			break;
+		default:
+			return "None";
+			break;
+	}
 }
