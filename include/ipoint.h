@@ -33,6 +33,9 @@ class PIXELS
 	public:
 		int getX();
 		int getY();
+		U8  getRed();
+		U8  getGreen();
+		U8  getBlue();
 		bool getEdge();
 		RGBQUAD getRGB();
 		//binaryzation image

@@ -9,12 +9,12 @@ int main(int argc,char* argv[])
 		printf("%s usage: pic.bmp x y outpath\n",argv[0]);
 		return 0;
 	}
-	const char*path[] ={"","source/test24.bmp","source/test24.bmp","","source/test24.bmp",""};
-	//Rbmp bmp(argv[1]);
-	Rbmp bmp(path);
+	//const char*path[] ={"","source/test24.bmp","source/test24.bmp","","source/test24.bmp",""};
+	Rbmp bmp(argv[1]);
+	//Rbmp bmp(path);
 	//PIXELS tmp;
 	//tmp.setXY(atoi(argv[2]),atoi(argv[3]));
-	//bmp.get_image_msg();
+	bmp.get_image_msg();
 	//bmp.show_allData();
 	//bmp.get_pix(atoi(argv[2]),atoi(argv[3]));
 	//bmp.get_pot(tmp);
@@ -24,7 +24,8 @@ int main(int argc,char* argv[])
 	//bmp.delReadIline(line,atoi(argv[3]));
 	//输出图像的信息
 	//bmp.write_image(argv[4]);
-	bmp.imageSpatialize();
+	//bmp.imageSpatialize();
+	bmp.genHistogram();
 	cout<<endl;
 	return 0;
 }

@@ -324,6 +324,18 @@ RGBQUAD PIXELS::getRGB()
 {
 	return prgb;
 }
+U8 PIXELS::getRed()
+{
+	return prgb.rgbRed;
+}
+U8 PIXELS::getGreen()
+{
+	return prgb.rgbGreen;
+}
+U8 PIXELS::getBlue()
+{
+	return prgb.rgbBlue;
+}
 //just copy the position
 PIXELS& PIXELS::operator=(const PIXELS& pixel)
 {

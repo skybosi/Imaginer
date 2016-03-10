@@ -42,9 +42,10 @@ class Rbmp
 		string bmppath;//图像的路径
 		const char** bmppathl;//图像的路径
 		map<Position,string> rbmp;
-		BMPALLHEAD* allhead;
+		BMPALLHEAD allhead;
 		BYTE8* pBmpBuf;//读入图像数据的指针
 		ppPIXELS allData;//bmp image matrix
+		ppPIXELS imageData;
 		RGBQUAD* pColorTable;//颜色表指针
 		BITMAPFILEHEADER head;
 		BITMAPINFOHEADER infohead;
@@ -84,8 +85,6 @@ class Rbmp
 		//Init when open or read a image 
 		bool init_image();
 		//Init before create or write a image
-		bool initWimage();
-		//Init before create or write a spatializtion image
 		bool initSpatialize(const char** imagePath);
 		//Test a imageData is new or have some message
 		//just for deal with form last step
@@ -122,6 +121,8 @@ class Rbmp
 		//@ tmpimageData : destination iamge pointer
 		ppPIXELS imageDatadup2(ppPIXELS imageData,ppPIXELS& tmpimageData);
 	public://The function deal with the bmp image (Macroscopic)
+		//Function: generate the image's Histogram
+		bool     genHistogram();
 		//Function: Move the image 
 		//@ imageData : image data pointer
 		//@ mx        : The distance at x direction move 
