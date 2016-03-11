@@ -91,6 +91,8 @@ class Rbmp
 		bool isNew(ppPIXELS imageData);
 		//deal with the pixel's message is out range or not
 		bool out_range_error(PIXELS pixel);
+		//Set a image allhead message
+		bool setHead(int& lineByte,int W,int H);
 		//Write the iamge Data to a file
 		bool writeAllData(ppPIXELS imageData);
 		//show bmp image head
@@ -101,6 +103,8 @@ class Rbmp
 		void show_6path(map<Position,string> pathl);
 		//Get Position's string
 		string Pos2str(Position pos);
+		//Get colorType's string
+		string color2str(colorType color);
 		//delete/free the memory image Data after deal with
 		bool delImageData(ppPIXELS& imageData,int H);
 		//delete/free the memory image same to ~Rbmp()
@@ -122,7 +126,7 @@ class Rbmp
 		ppPIXELS imageDatadup2(ppPIXELS imageData,ppPIXELS& tmpimageData);
 	public://The function deal with the bmp image (Macroscopic)
 		//Function: generate the image's Histogram
-		bool     genHistogram();
+		bool     genHistogram(colorType color = Pricolor);
 		//Function: Move the image 
 		//@ imageData : image data pointer
 		//@ mx        : The distance at x direction move 
@@ -135,39 +139,38 @@ class Rbmp
 		//Function: get 3 Color(RGB) 
 		//@ imageData : image data pointer
 		//@ color     : The color (see enum colorType) 
-		ppPIXELS getImage3Color(ppPIXELS imageData,colorType color = Pricolor);
+		ppPIXELS getImage3Color(ppPIXELS& imageData,colorType color = Pricolor);
 		//Function: Zoom the image
 		//@ imageData : image data pointer
 		//@ scalex    : The zoom rate at x direction move
 		//@ scaley    : The zoom rate at y direction move
-		ppPIXELS imageZoom(ppPIXELS imageData,float scalex = 1.0,float scaley = 1.0);
+		ppPIXELS imageZoom(ppPIXELS& imageData,float scalex = 1.0,float scaley = 1.0);
 		//Function: Spherize the image
 		//@ imageData : image data pointer
 		//@ radius    : Spherize's radius
 		//NOTE: if radius = 0,will Adhered with bmpHeight and bmpWidth (oval)
 		//else will Adhered with a circle of radius
-		ppPIXELS imageSpherize(ppPIXELS imageData,float radius = 0.0);
+		ppPIXELS imageSpherize(ppPIXELS& imageData,float radius = 0.0);
 		//Function: Transpose the image
 		//@ imageData : image data pointer
 		//@ AR        : Antegrade(TRUE) and retrograde(FALSE)
-		ppPIXELS imageTranspose(ppPIXELS imageData,bool AR = true);
+		ppPIXELS imageTranspose(ppPIXELS& imageData,bool AR = true);
 		//Function: Revolution the image
 		//@ imageData : image data pointer
 		//@ px        : The Revolution point set x
 		//@ py        : The Revolution point set y
 		//@ angle     : The Revolution angle(+ Antegrade, - retrograde) 
-		ppPIXELS imageRevolution(ppPIXELS imageData,int px = 0,int py = 0,float angle = 90.0);
+		ppPIXELS imageRevolution(ppPIXELS& imageData,int px = 0,int py = 0,float angle = 90.0);
 		//Function: Shear the image
 		//@ imageData : image data pointer
 		//@ XorY      : Shear the at x or y direction(TRUE :x FALSE: y)
 		//@ angle     : The Shear angle(+ Up/Right, - Down/left)
-		ppPIXELS imageShear(ppPIXELS imageData,bool XorY = true,float angle = 45.0);
+		ppPIXELS imageShear(ppPIXELS& imageData,bool XorY = true,float angle = 45.0);
 		//Function: spatialize the image
 		//@ imageData : image data pointer array ,size is six
 		//  [0] : up [1] : down [2] : left [3] : right [4] : front [5] : back  
-		ppPIXELS imageSpatialize();
+		ppPIXELS imageSpatialize(string outpath);
 	public://The function deal with the bmp image (Microcosmic)
-
 
 };
 

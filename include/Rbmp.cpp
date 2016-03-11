@@ -410,14 +410,28 @@ bool Rbmp::write_image(const char *outpath)
 
 bool Rbmp::isNew(ppPIXELS imageData)
 {
-	if ((imageData[0][1].getY() != 0) ||
-			(imageData[0][1].getY() != 0) ||
-			(imageData[0][1].getEdge() != 0) ||
-			(imageData[0][1].getRGB().rgbRed != 0) ||
+	if(imageData == NULL)
+	{
+		return true;
+	}
+	if ((imageData[0][1].getY() != 0) || (imageData[0][1].getY() != 0) ||
+			(imageData[0][1].getEdge() != 0) || (imageData[0][1].getRGB().rgbRed != 0) ||
 			(imageData[0][1].getRGB().rgbGreen != 0) || (imageData[0][1].getRGB().rgbBlue != 0))
 	{
 		return false;
 	}
+	return true;
+}
+bool Rbmp::setHead(int& lineByte,int W,int H)
+{
+	if(W <= 0 || H <= 0)
+		return false;
+	allhead.infoHead.biWidth = W;
+	allhead.infoHead.biHeight = H;
+	lineByte = (W * biBitCount + 31) / 32 * 4;
+	allhead.infoHead.biSizeImage = H * lineByte;
+	allhead.bmpHead.bfSize = H * lineByte + 54;
+	printf("allhead:%p,lineByte:%d\n",&allhead,lineByte);
 	return true;
 }
 
@@ -427,6 +441,7 @@ bool Rbmp::writeAllData(ppPIXELS imageData)
 	int W = allhead.infoHead.biWidth;
 	int lineByte;
 	lineByte = (W * biBitCount + 31) / 32 * 4;
+	printf("lineByte:%d\n",lineByte);
 	BYTE8 *linedata = new BYTE8[lineByte];
 	memset(linedata, 0, lineByte);
 	if (pColorTable)
@@ -440,6 +455,7 @@ bool Rbmp::writeAllData(ppPIXELS imageData)
 	{
 		for (x = 0, k = 0; x < W; x++, k++)
 		{
+			//printf("x:%d\n",x);
 			switch (biBitCount)
 			{
 				case 24:
@@ -455,10 +471,10 @@ bool Rbmp::writeAllData(ppPIXELS imageData)
 					break;
 			}
 		}
+		//printf("???????????fpo:%p linedata:%p\n",fpo,linedata);
 		fwrite(linedata, lineByte, 1, fpo);
-		// printf("y:%d\n",y);
+		 //printf("y:%d\n",y);
 	}
-	printf("here000000:%ld\n", ftell(fpo));
 	// free memory
 	if (linedata)
 		delete[]linedata;
@@ -495,119 +511,147 @@ bool Rbmp::deal_image(ppPIXELS  &imageData)
 	//switch(Chose)
 	//{
 		//imageData = imageShear(imageData,true,-45.0);
-		//imageData = imageTranspose(imageData);
+		imageData = imageTranspose(imageData);
 		//imageData = imageRevolution(imageData,bmpWidth/2,bmpHeight/2,-45);
 		//imageData = imageSpherize(imageData, bmpHeight / 2);
 		//imageData = imageZoom(imageData,0.5,0.5);
 		//imageData = imageMirror(imageData,UR);
-		imageData = imageMove(imageData,100,100);
+		//imageData = imageMove(imageData,100,100);
 		//imageData = getImage3Color(imageData,Green);
 	//}
 	return true;
 }
-bool Rbmp::genHistogram()
+
+bool Rbmp::genHistogram(colorType color)
 {
-	int Red[256] = {0};
-	int Green[256] = {0};
-	int Blue[256] = {0};
+	if(NULL == allData)
+		return false;
+	int RED[256] = {0};
+	int GRE[256] = {0};
+	int BLU[256] = {0};
 	for (int y = 0; y < bmpHeight; y++)
 	{
 		for (int x = 0; x < bmpWidth; x++)
 		{
-			Red[allData[y][x].getRed()]++;
-			Green[allData[y][x].getGreen()]++;
-			Blue[allData[y][x].getBlue()]++;
+			RED[allData[y][x].getRed()]++;
+			GRE[allData[y][x].getGreen()]++;
+			BLU[allData[y][x].getBlue()]++;
 		}
 	}
 	float Rmax = 0,Gmax = 0,Bmax = 0;
 	for(int i = 0; i < 256; i++)
 	{
-		if(Red[i] > Rmax)
-			Rmax=Red[i];
-		if(Green[i] > Gmax)
-			Gmax=Green[i];
-		if(Blue[i] > Bmax)
-			Bmax=Blue[i];
-		//printf("%u ",Red[i]);
-		//printf("%u ",Green[i]);
-		//printf("%u\n",Blue[i]);
+		if(RED[i] > Rmax)
+			Rmax=RED[i];
+		if(GRE[i] > Gmax)
+			Gmax=GRE[i];
+		if(BLU[i] > Bmax)
+			Bmax=BLU[i];
+		//printf("i:%d R:%d G:%d B:%d\n",i,RED[i],GRE[i],BLU[i]);
 	}
-	size_t pos = bmppath.rfind(".bmp");
-	string outpath = bmppath.substr(0,pos) + "_htg.bmp";
-	printf("genHistogram :%s Rmax:%f Gmax:%f Blue:%f\n",outpath.c_str()
-			,Rmax,Gmax,Bmax);
-	fpo = fopen(outpath.c_str(),"wb");
 	//set allhead
-	int border = 3;
+	//set Histogram's frame
+	int border = 1;
 	int Lmargin = 20, Rmargin = 20;
 	int Dmargin = 20, Umargin = 20;
-	int W = 256 + border + border + Lmargin + Rmargin;
-	int H = 158 + border + border + Umargin + Dmargin;// 158 = 256*0.618 golden section
-	float Rscale = 158/Rmax;
-	float Gscale = 158/Gmax;
-	float Bscale = 158/Bmax;
-	int lineByte = 0;
-	allhead.infoHead.biWidth = W;
-	allhead.infoHead.biHeight = H;
-	lineByte = (W * biBitCount + 31) / 32 * 4;
-	allhead.infoHead.biSizeImage = H * lineByte;
-	allhead.bmpHead.bfSize = H * lineByte + 54;
-	//write allhead
-	fwrite(&allhead, 54, 1, fpo);
+	int Lb = Lmargin + border;
+	int Rb = Rmargin + border;
+	int Ub = Umargin + border;
+	int Db = Dmargin + border;
+#define Hh 158
+	int W = 255 + Lb + Rb;
+	int H = Hh + Ub + Db;// 158 = 256*0.618 golden section
+	int H_D = H - Dmargin;
+	int W_R = W - Rmargin;
+	int H_Db = H - Db;
+	int W_Rb = W - Rb;
+	float Rscale = Hh/Rmax;
+	float Gscale = Hh/Gmax;
+	float Bscale = Hh/Bmax;
+	int x, k;
+	int lineByte;
+	FILE* fpg = NULL;
+	size_t pos = bmppath.rfind(".bmp");
+	string outpath = bmppath.substr(0,pos) + color2str(color) +"_htg.bmp";
+	//printf("genHistogram :%s Rmax:%f Gmax:%f Blue:%f\n",outpath.c_str() ,Rmax,Gmax,Bmax);
+	fpg = fopen(outpath.c_str(),"wb");
+	if(setHead(lineByte,W,H))
+	{
+		//write allhead
+		fwrite(&allhead, 54, 1, fpg);
+	}
 	//write allData
 	BYTE8 *linedata = new BYTE8[lineByte];
 	memset(linedata,0,lineByte);
-	int x, k;
-	//for (int y = H - 1; y >= 0; y--)
+	bool flag = true;
 	for (int y = 0; y < H; y++)
 	{
 		for (x = 0, k = 0; x < W; x++, k++)
 		{
-			if(y < Umargin || y > H - Dmargin || 
-				 x < Lmargin || x > W - Rmargin)
+			if(y < Umargin || y > H_D || x < Lmargin || x > W_R)
 			{
-				linedata[k++] = 255;
-				linedata[k++] = 255;
-				linedata[k] = 255;
+				linedata[k++] = 255, linedata[k++] = 255, linedata[k] = 255;
 			}
-			else if((y >= Umargin && y < Umargin + border) 
-					 || (y <= H - Dmargin && y > H - Dmargin - border)
-					 || (x >= Lmargin && x < Lmargin + border)
-					 || (x >= W - Rmargin - border && x <= W - Rmargin))
+			else if((y >= Umargin && y < Ub) || (y <= H_D && y > H_Db)
+					|| (x >= Lmargin && x < Lb) || (x > W_Rb && x <= W_R))
 			{
-				linedata[k++] = 0;
-				linedata[k++] = 0;
-				linedata[k] = 0;
+				linedata[k++] = 0, linedata[k++] = 0, linedata[k] = 0;
 			}
 			else
 			{
-				printf("x:%d num: %d high: %f  y: %d\n",x-Lmargin-border,Red[x-Lmargin-border],Red[x-Lmargin-border]*Rscale,y-Dmargin-border);
-				if(Red[x-Rmargin-border]*Rscale > y-Dmargin-border)
+				switch(color)
 				{
-					linedata[k+2] = 255;
+					case Red:
+					if(RED[x-Rb]*Rscale > y-Db)
+					{
+						flag = false;
+						linedata[k+2] = 255;
+					}
+					else
+						flag = true;
+					break;
+					case Green:
+					if(GRE[x-Rb]*Gscale > y-Db)
+					{
+						flag = false;
+						linedata[k+1] = 255;
+					}
+					else
+						flag = true;
+					break;
+					case Blue:
+					if(BLU[x-Rb]*Bscale > y-Db)
+					{
+						flag = false;
+						linedata[k] = 255;
+					}
+					else
+						flag = true;
+					break;
+					default:
+					printf("NO THIS COLOR!\n");
+					break;
 				}
-				else if(Green[x-Rmargin-border]*Gscale > y-Dmargin-border)
+				if(flag)
 				{
-					linedata[k+1] = 255;
-				}
-				else if(Blue[x-Rmargin-border]*Bscale > y-Dmargin-border)
-				{
-					linedata[k] = 255;
-				}
-				else
-				{
-					linedata[k] = 255;
-					linedata[k+1] = 255;
-					linedata[k+2] = 255;
+					linedata[k] = 255, linedata[k+1] = 255, linedata[k+2] = 255;
 				}
 				k+=2;
 			}
-			//printf("x %d y %d help!\n",x,y);
 		}
-		fwrite(linedata, lineByte, 1, fpo);
+		fwrite(linedata, lineByte, 1, fpg);
 	}
+#undef  Hh
 	if (linedata)
+	{
 		delete[]linedata;
+		linedata = NULL;
+	}
+	if(fpg)
+	{
+		fclose(fpg);
+		fpg = NULL;
+	}
 	return true;
 }
 ppPIXELS Rbmp::imageMirror(ppPIXELS &imageData, Method method)
@@ -664,7 +708,7 @@ ppPIXELS Rbmp::imageMirror(ppPIXELS &imageData, Method method)
 	return imageData;
 }
 
-ppPIXELS Rbmp::getImage3Color(ppPIXELS  imageData, colorType color)
+ppPIXELS Rbmp::getImage3Color(ppPIXELS&  imageData, colorType color)
 {
 	ppPIXELS tmpimageData;
 	if (isNew(imageData))
@@ -752,9 +796,8 @@ ppPIXELS Rbmp::imageDatadup2(ppPIXELS imageData, ppPIXELS &tmpimageData)
 	return tmpimageData;
 }
 
-ppPIXELS Rbmp::imageZoom(ppPIXELS imageData, float scalex, float scaley)
+ppPIXELS Rbmp::imageZoom(ppPIXELS& imageData, float scalex, float scaley)
 {
-	int lineByte;
 	ppPIXELS tmpimageData;
 	if (isNew(imageData))
 	{
@@ -796,18 +839,14 @@ ppPIXELS Rbmp::imageZoom(ppPIXELS imageData, float scalex, float scaley)
 		// first free tmpimageData
 		delImageData(tmpimageData, bmpHeight);
 		// then set allhead
-		allhead.infoHead.biWidth = W;
-		allhead.infoHead.biHeight = H;
-		lineByte = (W * biBitCount + 31) / 32 * 4;
-		allhead.infoHead.biSizeImage = H * lineByte;
-		allhead.bmpHead.bfSize = H * lineByte + 54;
+		int lineByte;
+		setHead(lineByte,W,H);
 	}
 	return imageData;
 }
 
-ppPIXELS Rbmp::imageTranspose(ppPIXELS imageData,bool AR)
+ppPIXELS Rbmp::imageTranspose(ppPIXELS& imageData,bool AR)
 {
-	int lineByte;
 	ppPIXELS tmpimageData;
 	if (isNew(imageData))
 	{
@@ -859,26 +898,23 @@ ppPIXELS Rbmp::imageTranspose(ppPIXELS imageData,bool AR)
 	// first free tmpimageData
 	delImageData(tmpimageData, bmpHeight);
 	// then set allhead
-	allhead.infoHead.biWidth = W;
-	allhead.infoHead.biHeight = H;
-	lineByte = (W * biBitCount + 31) / 32 * 4;
-	allhead.infoHead.biSizeImage = H * lineByte;
-	allhead.bmpHead.bfSize = H * lineByte + 54;
+	int lineByte;
+	setHead(lineByte,W,H);
 	return imageData;
 }
 
-ppPIXELS Rbmp::imageShear(ppPIXELS imageData,bool XorY,float angle)
+ppPIXELS Rbmp::imageShear(ppPIXELS& imageData,bool XorY,float angle)
 {
 	angle = D2R(angle);
 	ppPIXELS tmpimageData;
 	int nx, ny;
-	int lineByte;
 	if (isNew(imageData))
 	{
 		tmpimageData = imageDatadup2(allData, tmpimageData);
 	}
 	else
 	{
+		printf("!!!!!!!!!!!\n");
 		tmpimageData = imageDatadup2(imageData, tmpimageData);
 	}
 	int H = XorY ? bmpHeight : (int)(bmpHeight + bmpWidth * ABS(tan(angle)));
@@ -909,16 +945,15 @@ ppPIXELS Rbmp::imageShear(ppPIXELS imageData,bool XorY,float angle)
 				imageData[y][x] = tmpimageData[ny][nx];
 		}
 	}	// then set allhead
-	allhead.infoHead.biWidth = W;
-	allhead.infoHead.biHeight = H;
-	lineByte = (W * biBitCount + 31) / 32 * 4;
-	allhead.infoHead.biSizeImage = H * lineByte;
-	allhead.bmpHead.bfSize = H * lineByte + 54;
+	//delImageData(imageData,H);
+	int lineByte;
+	setHead(lineByte,W,H);
 	delImageData(tmpimageData, bmpHeight);
+	printf("INNNNN: H:%d %p\n",H,imageData);
 	return imageData;
 }
 
-ppPIXELS Rbmp::imageRevolution(ppPIXELS  imageData,int px,int py,float angle)
+ppPIXELS Rbmp::imageRevolution(ppPIXELS&  imageData,int px,int py,float angle)
 {
 	angle = D2R(angle);
 	ppPIXELS tmpimageData;
@@ -938,8 +973,6 @@ ppPIXELS Rbmp::imageRevolution(ppPIXELS  imageData,int px,int py,float angle)
 
 			nx = (x - px) * cos(angle) - (y - py) * sin(angle) + px;
 			ny = (x - px) * sin(angle) + (y - py) * cos(angle) + py;
-			//x0= (x - rx0)*cos(a)- (y - ry0)*sin(a) + rx0 ;
-			//y0= (x - rx0)*sin(a) + (y - ry0)*cos(a) + ry0 ;
 			//printf("angle: %f cos:%f X:%d nx:%d\t Y:%d ny:%d\n",angle, cos(angle),x,nx,y,ny);
 			if (nx < 0 || ny < 0 || nx >= bmpWidth || ny >= bmpHeight)
 				imageData[y][x].setRGB(255, 255, 255);
@@ -951,7 +984,7 @@ ppPIXELS Rbmp::imageRevolution(ppPIXELS  imageData,int px,int py,float angle)
 	return imageData;
 }
 
-ppPIXELS Rbmp::imageSpherize(ppPIXELS imageData, float radius)
+ppPIXELS Rbmp::imageSpherize(ppPIXELS& imageData, float radius)
 {
 	ppPIXELS tmpimageData;
 	int w = bmpWidth / 2;
@@ -1021,51 +1054,110 @@ ppPIXELS Rbmp::imageSpherize(ppPIXELS imageData, float radius)
 	delImageData(tmpimageData, bmpHeight);
 	return imageData;
 }
-ppPIXELS Rbmp::imageSpatialize()
+ppPIXELS Rbmp::imageSpatialize(string outpath)
 {
 	if (initSpatialize(bmppathl))
 	{
 		cout << "init bmp list image is OK!" << endl;
-		show_6path(rbmp);
+		//show_6path(rbmp);
 	}
 	else
 	{
 		cout << "init bmp list image is fair!" << endl;
+		return NULL;
 	}
 	map<Position,string>::iterator it;
-	ppPIXELS imageData[3];
+	ppPIXELS imageData[6] = {NULL};
 	int i;
+	int LH = 0,RH = 0, UH = 0,DH = 0, FH = 0,BH = 0, H = 0,W = 0;
+	size_t pos = bmppath.rfind(".bmp");
+	if(pos == string::npos)
+		outpath += "_Spl.bmp";
+	fpo = fopen(outpath.c_str(), "wb");
 	for(i = 0,it = rbmp.begin(); it != rbmp.end() ; ++it,++i)
 	{
 		cout<<"key: " << it->first <<" (" << Pos2str(it->first) 
 			<< ")" << "\tvalue: " << it->second << endl;
 		bmppath = it->second;
-		fp = fopen(bmppath.c_str(), "rb");
+		fpo = fopen(bmppath.c_str(), "rb");
 		if (init_image())
 		{
 			cout << "init bmp image is OK!" << endl;
 		}
-		imageData[i] = imageDatadup2(allData,imageData[i]);
+		printf("it->first:%d\n",it->first);
 		switch(it->first)
 		{
 			case Left:
-				imageShear(imageData[i],false,45.0);
+				imageShear(imageData[Left],false,45.0);
+				H = allhead.infoHead.biHeight;
+				LH = H;
 				break;
 			case Right:
-				imageShear(imageData[i],false,-45.0);
+				imageShear(imageData[Right],false,-45.0);
+				H = allhead.infoHead.biHeight;
+				RH = H;
 				break;
 			case Up:
-				imageShear(imageData[i],true,45.0);
+				imageShear(imageData[Up],true,45.0);
+				W = allhead.infoHead.biWidth;
+				UH = allhead.infoHead.biHeight;
 				break;
 			case Down:
-				imageShear(imageData[i],true,-45.0);
+				imageShear(imageData[Down],true,-45.0);
+				W = allhead.infoHead.biWidth;
+				DH = allhead.infoHead.biHeight;
+				break;
+			case Front:
+				FH = allhead.infoHead.biHeight;
+				break;
+			case Back:
+				BH = allhead.infoHead.biHeight;
 				break;
 			default:	
+				printf("why:%d\n",it->first);
 				break;
 		}
-		printf("shear is ok...\n");
-		writeAllData(imageData[i]);
+		printf("shear is ok... W:%d H:%d\n",W,H);
+		get_image_msg();
 		deleteAll();
+	}
+	//write image
+	int lineByte = 0;
+	setHead(lineByte,W,H);
+	ppPIXELS newImage = NULL;
+	newImageData(newImage,W,H);
+	printf("imageData:%p,fpo:%p",imageData[Down],fpo);
+	//imageData[Down][0][0].show_PIXELS();
+	writeAllData(newImage);
+	if(LH)
+	{
+		printf("Lwwww%d\n",LH);
+		delImageData(imageData[Left],LH);
+	}
+	if(RH)
+	{
+		printf("Rwwww%d\n",RH);
+		delImageData(imageData[Right],RH);
+	}
+	if(UH)
+	{
+		printf("Uwwww%d\n",UH);
+		delImageData(imageData[Up],UH);
+	}
+	if(DH)
+	{
+		printf("Dwwww%d ",DH);
+		delImageData(imageData[Down],DH);
+	}
+	if(FH)
+	{
+		printf("Fwwww%d\n",FH);
+		delImageData(imageData[Front],FH);
+	}
+	if(BH)
+	{
+		printf("Bwwww%d\n",BH);
+		delImageData(imageData[Back],BH);
 	}
 	return NULL;
 }
@@ -1089,6 +1181,7 @@ ppPIXELS Rbmp::newImageData(ppPIXELS &imageData, int W, int H)
 
 bool Rbmp::delImageData(ppPIXELS& imageData, int H)
 {
+	printf("H:%d %p\n",H,imageData);
 	if (imageData)
 	{
 		// printf("del:%d\n",H);
@@ -1101,6 +1194,10 @@ bool Rbmp::delImageData(ppPIXELS& imageData, int H)
 		// delete []imageData;
 		free(imageData);
 		imageData = NULL;
+	}
+	else
+	{
+		printf("imageData = NULL\n");
 	}
 	return true;
 }
@@ -1181,6 +1278,27 @@ string Rbmp::Pos2str(Position pos)
 			break;
 		default:
 			return "None";
+			break;
+	}
+}
+string Rbmp::color2str(colorType color)
+{
+	switch(color)
+	{
+		case Pricolor:
+			return "All";
+			break;
+		case Red:
+			return "Red";
+			break;
+		case Green:
+			return "Green";
+			break;
+		case Blue:
+			return "Blue";
+			break;
+		default:
+			return "all";
 			break;
 	}
 }
