@@ -61,7 +61,7 @@ void PIXPOT::show_PIXPOT8diffRGB(RGBQUAD diffRgb)
 }
 PIXPOT::PIXPOT()
 {
-	memset(this,0,sizeof(PIXPOT));
+	//memset(this,0,sizeof(PIXPOT));
 }
 void PIXPOT::show_PIXPOT()
 {
@@ -243,9 +243,9 @@ PIXELS PIXELS::setRGB(PIXELS ppot)
 	return *this;
 }
 
-PIXELS::PIXELS()
+PIXELS::PIXELS():pix_X(0),pix_Y(0),rgb_threshold(128),bEdge(false)
 {
-	memset(this,0,sizeof(PIXELS));
+	memset(&prgb,0,sizeof(RGBQUAD));
 	//rgb_threshold  = 0;
 }
 bool PIXELS::isEdge(PIXELS& pixel, int W,int H)

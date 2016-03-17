@@ -45,10 +45,11 @@ class Rbmp
 		BMPALLHEAD allhead;
 		BYTE8* pBmpBuf;//读入图像数据的指针
 		ppPIXELS allData;//bmp image matrix
-		ppPIXELS imageData;
+		//ppPIXELS imageData;
 		RGBQUAD* pColorTable;//颜色表指针
 		BITMAPFILEHEADER head;
 		BITMAPINFOHEADER infohead;
+		RGBQUAD backGround;
 	public:
 		~Rbmp();
 		Rbmp(const char* bmpname);
@@ -72,16 +73,26 @@ class Rbmp
 		//Test a line's Boundary
 		bool isBoundary(pPIXELS lineppot);
 		//deal with image with a series of function
-		bool deal_image(ppPIXELS& imageData);
+		//@ dealType: deal with the image's type way
+		bool deal_image(const char* dealType);
 		//Write or Create the new image message into a file
 		//Get a new image
 		//@ outpath : detail output path
-		bool write_image(const char* outpath);
+		//@ dealType: deal with the image's type way
+		bool write_image(const char* outpath,const char* dealType);
 		//Read serval rows from a line
 		//@ beginY : Begin line number
 		//@ rows   : Read 'rows' lines
-		ppPIXELS readIline(int beginY=0,int rows=0);
+		ppPIXELS readNline(int beginY=0,int rows=0);
+		//set BackGround with RGBQUAD
+		bool setBackground(RGBQUAD rgb);
+		//set BackGround with R,G,B
+		bool setBackground(U8 r,U8 g,U8 b);
 	private:
+		//alike background or not,Mean and the same color as 
+		//the background color 
+		//NOTE: But not necessarily background
+		bool alikeBackground(PIXELS pixel);
 		//Init when open or read a image 
 		bool init_image();
 		//Init before create or write a image
@@ -92,9 +103,9 @@ class Rbmp
 		//deal with the pixel's message is out range or not
 		bool out_range_error(PIXELS pixel);
 		//Set a image allhead message
-		bool setHead(int& lineByte,int W,int H);
+		bool setHead(BMPALLHEAD& allhead,int W,int H);
 		//Write the iamge Data to a file
-		bool writeAllData(ppPIXELS imageData);
+		bool writeAllData(ppPIXELS& imageData);
 		//show bmp image head
 		void show_bmp_head(BITMAPFILEHEADER &head);
 		//show bmp image info
@@ -109,10 +120,10 @@ class Rbmp
 		bool delImageData(ppPIXELS& imageData,int H);
 		//delete/free the memory image same to ~Rbmp()
 		bool deleteAll();
-		//delete/free the memory image When call readIline
+		//delete/free the memory image When call readNline
 		//@ lineppot : the pointer with the some line data
 		//@ rows     : the line number
-		void delReadIline(ppPIXELS lineppot,int rows);
+		void delreadNline(ppPIXELS lineppot,int rows);
 		//Add or Create ColorTable if the bmp is 256 or smaller (NOT WORK)
 		int addColorTable(PIXELS pixel,BYTE8& linedata);
 		//new/malloc some memory to a save the image data will be deal with
@@ -128,46 +139,37 @@ class Rbmp
 		//Function: generate the image's Histogram
 		bool     genHistogram(colorType color = Pricolor);
 		//Function: Move the image 
-		//@ imageData : image data pointer
 		//@ mx        : The distance at x direction move 
 		//@ my        : The distance at y direction move
-		ppPIXELS imageMove(ppPIXELS& imageData,int mx = 0,int my = 0);
+		ppPIXELS imageMove(int mx = 0,int my = 0);
 		//Function: Mirror the image
-		//@ imageData : image data pointer
 		//@ method    : Mirror method (see enum Method)
-		ppPIXELS imageMirror(ppPIXELS& imageData,Method method = NONE);
+		ppPIXELS imageMirror(Method method = NONE);
 		//Function: get 3 Color(RGB) 
-		//@ imageData : image data pointer
 		//@ color     : The color (see enum colorType) 
-		ppPIXELS getImage3Color(ppPIXELS& imageData,colorType color = Pricolor);
+		ppPIXELS getImage3Color(colorType color = Pricolor);
 		//Function: Zoom the image
-		//@ imageData : image data pointer
 		//@ scalex    : The zoom rate at x direction move
 		//@ scaley    : The zoom rate at y direction move
-		ppPIXELS imageZoom(ppPIXELS& imageData,float scalex = 1.0,float scaley = 1.0);
+		ppPIXELS imageZoom(float scalex = 1.0,float scaley = 1.0);
 		//Function: Spherize the image
-		//@ imageData : image data pointer
 		//@ radius    : Spherize's radius
 		//NOTE: if radius = 0,will Adhered with bmpHeight and bmpWidth (oval)
 		//else will Adhered with a circle of radius
-		ppPIXELS imageSpherize(ppPIXELS& imageData,float radius = 0.0);
+		ppPIXELS imageSpherize(float radius = 0.0);
 		//Function: Transpose the image
-		//@ imageData : image data pointer
 		//@ AR        : Antegrade(TRUE) and retrograde(FALSE)
-		ppPIXELS imageTranspose(ppPIXELS& imageData,bool AR = true);
+		ppPIXELS imageTranspose(bool AR = true);
 		//Function: Revolution the image
-		//@ imageData : image data pointer
 		//@ px        : The Revolution point set x
 		//@ py        : The Revolution point set y
 		//@ angle     : The Revolution angle(+ Antegrade, - retrograde) 
-		ppPIXELS imageRevolution(ppPIXELS& imageData,int px = 0,int py = 0,float angle = 90.0);
+		ppPIXELS imageRevolution(int px = 0,int py = 0,float angle = 90.0);
 		//Function: Shear the image
-		//@ imageData : image data pointer
 		//@ XorY      : Shear the at x or y direction(TRUE :x FALSE: y)
 		//@ angle     : The Shear angle(+ Up/Right, - Down/left)
-		ppPIXELS imageShear(ppPIXELS& imageData,bool XorY = true,float angle = 45.0);
+		ppPIXELS imageShear(bool XorY = true,float angle = 45.0);
 		//Function: spatialize the image
-		//@ imageData : image data pointer array ,size is six
 		//  [0] : up [1] : down [2] : left [3] : right [4] : front [5] : back  
 		ppPIXELS imageSpatialize(string outpath);
 	public://The function deal with the bmp image (Microcosmic)
