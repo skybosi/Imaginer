@@ -5,12 +5,16 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdexcept>
+#include <vector>
 #include <map>
 #include "ibmp.h"
 #include "image.h"
 #include "ipoint.h"
 typedef PIXELS* pPIXELS;
 typedef pPIXELS* ppPIXELS;
+
+typedef vector<PIXELS> vPIXELS;
+typedef vector<vPIXELS> vvPIXELS;
 using namespace std;
 //class Rbmp: public Image
 class Rbmp
@@ -43,13 +47,12 @@ class Rbmp
 		const char** bmppathl;//图像的路径
 		map<Position,string> rbmp;
 		BMPALLHEAD allhead;
-		BYTE8* pBmpBuf;//读入图像数据的指针
 		ppPIXELS allData;//bmp image matrix
-		//ppPIXELS imageData;
 		RGBQUAD* pColorTable;//颜色表指针
 		BITMAPFILEHEADER head;
 		BITMAPINFOHEADER infohead;
 		RGBQUAD backGround;
+		vvPIXELS boundarys;
 	public:
 		~Rbmp();
 		Rbmp(const char* bmpname);
@@ -71,15 +74,15 @@ class Rbmp
 		//about (x,y), RGB value, isEdge 
 		void show_allData();
 		//Test a line's Boundary
-		bool isBoundary(pPIXELS lineppot);
+		bool isBoundaryPoint(PIXELS pot);
 		//deal with image with a series of function
 		//@ dealType: deal with the image's type way
-		bool deal_image(const char* dealType);
+		bool deal_image(const char* dealType = NULL);
 		//Write or Create the new image message into a file
 		//Get a new image
 		//@ outpath : detail output path
 		//@ dealType: deal with the image's type way
-		bool write_image(const char* outpath,const char* dealType);
+		bool write_image(const char* outpath,const char* dealType = NULL);
 		//Read serval rows from a line
 		//@ beginY : Begin line number
 		//@ rows   : Read 'rows' lines
@@ -92,7 +95,15 @@ class Rbmp
 		//alike background or not,Mean and the same color as 
 		//the background color 
 		//NOTE: But not necessarily background
-		bool alikeBackground(PIXELS pixel);
+		inline bool alikeBackground(PIXELS pixel);
+		//alike background or not,Mean and the same color as 
+		//the background color 
+		//NOTE: But not necessarily background
+		inline bool alikeBackground(RGBQUAD rgb);
+		//alike background or not,Mean and the same color as 
+		//the background color 
+		//NOTE: But not necessarily background
+		inline bool alikeBackground(int x,int y);
 		//Init when open or read a image 
 		bool init_image();
 		//Init before create or write a image
@@ -135,7 +146,11 @@ class Rbmp
 		//@ imageData    : source image pointer
 		//@ tmpimageData : destination iamge pointer
 		ppPIXELS imageDatadup2(ppPIXELS imageData,ppPIXELS& tmpimageData);
+		//
+		bool isEdge(int x,int y);
 	public://The function deal with the bmp image (Macroscopic)
+		//Function: generate the image's bar diagram 
+		bool     genBardiagram(colorType color = Pricolor);
 		//Function: generate the image's Histogram
 		bool     genHistogram(colorType color = Pricolor);
 		//Function: Move the image 
@@ -173,6 +188,9 @@ class Rbmp
 		//  [0] : up [1] : down [2] : left [3] : right [4] : front [5] : back  
 		ppPIXELS imageSpatialize(string outpath);
 	public://The function deal with the bmp image (Microcosmic)
+		//Gets the border(boundary) line
+		void getBoundaryLine();
+		void trackDown(PIXELS startPoint);
 
 };
 

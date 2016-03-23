@@ -71,5 +71,9 @@ class PIXPOT
 		PIXELS* get_pos8(PIXELS pixel,PIXELS* pos8,int W,int H);
 		//set the right point postion
 		PIXPOT set_pots8(PIXELS* pos8);
+		//get the diff value 4 side point
+		RGBQUAD get_diff4s(int indexs);
+		//get the diff value 4 angle point
+		RGBQUAD get_diff4a(int indexa);
 };
 #endif // ipoint.h :[]

@@ -6,7 +6,7 @@
 #define D2R(D) D*PI/180
 #define OUTRANGE(P) ((P > 255) || (P < 0))
 static int globalI = 0;
-Rbmp::Rbmp(const char *bmpname):fp(NULL), fpo(NULL), bmppath(bmpname),pBmpBuf(NULL), allData(NULL), pColorTable(NULL)
+Rbmp::Rbmp(const char *bmpname):fp(NULL), fpo(NULL), bmppath(bmpname), allData(NULL), pColorTable(NULL)
 {
 	// 二进制读方式打开指定的图像文件
 	fp = fopen(bmppath.c_str(), "rb");
@@ -21,7 +21,7 @@ Rbmp::Rbmp(const char *bmpname):fp(NULL), fpo(NULL), bmppath(bmpname),pBmpBuf(NU
 	}
 	cout << "create a Rbmp ....\n" << endl;
 }
-Rbmp::Rbmp(const char **bmpnamel):fp(NULL), fpo(NULL),bmppathl(bmpnamel),pBmpBuf(NULL),allData(NULL),pColorTable(NULL)
+Rbmp::Rbmp(const char **bmpnamel):fp(NULL), fpo(NULL),bmppathl(bmpnamel),allData(NULL),pColorTable(NULL)
 {
 	cout << "create a Rbmp list ....\n" << endl;
 }
@@ -129,6 +129,27 @@ bool Rbmp::alikeBackground(PIXELS pixel)
 	else
 		return false;
 }
+bool Rbmp::alikeBackground(int x,int y)
+{
+	;
+	RGBQUAD rgb = get_pix(x,y).getRGB();
+	if(!(rgb.rgbRed ^ backGround.rgbRed) &&
+		 !(rgb.rgbGreen ^ backGround.rgbGreen) &&
+		 !(rgb.rgbBlue ^ backGround.rgbBlue))
+		return true;
+	else
+		return false;
+}
+
+bool Rbmp::alikeBackground(RGBQUAD rgb)
+{
+	if(!(rgb.rgbRed ^ backGround.rgbRed) &&
+		 !(rgb.rgbGreen ^ backGround.rgbGreen) &&
+		 !(rgb.rgbBlue ^ backGround.rgbBlue))
+		return true;
+	else
+		return false;
+}
 
 bool Rbmp::initSpatialize(const char** imagePath)
 {
@@ -150,11 +171,6 @@ bool Rbmp::initSpatialize(const char** imagePath)
 
 Rbmp::~Rbmp()
 {
-	if (pBmpBuf)
-	{
-		delete[]pBmpBuf;
-		pBmpBuf = NULL;
-	}
 	if (pColorTable && biBitCount == 8)
 	{
 		delete[]pColorTable;
@@ -185,11 +201,6 @@ Rbmp::~Rbmp()
 }
 bool Rbmp::deleteAll()
 {
-	if (pBmpBuf)
-	{
-		delete[]pBmpBuf;
-		pBmpBuf = NULL;
-	}
 	if (pColorTable && biBitCount == 8)
 	{
 		delete[]pColorTable;
@@ -231,7 +242,7 @@ int Rbmp::getH()
 
 PIXELS Rbmp::get_pix(int x, int y)
 {
-	printf("In get_pix(x,y)\n");
+	//printf("In get_pix(x,y)\n");
 	PIXELS ppot;
 	ppot.setXY(x, y);
 	try
@@ -241,13 +252,15 @@ PIXELS Rbmp::get_pix(int x, int y)
 	}
 	catch(...)
 	{
-		printf("In get_pix(pixel) ,You set (x,y):(%d,%d) is out Range!\n", ppot.getX(),
-				ppot.getY());
-		return ppot;
+		printf("In get_pix(pixel) ,You set (x,y):(%d,%d) is out Range!\n", ppot.getX(), ppot.getY());
+		//return ppot;
 	}
 	ppot.setRGB(allData[y][x]);
-	ppot.show_PIXELS();
-	printf("\n");
+	if(alikeBackground(ppot))
+	{
+		ppot.show_PIXELS();
+		printf("\n");
+	}
 	return ppot;
 }
 
@@ -263,7 +276,7 @@ PIXELS Rbmp::get_pix(PIXELS pixel)
 	{
 		printf("In get_pix(pixel) ,You set (x,y):(%d,%d) is out Range!\n", pixel.getX(),
 				pixel.getY());
-		return ppot;
+		//return ppot;
 	}
 	ppot.setXY(pixel.getX(), pixel.getY());
 	ppot.setRGB(allData[pixel.getY()][pixel.getX()]);
@@ -285,7 +298,7 @@ PIXPOT Rbmp::get_pot(PIXELS pixel)
 	catch(...)
 	{
 		printf("In get_pot ,You set (x,y):(%d,%d) is out Range!\n", pixel.getX(), pixel.getY());
-		return pots8;
+		//return pots8;
 	}
 	pos8 = new PIXELS[9];
 	/* 
@@ -323,20 +336,124 @@ void Rbmp::show_allData()
 		}
 	}
 }
-
-// is Boundary 
-// PIXPOT *lineppot = new PIXPOT[bmpWidth];
-bool Rbmp::isBoundary(pPIXELS  lineppot)
+void Rbmp::getBoundaryLine()
 {
-	PIXPOT pots8;
-	int x = 0;
-	for (; x < bmpWidth; x++)
+	for (int y = 0; y < bmpHeight - 1; y++)
 	{
-		pots8 = get_pot(lineppot[x]);
-		printf("=======================\n");
+		for (int x = 0; x < bmpWidth; x++)
+		{
+			//if(isBoundaryPoint(allData[y][x]))
+			if(alikeBackground(allData[y][x]))
+			{
+				//start track down by following clues(顺藤摸瓜)
+				trackDown(allData[y][x]);
+				break;
+			}
+		}
 	}
-
-	return true;
+}
+//start track down by following clues(顺藤摸瓜)
+void Rbmp::trackDown(PIXELS startPoint)
+{
+	printf("Starting track down by following clues(顺藤摸瓜)...\n");
+	int sx = startPoint.getX();
+	int x = sx;
+	int sy = startPoint.getY();
+	int y = sy++;
+	vPIXELS boundaryline;
+	boundaryline.push_back(startPoint);
+	//startPoint.setRGB(0,0,0);
+	int flag = true;
+	while ((x != sx || y != sy) && !isEdge(x, y))
+	//while (1)
+	{
+		/*
+		if(x == sx && y == sy)
+			break;
+		if(isEdge(x,y))
+			break;*/
+		flag = true;
+		//向下(down)
+		while(flag)
+		{
+			if(isEdge(x,y))
+				break;
+			if(alikeBackground(x, y++))
+			{
+				get_pix(x,y).setRGB(0,0,0);
+				boundaryline.push_back(get_pix(x,y));
+				while (alikeBackground(x--, y))
+				{
+					get_pix(x,y).setRGB(0,0,0);
+					boundaryline.push_back(get_pix(x,y));
+				}
+				x++;
+			}
+			else
+			{
+				y--;
+				while (alikeBackground(x++, y))
+				{
+					get_pix(x,y).setRGB(0,0,0);
+					boundaryline.push_back(get_pix(x,y));
+					if (alikeBackground(x, y++))
+					{
+						get_pix(x,y).setRGB(0,0,0);
+						boundaryline.push_back(get_pix(x,y));
+						break;
+					}
+					else 
+						flag = false;
+				}
+			}
+		}
+		//向上(up)
+		while(flag)
+		{
+			if(isEdge(x,y))
+				break;
+			if (alikeBackground(x, y--))
+			{
+				get_pix(x,y).setRGB(0,0,0);
+				boundaryline.push_back(get_pix(x,y));
+				while (!alikeBackground(x++, y))
+				{
+					get_pix(x,y).setRGB(0,0,0);
+					boundaryline.push_back(get_pix(x,y));
+				}
+				x--;
+			}
+			else
+			{
+				y++;
+				while (alikeBackground(x--, y))
+				{
+					get_pix(x,y).setRGB(0,0,0);
+					boundaryline.push_back(get_pix(x,y));
+					if (alikeBackground(x, y--))
+					{
+						get_pix(x,y).setRGB(0,0,0);
+						boundaryline.push_back(get_pix(x,y));
+						break;
+					}
+					else 
+						flag = false;
+				}
+			}
+		}
+	}
+}
+// is Boundary 
+bool Rbmp::isBoundaryPoint(PIXELS pot)
+{
+	if(!alikeBackground(pot))
+	{
+		return false;
+	}
+	else
+	{
+		return true;
+	}
 }
 
 /* 函数名称readNline() */
@@ -351,7 +468,7 @@ ppPIXELS Rbmp::readNline(int beginY, int rows)
 	catch(...)
 	{
 		printf("In readNline ,You set beginY:%d is out Range!\n", beginY);
-		return NULL;
+		//return NULL;
 	}
 	if (rows == 0)
 	{
@@ -570,17 +687,30 @@ bool Rbmp::deal_image(const char* dealType)
 				break;
 			case 'H':
 				cout << "  -H     genHistogram    : get a image's 3(R,G,B) color Histogram\n";
+				genBardiagram(Red);
+				genBardiagram(Green);
+				genBardiagram(Blue);
+				genBardiagram();
+				break;
+			case 'B':
+				cout << "  -B     genBardiagram   : get a image's 3(R,G,B) color Bar diagram\n";
 				genHistogram(Red);
+				genHistogram(Green);
+				genHistogram(Blue);
+				genHistogram();
 				break;
 			default:
+				printf("Not deal with!\n");
 				break;
 		}
 		dealType++;
 	}
+	if(!dealType)
+		printf("Not deal with!\n");
 	return true;
 }
 
-bool Rbmp::genHistogram(colorType color)
+bool Rbmp::genBardiagram(colorType color)
 {
 	if(NULL == allData)
 	{
@@ -638,7 +768,7 @@ bool Rbmp::genHistogram(colorType color)
 	size_t pos = bmppath.rfind(".bmp");
 	string outpath;
 	if(pos != string::npos)
-		outpath = bmppath.substr(0,pos) + color2str(color) +"_htg.bmp";
+		outpath = bmppath.substr(0,pos) + color2str(color) +"_bar.bmp";
 	else
 		outpath = bmppath + color2str(color) +"_htg.bmp";
 	//printf("genHistogram :%s Rmax:%f Gmax:%f Blue:%f\n",outpath.c_str() ,Rmax,Gmax,Bmax);
@@ -701,6 +831,177 @@ bool Rbmp::genHistogram(colorType color)
 					break;
 					case Pricolor:
 					if(ALL[x-Rb]*Ascale > y-Db)
+					{
+						flag = false;
+						linedata[k] = 57,linedata[k+1] = 77,linedata[k+2] = 118;
+					}
+					else
+						flag = true;
+					break;
+					default:
+					printf("NO THIS COLOR!\n");
+					break;
+				}
+				if(flag)
+				{
+					linedata[k] = 255, linedata[k+1] = 255, linedata[k+2] = 255;
+				}
+				k+=2;
+			}
+		}
+		fwrite(linedata, lineByte, 1, fpg);
+	}
+#undef  Hh
+	if (linedata)
+	{
+		delete[]linedata;
+		linedata = NULL;
+	}
+	if(fpg)
+	{
+		fclose(fpg);
+		fpg = NULL;
+	}
+	return true;
+}
+bool Rbmp::genHistogram(colorType color)
+{
+	if(NULL == allData)
+	{
+		printf("In %s allData is NULL\n",__FUNCTION__);
+		return false;
+	}
+	float PIXELSCOUNT = bmpWidth * bmpHeight;
+	int RED[256] = {0};
+	float FRED[256] = {0};
+	int GRE[256] = {0};
+	float FGRE[256] = {0};
+	int BLU[256] = {0};
+	float FBLU[256] = {0};
+	int ALL[256] = {0};
+	float FALL[256] = {0};
+	for (int y = 0; y < bmpHeight; y++)
+	{
+		for (int x = 0; x < bmpWidth; x++)
+		{
+			RED[allData[y][x].getRed()]++;
+			GRE[allData[y][x].getGreen()]++;
+			BLU[allData[y][x].getBlue()]++;
+		}
+	}
+	for(int i = 0; i < 256; i++)
+	{
+		FRED[i] = RED[i] / PIXELSCOUNT;
+		FGRE[i] = GRE[i] / PIXELSCOUNT;
+		FBLU[i] = BLU[i] / PIXELSCOUNT;
+		ALL[i] = RED[i] + GRE[i] + BLU[i];
+		FALL[i] = ALL[i] / PIXELSCOUNT;
+		//FALL[i] = FRED[i] + FGRE[i] + FBLU[i];
+		//printf("i:%d R:%d(%f) G:%d(%f) B:%d(%f)\n",i,RED[i],FRED[i],GRE[i],FGRE[i],BLU[i],FBLU[i]);
+		printf("%d %d %d %d %d\n",i,RED[i],GRE[i],BLU[i],ALL[i]);
+	}
+	float Rmax = 0,Gmax = 0,Bmax = 0,Amax = 0;
+	for(int i = 0; i < 256; i++)
+	{
+		if(FRED[i] > Rmax)
+			Rmax=FRED[i];
+		if(FGRE[i] > Gmax)
+			Gmax=FGRE[i];
+		if(FBLU[i] > Bmax)
+			Bmax=FBLU[i];
+	}
+	Amax  = Rmax + Gmax + Bmax;
+	printf("PIXELSCOUNT：%f\n",PIXELSCOUNT);
+	printf("R:%f G:%f B:%f A:%f\n",Rmax,Gmax,Bmax,Amax);
+	//set allhead
+	//set Histogram's frame
+	int border = 1;
+	int Lmargin = 20, Rmargin = 20;
+	int Dmargin = 20, Umargin = 20;
+	int Lb = Lmargin + border;
+	int Rb = Rmargin + border;
+	int Ub = Umargin + border;
+	int Db = Dmargin + border;
+#define Hh 158
+	int W = 255 + Lb + Rb;
+	int H = Hh + Ub + Db;// 158 = 256*0.618 golden section
+	int H_D = H - Dmargin;
+	int W_R = W - Rmargin;
+	int H_Db = H - Db;
+	int W_Rb = W - Rb;
+	float Rscale = Hh/Rmax;
+	float Gscale = Hh/Gmax;
+	float Bscale = Hh/Bmax;
+	float Ascale = Hh/Amax;
+	printf("R:%f G:%f B:%f A:%f\n",Rscale,Gscale,Bscale,Ascale);
+	int x, k;
+	FILE* fpg = NULL;
+	size_t pos = bmppath.rfind(".bmp");
+	string outpath;
+	if(pos != string::npos)
+		outpath = bmppath.substr(0,pos) + color2str(color) +"_htg.bmp";
+	else
+		outpath = bmppath + color2str(color) +"_htg.bmp";
+	//printf("genHistogram :%s Rmax:%f Gmax:%f Blue:%f\n",outpath.c_str() ,Rmax,Gmax,Bmax);
+	fpg = fopen(outpath.c_str(),"wb");
+	BMPALLHEAD HallHead;
+	memcpy(&HallHead,&allhead,sizeof(BMPALLHEAD));
+	if(setHead(HallHead,W,H))
+	{
+		fwrite(&HallHead, 54, 1, fpg);
+	}
+	int lineByte;
+	lineByte = (W * biBitCount + 31) / 32 * 4;
+	//write allData
+	BYTE8 *linedata = new BYTE8[lineByte];
+	memset(linedata,0,lineByte);
+	bool flag = true;
+	for (int y = 0; y < H; y++)
+	{
+		for (x = 0, k = 0; x < W; x++, k++)
+		{
+			if(y < Umargin || y > H_D || x < Lmargin || x > W_R)
+			{
+				linedata[k++] = 255, linedata[k++] = 255, linedata[k] = 255;
+			}
+			else if((y >= Umargin && y < Ub) || (y <= H_D && y > H_Db)
+					|| (x >= Lmargin && x < Lb) || (x > W_Rb && x <= W_R))
+			{
+				linedata[k++] = 0, linedata[k++] = 0, linedata[k] = 0;
+			}
+			else
+			{
+				switch(color)
+				{
+					case Red:
+					if(FRED[x-Rb]*Rscale > y-Db)
+					{
+						flag = false;
+						linedata[k+2] = 255;
+					}
+					else
+						flag = true;
+					break;
+					case Green:
+					if(FGRE[x-Rb]*Gscale > y-Db)
+					{
+						flag = false;
+						linedata[k+1] = 255;
+					}
+					else
+						flag = true;
+					break;
+					case Blue:
+					if(FBLU[x-Rb]*Bscale > y-Db)
+					{
+						flag = false;
+						linedata[k] = 255;
+					}
+					else
+						flag = true;
+					break;
+					case Pricolor:
+					if(FALL[x-Rb]*Ascale > y-Db)
 					{
 						flag = false;
 						linedata[k] = 57,linedata[k+1] = 77,linedata[k+2] = 118;
@@ -925,28 +1226,6 @@ ppPIXELS Rbmp::imageTranspose(bool AR)
 			allData[y][x] = AorR(x,y);
 		}
 	}
-	/*
-		 {
-		 for (int y = 0;y < H;y++)
-		 {
-		 for (int x = 0;x < W;x++)
-		 {
-		 imageData[y][x] = tmpimageData[x][H-1-y];
-		 }
-		 }
-		 }
-		 else
-		 {
-		 for (int y = 0;y < H;y++)
-		 {
-		 for (int x = 0;x < W;x++)
-		 {
-		 imageData[y][x] = tmpimageData[W-1-x][y];
-		 }
-		 }
-
-		 }
-		 */
 	// first free tmpimageData
 	delImageData(tmpimageData, bmpHeight);
 	// then set allhead
@@ -1021,18 +1300,23 @@ ppPIXELS Rbmp::imageRevolution(int px,int py,float angle)
 ppPIXELS Rbmp::imageSpherize(float radius)
 {
 	ppPIXELS tmpimageData;
-	int w = bmpWidth / 2;
-	int h = bmpHeight / 2;
-	int mx1, mx2, nx;
+	float w = bmpWidth / 2.0;
+	float h = bmpHeight / 2.0;
+	float wh = w / h;
+	float mx1, mx2;
+	int nx;
+	float radius2 = radius * radius;
 	float dealt;
 	tmpimageData = imageDatadup2(allData, tmpimageData);
 	if (radius <= 0.0)			// oval
 	{
 		for (int y = 0; y < bmpHeight; y++)
 		{
-			mx1 = w + (w * sqrt(2 * h * y - y * y)) / h;
-			mx2 = w - (w * sqrt(2 * h * y - y * y)) / h;
-			dealt = (mx1 - mx2) / (bmpWidth * 1.0);
+			//mx1 = w + (w * sqrt(2 * h * y - y * y)) / h;
+			//mx2 = w - (w * sqrt(2 * h * y - y * y)) / h;
+			mx1 = w + wh * sqrt(2 * h * y - y * y);
+			mx2 = w - wh * sqrt(2 * h * y - y * y);
+			dealt = (mx1 - mx2) / bmpWidth;
 			//printf("Y:%d, %d - %d %d ;%f\n", y, mx1, mx2, mx1 - mx2, dealt);
 			for (int x = 0; x < bmpWidth; x++)
 			{
@@ -1055,9 +1339,9 @@ ppPIXELS Rbmp::imageSpherize(float radius)
 	{
 		for (int y = 0; y < bmpHeight; y++)
 		{
-			mx1 = w + sqrt(radius * radius - (y - h) * (y - h));
+			mx1 = w + sqrt(radius2 - (y - h) * (y - h));
 			// mx1 = w + sqrt(2*h*y-y*y);
-			mx2 = w - sqrt(radius * radius - (y - h) * (y - h));
+			mx2 = w - sqrt(radius2 - (y - h) * (y - h));
 			// mx2 = w - sqrt(2*h*y-y*y);
 			dealt = (mx1 - mx2) / (bmpWidth * 1.0);
 			//printf("Y:%d, %d - %d ;%f\n", y, mx1, mx2, dealt);
@@ -1357,3 +1641,12 @@ bool Rbmp::setBackground(U8 r,U8 g,U8 b)
 	backGround.rgbBlue = b;
 	return true;
 }
+bool Rbmp::isEdge(int x,int y)
+{
+	if(x <= 0 || x >= bmpWidth ||
+			y <= 0 || y >= bmpHeight)
+		return true;
+	else
+		return false;
+}
+

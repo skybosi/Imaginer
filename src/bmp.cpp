@@ -14,7 +14,7 @@ int main(int argc,char* argv[])
 	//Rbmp bmp(path);
 	//PIXELS tmp;
 	//tmp.setXY(atoi(argv[2]),atoi(argv[3]));
-	//bmp.get_image_msg();
+	bmp.get_image_msg();
 	//bmp.show_allData();
 	//bmp.get_pix(atoi(argv[2]),atoi(argv[3]));
 	//bmp.get_pot(tmp);
@@ -23,7 +23,8 @@ int main(int argc,char* argv[])
 	//PIXELS** line = bmp.readIline(atoi(argv[2]),atoi(argv[3]));
 	//bmp.delReadIline(line,atoi(argv[3]));
 	//输出图像的信息
-	bmp.write_image(argv[4],"ZMTsSH");
+	bmp.getBoundaryLine();
+	bmp.write_image(argv[4]);
 	//bmp.imageSpatialize(argv[4]);
 	//bmp.genHistogram(Red);
 	//bmp.genHistogram(Green);

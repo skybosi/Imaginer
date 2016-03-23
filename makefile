@@ -30,6 +30,6 @@ initdir:
 	mkdir -p log
 	
 clean:
-	rm -rf ${TARGET} bin log/*
+	rm -rf ${TARGET} bin log/* include/*~ src/*~
 
 .PHONY:test debug

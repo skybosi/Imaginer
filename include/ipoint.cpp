@@ -1,20 +1,10 @@
 #include "ipoint.h"
 
-//fix up the point position,if the point is edge point 
-void PIXELS::fix_PIXELS(int W,int H)
+PIXPOT::PIXPOT()
 {
-	if(isEdge(*this,W,H))
-	{
-		if(pix_X < 0)
-			pix_X += W;
-		if(pix_Y < 0)
-			pix_Y += H;
-		if(pix_X >= W)
-			pix_X -= W;
-		if(pix_Y >= H)
-			pix_Y -= H;
-	}
+	//memset(this,0,sizeof(PIXPOT));
 }
+
 void PIXPOT::fix_PIXPOT(PIXPOT& pots8,int W,int H)
 {
 	int i = 0;
@@ -25,20 +15,7 @@ void PIXPOT::fix_PIXPOT(PIXPOT& pots8,int W,int H)
 		i++;
 	}
 }
-//get the diff RGB between the focus point with other 8 point
-RGBQUAD PIXELS::get_diff8RGB(PIXELS pixel)
-{
-	RGBQUAD diffRgb;
-	diffRgb.rgbRed = prgb.rgbRed - pixel.prgb.rgbRed;
-	diffRgb.rgbGreen = prgb.rgbGreen - pixel.prgb.rgbGreen;
-	diffRgb.rgbBlue = prgb.rgbBlue - pixel.prgb.rgbBlue;
-	diffRgb.rgbReserved = prgb.rgbReserved - pixel.prgb.rgbReserved;
-	//diffRgb.rgbRed = pixel.prgb.rgbRed - prgb.rgbRed ;
-	//diffRgb.rgbGreen = pixel.prgb.rgbGreen - prgb.rgbGreen;
-	//diffRgb.rgbBlue = pixel.prgb.rgbBlue - prgb.rgbBlue ;
-	//diffRgb.rgbReserved = pixel.prgb.rgbReserved - prgb.rgbReserved ;
-	return diffRgb;
-}
+
 void PIXPOT::show_PIXPOT8diffRGB(RGBQUAD diffRgb)
 {
 	printf("diff:(%03d,%03d,%03d)\taverage:%-3.3f\t",
@@ -59,9 +36,21 @@ void PIXPOT::show_PIXPOT8diffRGB(RGBQUAD diffRgb)
 	}
 	printf("色差:%d\n",ABS(diff));
 }
-PIXPOT::PIXPOT()
+
+PIXPOT PIXPOT::set_pots8(PIXELS* pos8)
 {
-	//memset(this,0,sizeof(PIXPOT));
+	pot  = pos8[0];
+	int i = 0;
+	while(i< 4)
+	{
+		pot4s[i] = pos8[i+1];
+		diff4s[i] = pot4s[i].get_diff8RGB(pos8[0]);
+		pot4a[i] = pos8[i+5];
+		diff4a[i] = pot4a[i].get_diff8RGB(pos8[0]);
+		i++;
+	}
+	//show_PIXPOT();
+	return *this;
 }
 void PIXPOT::show_PIXPOT()
 {
@@ -76,6 +65,26 @@ void PIXPOT::show_PIXPOT()
 		show_PIXPOT8diffRGB(diff4a[i]);
 		i++;
 	}
+}
+//get the diff value 4 side point
+RGBQUAD PIXPOT::get_diff4s(int indexs)
+{
+	RGBQUAD tmp;
+	memset(&tmp,255,sizeof(RGBQUAD));
+	if(indexs < 0 || indexs > 3)
+		return tmp;
+	else
+		return diff4s[indexs]; 
+}
+//get the diff value 4 angle point
+RGBQUAD PIXPOT::get_diff4a(int indexa)
+{
+	RGBQUAD tmp;
+	memset(&tmp,255,sizeof(RGBQUAD));
+	if(indexa < 0 || indexa > 3)
+		return tmp;
+	else
+		return diff4a[indexa]; 
 }
 //get 8 point position(x,y)
 PIXELS* PIXPOT::get_pos8(PIXELS pixel,PIXELS* pos8,int W,int H)
@@ -113,25 +122,16 @@ PIXELS* PIXPOT::get_pos8(PIXELS pixel,PIXELS* pos8,int W,int H)
 //		printf("\n");
 		i++;
 	}
-//	printf("???????????????\n");
 //	show_PIXPOT();
 	return pos8;
 }
-PIXPOT PIXPOT::set_pots8(PIXELS* pos8)
+
+PIXELS::PIXELS():pix_X(0),pix_Y(0),rgb_threshold(128),bEdge(false)
 {
-	pot  = pos8[0];
-	int i = 0;
-	while(i< 4)
-	{
-		pot4s[i] = pos8[i+1];
-		diff4s[i] = pot4s[i].get_diff8RGB(pos8[0]);
-		pot4a[i] = pos8[i+5];
-		diff4a[i] = pot4a[i].get_diff8RGB(pos8[0]);
-		i++;
-	}
-	//show_PIXPOT();
-	return *this;
+	memset(&prgb,0,sizeof(RGBQUAD));
+	//rgb_threshold  = 0;
 }
+
 //mix two color
 PIXELS PIXELS::mix(PIXELS& ppot1,PIXELS& ppot2,U8 weight)
 {
@@ -208,6 +208,17 @@ PIXELS PIXELS::get3Color(colorType color)
 	return *this;
 }
 
+//get the diff RGB between the focus point with other 8 point
+RGBQUAD PIXELS::get_diff8RGB(PIXELS pixel)
+{
+	RGBQUAD diffRgb;
+	diffRgb.rgbRed = prgb.rgbRed - pixel.prgb.rgbRed;
+	diffRgb.rgbGreen = prgb.rgbGreen - pixel.prgb.rgbGreen;
+	diffRgb.rgbBlue = prgb.rgbBlue - pixel.prgb.rgbBlue;
+	diffRgb.rgbReserved = prgb.rgbReserved - pixel.prgb.rgbReserved;
+	return diffRgb;
+}
+
 //set rgb with r g b
 PIXELS PIXELS::setRGB(U8 b,U8 g,U8 r)
 //PIXELS PIXELS::setRGB(U8 r,U8 g,U8 b)
@@ -243,11 +254,6 @@ PIXELS PIXELS::setRGB(PIXELS ppot)
 	return *this;
 }
 
-PIXELS::PIXELS():pix_X(0),pix_Y(0),rgb_threshold(128),bEdge(false)
-{
-	memset(&prgb,0,sizeof(RGBQUAD));
-	//rgb_threshold  = 0;
-}
 bool PIXELS::isEdge(PIXELS& pixel, int W,int H)
 {
 	if((pixel.pix_X <= 0) | (pixel.pix_X >= W-1) |
@@ -350,4 +356,20 @@ PIXELS& PIXELS::operator=(const PIXELS& pixel)
 	memcpy(&prgb,&pixel.prgb,sizeof(RGBQUAD));
 	rgb_threshold = pixel.rgb_threshold;
 	return *this;
+}
+
+//fix up the point position,if the point is edge point 
+void PIXELS::fix_PIXELS(int W,int H)
+{
+	if(isEdge(*this,W,H))
+	{
+		if(pix_X < 0)
+			pix_X += W;
+		if(pix_Y < 0)
+			pix_Y += H;
+		if(pix_X >= W)
+			pix_X -= W;
+		if(pix_Y >= H)
+			pix_Y -= H;
+	}
 }
