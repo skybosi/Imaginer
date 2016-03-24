@@ -190,7 +190,7 @@ class Rbmp
 	public://The function deal with the bmp image (Microcosmic)
 		//Gets the border(boundary) line
 		void getBoundaryLine();
-		void trackDown(PIXELS startPoint);
+		bool trackDown(PIXELS startPoint);
 
 };
 

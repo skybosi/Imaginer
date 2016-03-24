@@ -256,11 +256,12 @@ PIXELS Rbmp::get_pix(int x, int y)
 		//return ppot;
 	}
 	ppot.setRGB(allData[y][x]);
+	/*
 	if(alikeBackground(ppot))
 	{
 		ppot.show_PIXELS();
 		printf("\n");
-	}
+	}*/
 	return ppot;
 }
 
@@ -338,7 +339,7 @@ void Rbmp::show_allData()
 }
 void Rbmp::getBoundaryLine()
 {
-	for (int y = 0; y < bmpHeight - 1; y++)
+	for (int y = 0;y < bmpHeight; y++)
 	{
 		for (int x = 0; x < bmpWidth; x++)
 		{
@@ -347,101 +348,134 @@ void Rbmp::getBoundaryLine()
 			{
 				//start track down by following clues(顺藤摸瓜)
 				trackDown(allData[y][x]);
-				break;
+				goto HERE;
 			}
 		}
 	}
+HERE:	printf("OOOOOOKKKKK!\n");
 }
 //start track down by following clues(顺藤摸瓜)
-void Rbmp::trackDown(PIXELS startPoint)
+bool Rbmp::trackDown(PIXELS startPoint)
 {
 	printf("Starting track down by following clues(顺藤摸瓜)...\n");
 	int sx = startPoint.getX();
 	int x = sx;
 	int sy = startPoint.getY();
-	int y = sy++;
+	int y = sy+1;
 	vPIXELS boundaryline;
 	boundaryline.push_back(startPoint);
+	printf("startPoint: ");
+	startPoint.show_PIXELS();
+	printf("\n");
 	//startPoint.setRGB(0,0,0);
-	int flag = true;
-	while ((x != sx || y != sy) && !isEdge(x, y))
-	//while (1)
+	PIXELS pot;
+	Position direction = Right;
+	bool flag = true;
+	//each direction relative to the image
+	while (flag && !(x == sx && y == sy))
 	{
-		/*
-		if(x == sx && y == sy)
-			break;
-		if(isEdge(x,y))
-			break;*/
-		flag = true;
-		//向下(down)
-		while(flag)
+		printf("direction:%s x:%d y:%d\n",Pos2str(direction).c_str(),x,y);
+		//boundaryline.push_back(pot);
+		//pot.show_PIXELS();
+		//printf("\n");
+		//allData[x][y].setRGB(0,0,0);
+		switch (direction)
 		{
-			if(isEdge(x,y))
-				break;
-			if(alikeBackground(x, y++))
-			{
-				get_pix(x,y).setRGB(0,0,0);
-				boundaryline.push_back(get_pix(x,y));
-				while (alikeBackground(x--, y))
+			case Right:
+				if (!isEdge(x, y + 1))
 				{
-					get_pix(x,y).setRGB(0,0,0);
-					boundaryline.push_back(get_pix(x,y));
-				}
-				x++;
-			}
-			else
-			{
-				y--;
-				while (alikeBackground(x++, y))
-				{
-					get_pix(x,y).setRGB(0,0,0);
-					boundaryline.push_back(get_pix(x,y));
-					if (alikeBackground(x, y++))
+					pot = get_pix(x, y + 1);
+					//pot = allData[x][y + 1];
+					if (alikeBackground(pot))
 					{
-						get_pix(x,y).setRGB(0,0,0);
-						boundaryline.push_back(get_pix(x,y));
-						break;
+						direction = Down;
+						y++;
 					}
-					else 
-						flag = false;
-				}
-			}
-		}
-		//向上(up)
-		while(flag)
-		{
-			if(isEdge(x,y))
-				break;
-			if (alikeBackground(x, y--))
-			{
-				get_pix(x,y).setRGB(0,0,0);
-				boundaryline.push_back(get_pix(x,y));
-				while (!alikeBackground(x++, y))
-				{
-					get_pix(x,y).setRGB(0,0,0);
-					boundaryline.push_back(get_pix(x,y));
-				}
-				x--;
-			}
-			else
-			{
-				y++;
-				while (alikeBackground(x--, y))
-				{
-					get_pix(x,y).setRGB(0,0,0);
-					boundaryline.push_back(get_pix(x,y));
-					if (alikeBackground(x, y--))
+					else
 					{
-						get_pix(x,y).setRGB(0,0,0);
-						boundaryline.push_back(get_pix(x,y));
-						break;
+						if (!alikeBackground(x + 1,y ))
+						{
+							direction = Up;
+						}
+						else
+							x++;
 					}
-					else 
-						flag = false;
 				}
-			}
+				else
+					flag = false;
+				break;
+			case Down:
+				if (!isEdge(x - 1, y))
+				{
+					pot = get_pix(x - 1, y);
+					if (alikeBackground(pot))
+					{
+						direction = Left;
+						x--;
+					}
+					else
+					{
+						if (!alikeBackground(x,y + 1))
+						{
+							direction = Right;
+						}
+						else
+							y++;
+					}
+				}
+				else
+					flag = false;
+				break;
+			case Up:
+				if (!isEdge(x + 1, y))
+				{
+					pot = get_pix(x + 1, y);
+					if (alikeBackground(pot))
+					{
+						direction = Right;
+						x++;
+					}
+					else
+					{
+						if(!alikeBackground(x,y - 1))
+						{
+							direction = Left;
+						}
+						else
+							y--;
+					}
+				}
+				else
+					flag = false;
+				break;
+			case Left:
+				if (!isEdge(x, y - 1))
+				{
+					pot = get_pix(x, y - 1);
+					if (alikeBackground(pot))
+					{
+						direction = Up;
+						y--;
+					}
+					else
+					{
+						if(!alikeBackground(x - 1,y))
+						{
+							direction = Down;
+						}
+						else	
+							x--;
+					}
+				}
+				else
+					flag = false;
+				break;
+			default:
+				break;
 		}
 	}
+	printf("trackDown ok.....\n");
+	return true;
 }
 // is Boundary 
 bool Rbmp::isBoundaryPoint(PIXELS pot)
@@ -649,6 +683,11 @@ int Rbmp::addColorTable(PIXELS pixel, BYTE8 & linedata)
 
 bool Rbmp::deal_image(const char* dealType)
 {
+	if(!dealType)
+	{
+		printf("Not deal with!\n");
+		return true;
+	}
 	while(*dealType)
 	{
 		switch(*dealType)
@@ -705,8 +744,6 @@ bool Rbmp::deal_image(const char* dealType)
 		}
 		dealType++;
 	}
-	if(!dealType)
-		printf("Not deal with!\n");
 	return true;
 }
 
