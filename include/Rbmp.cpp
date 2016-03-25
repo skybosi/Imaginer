@@ -131,7 +131,8 @@ bool Rbmp::alikeBackground(PIXELS pixel)
 }
 bool Rbmp::alikeBackground(int x,int y)
 {
-	;
+	if(isEdge(x,y))
+		return false;
 	RGBQUAD rgb = get_pix(x,y).getRGB();
 	if(!(rgb.rgbRed ^ backGround.rgbRed) &&
 		 !(rgb.rgbGreen ^ backGround.rgbGreen) &&
@@ -361,118 +362,21 @@ bool Rbmp::trackDown(PIXELS startPoint)
 	int sx = startPoint.getX();
 	int x = sx;
 	int sy = startPoint.getY();
-	int y = sy+1;
+	int y = sy;
 	vPIXELS boundaryline;
 	boundaryline.push_back(startPoint);
 	printf("startPoint: ");
 	startPoint.show_PIXELS();
 	printf("\n");
-	//startPoint.setRGB(0,0,0);
-	PIXELS pot;
 	Position direction = Right;
 	bool flag = true;
+	int flagxy = 0;
 	//each direction relative to the image
-	while (flag && !(x == sx && y == sy))
+	while (flag && flagxy != 2)
 	{
-		printf("direction:%s x:%d y:%d\n",Pos2str(direction).c_str(),x,y);
-		//boundaryline.push_back(pot);
-		//pot.show_PIXELS();
-		//printf("\n");
-		//allData[x][y].setRGB(0,0,0);
-		switch (direction)
-		{
-			case Right:
-				if (!isEdge(x, y + 1))
-				{
-					pot = get_pix(x, y + 1);
-					//pot = allData[x][y + 1];
-					if (alikeBackground(pot))
-					{
-						direction = Down;
-						y++;
-					}
-					else
-					{
-						if (!alikeBackground(x + 1,y ))
-						{
-							direction = Up;
-						}
-						else
-							x++;
-					}
-				}
-				else
-					flag = false;
-				break;
-			case Down:
-				if (!isEdge(x - 1, y))
-				{
-					pot = get_pix(x - 1, y);
-					if (alikeBackground(pot))
-					{
-						direction = Left;
-						x--;
-					}
-					else
-					{
-						if (!alikeBackground(x,y + 1))
-						{
-							direction = Right;
-						}
-						else
-							y++;
-					}
-				}
-				else
-					flag = false;
-				break;
-			case Up:
-				if (!isEdge(x + 1, y))
-				{
-					pot = get_pix(x + 1, y);
-					if (alikeBackground(pot))
-					{
-						direction = Right;
-						x++;
-					}
-					else
-					{
-						if(!alikeBackground(x,y - 1))
-						{
-							direction = Left;
-						}
-						else
-							y--;
-					}
-				}
-				else
-					flag = false;
-				break;
-			case Left:
-				if (!isEdge(x, y - 1))
-				{
-					pot = get_pix(x, y - 1);
-					if (alikeBackground(pot))
-					{
-						direction = Up;
-						y--;
-					}
-					else
-					{
-						if(!alikeBackground(x - 1,y))
-						{
-							direction = Down;
-						}
-						else	
-							x--;
-					}
-				}
-				else
-					flag = false;
-				break;
-			default:
-				break;
-		}
+		flag = getRpoint(direction,x,y);
+		if(x == sx && y == sy)
+			flagxy++;
 	}
 	printf("trackDown ok.....\n");
 	return true;
@@ -1619,13 +1523,13 @@ string Rbmp::Pos2str(Position pos)
 	switch(pos)
 	{
 		case Up:
-			return "Up";
+			return "Up   ";
 			break;
 		case Down:
-			return "Down";
+			return "Down ";
 			break;
 		case Left:
-			return "Left";
+			return "Left ";
 			break;
 		case Right:
 			return "Right";
@@ -1634,10 +1538,10 @@ string Rbmp::Pos2str(Position pos)
 			return "Front";
 			break;
 		case Back:
-			return "Back";
+			return "Back ";
 			break;
 		default:
-			return "None";
+			return "None ";
 			break;
 	}
 }
@@ -1686,4 +1590,116 @@ bool Rbmp::isEdge(int x,int y)
 	else
 		return false;
 }
-
+bool Rbmp::getRpoint(Position& direction,int& x,int& y)
+{
+	bool flag = true;
+	PIXELS pot;
+	printf("direction:%s x:%d y:%d\n",Pos2str(direction).c_str(),x,y);
+	switch (direction)
+	{
+		case Right:
+			if (!isEdge(x, y + 1))
+			{
+				pot = get_pix(x, y + 1);
+				//pot = allData[x][y + 1];
+				if (alikeBackground(pot))
+				{
+					direction = Down;
+					y++;
+				}
+				else
+				{
+					if (alikeBackground(x + 1,y ))
+					{
+						x++;
+					}
+					else
+					{
+						direction = Up;
+						y--;
+					}
+				}
+			}
+			else
+				flag = false;
+			break;
+		case Down:
+			if (!isEdge(x - 1, y))
+			{
+				pot = get_pix(x - 1, y);
+				if (alikeBackground(pot))
+				{
+					direction = Left;
+					x--;
+				}
+				else
+				{
+					if (alikeBackground(x,y + 1))
+					{
+						y++;
+					}
+					else
+					{
+						direction = Right;
+						x++;
+					}
+				}
+			}
+			else
+				flag = false;
+			break;
+		case Up:
+			if (!isEdge(x + 1, y))
+			{
+				pot = get_pix(x + 1, y);
+				if (alikeBackground(pot))
+				{
+					direction = Right;
+					x++;
+				}
+				else
+				{
+					if(alikeBackground(x,y - 1))
+					{
+						y--;
+					}
+					else
+					{
+						direction = Left;
+						x--;
+					}
+				}
+			}
+			else
+				flag = false;
+			break;
+		case Left:
+			if (!isEdge(x, y - 1))
+			{
+				pot = get_pix(x, y - 1);
+				if (alikeBackground(pot))
+				{
+					direction = Up;
+					y--;
+				}
+				else
+				{
+					if(alikeBackground(x - 1,y))
+					{
+						x--;
+					}
+					else
+					{
+						direction = Down;
+						y++;
+					}
+				}
+			}
+			else
+				flag = false;
+			break;
+		default:
+			break;
+	}
+	return flag;
+}

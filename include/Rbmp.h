@@ -146,8 +146,10 @@ class Rbmp
 		//@ imageData    : source image pointer
 		//@ tmpimageData : destination iamge pointer
 		ppPIXELS imageDatadup2(ppPIXELS imageData,ppPIXELS& tmpimageData);
-		//
+		//test a point(x,y) if a edge or not
 		bool isEdge(int x,int y);
+		//just want to get the right point of one point,if get x,y will be reset
+		bool getRpoint(Position& direction,int& x,int& y);
 	public://The function deal with the bmp image (Macroscopic)
 		//Function: generate the image's bar diagram 
 		bool     genBardiagram(colorType color = Pricolor);
