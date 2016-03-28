@@ -95,6 +95,7 @@ bool Rbmp::init_image()
 					// allData[y][x].setRGB(linedata[k+2],linedata[k+1],linedata[k]);
 					allData[y][x].setXY(x, y);
 					allData[y][x].isEdge(bmpWidth, bmpHeight);
+					allData[y][x].setempty(true);
 					k += 2;
 					break;
 				case 8:
@@ -104,6 +105,7 @@ bool Rbmp::init_image()
 					allData[y][x].setRGB(pColorTable[tablesite]);
 					allData[y][x].setXY(x, y);
 					allData[y][x].isEdge(bmpWidth, bmpHeight);
+					allData[y][x].setempty(true);
 					break;
 				default:
 					break;
@@ -119,27 +121,30 @@ bool Rbmp::init_image()
 		printf("In %s set Background error!\n",__FUNCTION__);
 	return true;
 }
-bool Rbmp::alikeBackground(PIXELS pixel)
+int Rbmp::alikeBackground(PIXELS pixel)
 {
+	if(pixel.empty())
+		return -1;
 	RGBQUAD rgb = pixel.getRGB();
 	if(!(rgb.rgbRed ^ backGround.rgbRed) &&
 		 !(rgb.rgbGreen ^ backGround.rgbGreen) &&
 		 !(rgb.rgbBlue ^ backGround.rgbBlue))
-		return true;
+		return 1;
 	else
-		return false;
+		return 0;
 }
-bool Rbmp::alikeBackground(int x,int y)
+int Rbmp::alikeBackground(int x,int y)
 {
-	if(isEdge(x,y))
-		return false;
-	RGBQUAD rgb = get_pix(x,y).getRGB();
+	PIXELS tmp = get_pix(x,y);
+	if(tmp.empty())
+		return -1;
+	RGBQUAD rgb = tmp.getRGB();
 	if(!(rgb.rgbRed ^ backGround.rgbRed) &&
 		 !(rgb.rgbGreen ^ backGround.rgbGreen) &&
 		 !(rgb.rgbBlue ^ backGround.rgbBlue))
-		return true;
+		return 1;
 	else
-		return false;
+		return 0;
 }
 
 bool Rbmp::alikeBackground(RGBQUAD rgb)
@@ -246,15 +251,11 @@ PIXELS Rbmp::get_pix(int x, int y)
 	//printf("In get_pix(x,y)\n");
 	PIXELS ppot;
 	ppot.setXY(x, y);
-	try
-	{
-		if (out_range_error(ppot))
-			throw 0;
-	}
-	catch(...)
+	if (out_range_error(ppot))
 	{
 		printf("In get_pix(pixel) ,You set (x,y):(%d,%d) is out Range!\n", ppot.getX(), ppot.getY());
-		//return ppot;
+		ppot.setempty();
+		return ppot;
 	}
 	ppot.setRGB(allData[y][x]);
 	/*
@@ -269,16 +270,11 @@ PIXELS Rbmp::get_pix(int x, int y)
 PIXELS Rbmp::get_pix(PIXELS pixel)
 {
 	PIXELS ppot;
-	try
+	if (out_range_error(pixel))
 	{
-		if (out_range_error(pixel))
-			throw 0;
-	}
-	catch(...)
-	{
-		printf("In get_pix(pixel) ,You set (x,y):(%d,%d) is out Range!\n", pixel.getX(),
-				pixel.getY());
-		//return ppot;
+		printf("In get_pix(pixel) ,You set (x,y):(%d,%d) is out Range!\n", pixel.getX(), pixel.getY());
+		ppot.setempty();
+		return ppot;
 	}
 	ppot.setXY(pixel.getX(), pixel.getY());
 	ppot.setRGB(allData[pixel.getY()][pixel.getX()]);
@@ -344,8 +340,7 @@ void Rbmp::getBoundaryLine()
 	{
 		for (int x = 0; x < bmpWidth; x++)
 		{
-			//if(isBoundaryPoint(allData[y][x]))
-			if(alikeBackground(allData[y][x]))
+			if(isBoundaryPoint(allData[y][x]))
 			{
 				//start track down by following clues(顺藤摸瓜)
 				trackDown(allData[y][x]);
@@ -365,32 +360,36 @@ bool Rbmp::trackDown(PIXELS startPoint)
 	int y = sy;
 	vPIXELS boundaryline;
 	boundaryline.push_back(startPoint);
-	printf("startPoint: ");
+	printf("push s: ");
 	startPoint.show_PIXELS();
 	printf("\n");
 	Position direction = Right;
-	bool flag = true;
-	int flagxy = 0;
 	//each direction relative to the image
-	while (flag && flagxy != 2)
+	do
 	{
-		flag = getRpoint(direction,x,y);
-		if(x == sx && y == sy)
-			flagxy++;
-	}
-	printf("trackDown ok.....\n");
+		if(getRpoint(direction,x,y))
+		{
+			boundaryline.push_back(get_pix(x,y));
+			printf("push a: ");
+			get_pix(x,y).show_PIXELS();
+			printf("\n");
+		}
+		else
+			break;
+	}while (x != sx || y != sy);
+	printf("trackDown ok..... line len:%ld\n",boundaryline.size());
 	return true;
 }
 // is Boundary 
 bool Rbmp::isBoundaryPoint(PIXELS pot)
 {
-	if(!alikeBackground(pot))
+	if(alikeBackground(pot) == 1)
 	{
-		return false;
+		return true;
 	}
 	else
 	{
-		return true;
+		return false;
 	}
 }
 
@@ -1504,7 +1503,7 @@ bool Rbmp::out_range_error(PIXELS pixel)
 {
 	int x = pixel.getX();
 	int y = pixel.getY();
-	if ((x >= bmpWidth) | (y >= bmpHeight) | (x < 0) | (y < 0))
+	if ((x >= bmpWidth) || (y >= bmpHeight) || (x < 0) || (y < 0))
 		return true;
 	else
 		return false;
@@ -1593,107 +1592,107 @@ bool Rbmp::isEdge(int x,int y)
 bool Rbmp::getRpoint(Position& direction,int& x,int& y)
 {
 	bool flag = true;
+	int flagxy = 0;
 	PIXELS pot;
-	printf("direction:%s x:%d y:%d\n",Pos2str(direction).c_str(),x,y);
+	//printf("direction:%s x:%d y:%d\t",Pos2str(direction).c_str(),x,y);
 	switch (direction)
 	{
 		case Right:
-			if (!isEdge(x, y + 1))
+			flagxy = alikeBackground(x,y + 1);
+			if (flagxy == 1)
 			{
-				pot = get_pix(x, y + 1);
-				//pot = allData[x][y + 1];
-				if (alikeBackground(pot))
-				{
-					direction = Down;
-					y++;
-				}
-				else
-				{
-					if (alikeBackground(x + 1,y ))
-					{
-						x++;
-					}
-					else
-					{
-						direction = Up;
-						y--;
-					}
-				}
+				direction = Down;
+				y++;
 			}
-			else
-				flag = false;
-			break;
-		case Down:
-			if (!isEdge(x - 1, y))
+			else if (flagxy == 0)
 			{
-				pot = get_pix(x - 1, y);
-				if (alikeBackground(pot))
+				flagxy = alikeBackground(x + 1,y);
+				if (flagxy == 1)
 				{
-					direction = Left;
-					x--;
-				}
-				else
-				{
-					if (alikeBackground(x,y + 1))
-					{
-						y++;
-					}
-					else
-					{
-						direction = Right;
-						x++;
-					}
-				}
-			}
-			else
-				flag = false;
-			break;
-		case Up:
-			if (!isEdge(x + 1, y))
-			{
-				pot = get_pix(x + 1, y);
-				if (alikeBackground(pot))
-				{
-					direction = Right;
 					x++;
 				}
-				else
-				{
-					if(alikeBackground(x,y - 1))
-					{
-						y--;
-					}
-					else
-					{
-						direction = Left;
-						x--;
-					}
-				}
-			}
-			else
-				flag = false;
-			break;
-		case Left:
-			if (!isEdge(x, y - 1))
-			{
-				pot = get_pix(x, y - 1);
-				if (alikeBackground(pot))
+				else if(flagxy == 0)
 				{
 					direction = Up;
 					y--;
 				}
 				else
+					flag = false;
+			}
+			else
+				flag = false;
+			break;
+		case Down:
+			flagxy = alikeBackground(x - 1,y);
+			if (flagxy == 1)
+			{
+				direction = Left;
+				x--;
+			}
+			else if (flagxy == 0)
+			{
+				flagxy = alikeBackground(x,y + 1);
+				if (flagxy == 1)
 				{
-					if(alikeBackground(x - 1,y))
-					{
-						x--;
-					}
-					else
-					{
-						direction = Down;
-						y++;
-					}
+					y++;
 				}
+				else if(flagxy == 0)
+				{
+					direction = Right;
+					x++;
+				}
+				else
+					flag = false;
+			}
+			else
+				flag = false;
+			break;
+		case Up:
+			flagxy = alikeBackground(x + 1,y);
+			if (flagxy == 1)
+			{
+				direction = Right;
+				x++;
+			}
+			else if (flagxy == 0)
+			{
+				flagxy = alikeBackground(x,y - 1);
+				if (flagxy == 1)
+				{
+					y--;
+				}
+				else if(flagxy == 0)
+				{
+					direction = Left;
+					x--;
+				}
+				else
+					flag = false;
+			}
+			else
+				flag = false;
+			break;
+		case Left:
+			flagxy = alikeBackground(x ,y - 1);
+			if (flagxy == 1)
+			{
+				direction = Up;
+				y--;
+			}
+			else if (flagxy == 0)
+			{
+				flagxy = alikeBackground(x - 1,y);
+				if (flagxy == 1)
+				{
+					x--;
+				}
+				else if(flagxy == 0)
+				{
+					direction = Down;
+					y++;
+				}
+				else
+					flag = false;
 			}
 			else
 				flag = false;

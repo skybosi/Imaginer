@@ -14,8 +14,10 @@ class PIXELS
 		RGBQUAD prgb;
 		U8 rgb_threshold;
 		bool bEdge;				// edge point
+		bool bEmpty;      //the pixel is NULL ,is false
 	public:
 		PIXELS();
+		bool empty();
 		bool isEdge(PIXELS& pixel, int W,int H);
 		bool isEdge(int W,int H);
 		void show_PIXELS();
@@ -28,6 +30,7 @@ class PIXELS
 		PIXELS setXY(PIXELS pixel);
 		PIXELS setXY(int x, int y);
 		PIXELS resetXY(int x,int y);
+		void   setempty(bool state = false);
 		U8 set_threshold(PIXELS ppot);
 		RGBQUAD get_diff8RGB(PIXELS ppot);
 	public:

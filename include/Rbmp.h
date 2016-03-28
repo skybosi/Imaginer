@@ -64,8 +64,10 @@ class Rbmp
 		//get a .bmp image header information
 		void get_image_msg();
 		//get a point RGB value from the (x,y)
+		//if the x,y is out range ,return empty PIXELS
 		PIXELS get_pix(int x,int y);
 		//get a point RGB value from the pixel
+		//if the pixel is out range ,return empty PIXELS
 		PIXELS get_pix(PIXELS pixel);
 		//get the 8 point info. around a point
 		PIXPOT get_pot(PIXELS pixel);
@@ -94,16 +96,20 @@ class Rbmp
 	private:
 		//alike background or not,Mean and the same color as 
 		//the background color 
+		//NOTE: But not necessarily background 
+		//return code:
+		//   -1 is empty pixel, 1 alike background,0 not alike background
+		inline int alikeBackground(PIXELS pixel);
+		//alike background or not,Mean and the same color as 
+		//the background color 
 		//NOTE: But not necessarily background
-		inline bool alikeBackground(PIXELS pixel);
+		//return code:
+		//   -1 is empty pixel, 1 alike background,0 not alike background
+		inline int alikeBackground(int x,int y);
 		//alike background or not,Mean and the same color as 
 		//the background color 
 		//NOTE: But not necessarily background
 		inline bool alikeBackground(RGBQUAD rgb);
-		//alike background or not,Mean and the same color as 
-		//the background color 
-		//NOTE: But not necessarily background
-		inline bool alikeBackground(int x,int y);
 		//Init when open or read a image 
 		bool init_image();
 		//Init before create or write a image

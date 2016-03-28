@@ -126,7 +126,7 @@ PIXELS* PIXPOT::get_pos8(PIXELS pixel,PIXELS* pos8,int W,int H)
 	return pos8;
 }
 
-PIXELS::PIXELS():pix_X(0),pix_Y(0),rgb_threshold(128),bEdge(false)
+PIXELS::PIXELS():pix_X(0),pix_Y(0),rgb_threshold(128),bEdge(false),bEmpty(true)
 {
 	memset(&prgb,0,sizeof(RGBQUAD));
 	//rgb_threshold  = 0;
@@ -253,7 +253,14 @@ PIXELS PIXELS::setRGB(PIXELS ppot)
 	prgb.rgbReserved = ppot.prgb.rgbReserved;
 	return *this;
 }
-
+void PIXELS::setempty(bool state)
+{
+	bEmpty = state;
+}
+bool PIXELS::empty()
+{
+	return !bEmpty;
+}
 bool PIXELS::isEdge(PIXELS& pixel, int W,int H)
 {
 	if((pixel.pix_X <= 0) | (pixel.pix_X >= W-1) |
