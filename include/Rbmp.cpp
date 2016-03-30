@@ -350,6 +350,14 @@ void Rbmp::getBoundaryLine()
 	}
 HERE:	printf("OOOOOOKKKKK!\n");
 }
+void Rbmp::show_line(vPIXELS boundaryline)
+{
+	for (size_t i =0; i < boundaryline.size(); i ++)
+	{
+		boundaryline[i].show_PIXELS();
+		printf("\n");
+	}
+}
 //start track down by following clues(顺藤摸瓜)
 bool Rbmp::trackDown(PIXELS startPoint)
 {
@@ -360,26 +368,33 @@ bool Rbmp::trackDown(PIXELS startPoint)
 	int y = sy;
 	vPIXELS boundaryline;
 	boundaryline.push_back(startPoint);
+	/*
 	printf("push s: ");
 	startPoint.show_PIXELS();
 	printf("\n");
+	*/
 	Position direction = Right;
 	//each direction relative to the image
 	do
 	{
-		if(getRpoint(direction,x,y))
+		if(getLpoint(direction,x,y) && !isEdge(x,y))
 		{
+			printf("x:%d y:%d\n",x,y);
 			boundaryline.push_back(get_pix(x,y));
+			/*
 			printf("push a: ");
 			get_pix(x,y).show_PIXELS();
 			printf("\n");
+			*/
 		}
 		else
 			break;
 	}while (x != sx || y != sy);
+	//show_line(boundaryline);
 	printf("trackDown ok..... line len:%ld\n",boundaryline.size());
 	return true;
 }
+
 // is Boundary 
 bool Rbmp::isBoundaryPoint(PIXELS pot)
 {
@@ -1591,7 +1606,6 @@ bool Rbmp::isEdge(int x,int y)
 }
 bool Rbmp::getRpoint(Position& direction,int& x,int& y)
 {
-	bool flag = true;
 	int flagxy = 0;
 	PIXELS pot;
 	//printf("direction:%s x:%d y:%d\t",Pos2str(direction).c_str(),x,y);
@@ -1617,10 +1631,10 @@ bool Rbmp::getRpoint(Position& direction,int& x,int& y)
 					y--;
 				}
 				else
-					flag = false;
+					return false;
 			}
 			else
-				flag = false;
+				return false;
 			break;
 		case Down:
 			flagxy = alikeBackground(x - 1,y);
@@ -1642,10 +1656,10 @@ bool Rbmp::getRpoint(Position& direction,int& x,int& y)
 					x++;
 				}
 				else
-					flag = false;
+					return false;
 			}
 			else
-				flag = false;
+				return false;
 			break;
 		case Up:
 			flagxy = alikeBackground(x + 1,y);
@@ -1667,10 +1681,10 @@ bool Rbmp::getRpoint(Position& direction,int& x,int& y)
 					x--;
 				}
 				else
-					flag = false;
+					return false;
 			}
 			else
-				flag = false;
+				return false;
 			break;
 		case Left:
 			flagxy = alikeBackground(x ,y - 1);
@@ -1692,13 +1706,125 @@ bool Rbmp::getRpoint(Position& direction,int& x,int& y)
 					y++;
 				}
 				else
-					flag = false;
+					return false;
 			}
 			else
-				flag = false;
+				return false;
 			break;
 		default:
 			break;
 	}
-	return flag;
+	return true;
+}
+bool Rbmp::getLpoint(Position& direction,int& x,int& y)
+{
+	int flagxy = 0;
+	PIXELS pot;
+	//printf("direction:%s x:%d y:%d\n",Pos2str(direction).c_str(),x,y);
+	switch (direction)
+	{
+		case Left:
+			flagxy = alikeBackground(x ,y + 1);
+			if (flagxy == 1)
+			{
+				direction = Down;
+				y++;
+			}
+			else if (flagxy == 0)
+			{
+				flagxy = alikeBackground(x - 1,y);
+				if (flagxy == 1)
+				{
+					x--;
+				}
+				else if(flagxy == 0)
+				{
+					direction = Up;
+					y--;
+				}
+				else
+					return false;
+			}
+			else
+				return false;
+			break;
+		case Right:
+			flagxy = alikeBackground(x,y - 1);
+			if (flagxy == 1)
+			{
+				direction = Up;
+				y--;
+			}
+			else if (flagxy == 0)
+			{
+				flagxy = alikeBackground(x + 1,y);
+				if (flagxy == 1)
+				{
+					x++;
+				}
+				else if(flagxy == 0)
+				{
+					direction = Down;
+					y++;
+				}
+				else
+					return false;
+			}
+			else
+				return false;
+			break;
+		case Down:
+			flagxy = alikeBackground(x + 1,y);
+			if (flagxy == 1)
+			{
+				direction = Right;
+				x++;
+			}
+			else if (flagxy == 0)
+			{
+				flagxy = alikeBackground(x,y + 1);
+				if (flagxy == 1)
+				{
+					y++;
+				}
+				else if(flagxy == 0)
+				{
+					direction = Left;
+					x--;
+				}
+				else
+					return false;
+			}
+			else
+				return false;
+			break;
+		case Up:
+			flagxy = alikeBackground(x - 1,y);
+			if (flagxy == 1)
+			{
+				direction = Left;
+				x--;
+			}
+			else if (flagxy == 0)
+			{
+				flagxy = alikeBackground(x,y - 1);
+				if (flagxy == 1)
+				{
+					y--;
+				}
+				else if(flagxy == 0)
+				{
+					direction = Right;
+					x++;
+				}
+				else
+					return false;
+			}
+			else
+				return false;
+			break;
+		default:
+			break;
+	}
+	return true;
 }

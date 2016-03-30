@@ -129,6 +129,8 @@ class Rbmp
 		void show_info_head(BITMAPINFOHEADER &infohead);
 		//show bmp path list
 		void show_6path(map<Position,string> pathl);
+		//show bmp path list
+		void show_line(vPIXELS boundaryline);
 		//Get Position's string
 		string Pos2str(Position pos);
 		//Get colorType's string
@@ -156,6 +158,8 @@ class Rbmp
 		bool isEdge(int x,int y);
 		//just want to get the right point of one point,if get x,y will be reset
 		bool getRpoint(Position& direction,int& x,int& y);
+		//just want to get the left point of one point,if get x,y will be reset
+		bool getLpoint(Position& direction,int& x,int& y);
 	public://The function deal with the bmp image (Macroscopic)
 		//Function: generate the image's bar diagram 
 		bool     genBardiagram(colorType color = Pricolor);
