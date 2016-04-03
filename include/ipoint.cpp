@@ -1,5 +1,7 @@
 #include "ipoint.h"
-
+#define LOS(RGBvar) ((ABS((char)RGBvar.rgbRed) <= 15) && \
+	                  (ABS((char)RGBvar.rgbGreen) <= 15) &&\
+	                  (ABS((char)RGBvar.rgbBlue) <= 15))        //level of similarity 
 PIXPOT::PIXPOT()
 {
 	//memset(this,0,sizeof(PIXPOT));
@@ -124,6 +126,23 @@ PIXELS* PIXPOT::get_pos8(PIXELS pixel,PIXELS* pos8,int W,int H)
 	}
 //	show_PIXPOT();
 	return pos8;
+}
+bool PIXPOT::pixelSimilar()
+{
+	int level = 0;
+	int i = 0;
+	while(i<4)
+	{
+		if(LOS(diff4a[i]) ||  LOS(diff4s[i]))
+		{
+			level++;
+		}
+		i++;
+	}
+	if(level >= 1)
+		return true;
+	else
+		return false;
 }
 
 PIXELS::PIXELS():pix_X(0),pix_Y(0),rgb_threshold(128),bEdge(false),bEmpty(true)

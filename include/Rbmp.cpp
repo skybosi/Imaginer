@@ -390,7 +390,7 @@ bool Rbmp::trackDown(PIXELS startPoint)
 		else
 			break;
 	}while (x != sx || y != sy);
-	//show_line(boundaryline);
+	show_line(boundaryline);
 	printf("trackDown ok..... line len:%ld\n",boundaryline.size());
 	return true;
 }
@@ -398,9 +398,24 @@ bool Rbmp::trackDown(PIXELS startPoint)
 // is Boundary 
 bool Rbmp::isBoundaryPoint(PIXELS pot)
 {
+	PIXPOT tmp;
 	if(alikeBackground(pot) == 1)
 	{
-		return true;
+		tmp = get_pot(pot);
+		if(tmp.pixelSimilar())
+		{
+			tmp.show_PIXPOT();
+			printf("相似度极高\n");
+			printf("\n");
+			return false;
+		}
+		else
+		{
+			tmp.show_PIXPOT();
+			printf("相似度一般\n");
+			printf("\n");
+			return true;
+		}
 	}
 	else
 	{

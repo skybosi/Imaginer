@@ -78,5 +78,7 @@ class PIXPOT
 		RGBQUAD get_diff4s(int indexs);
 		//get the diff value 4 angle point
 		RGBQUAD get_diff4a(int indexa);
+		//pixel similarity
+		bool pixelSimilar();
 };
 #endif // ipoint.h :[]
