@@ -383,6 +383,17 @@ PIXELS& PIXELS::operator=(const PIXELS& pixel)
 	rgb_threshold = pixel.rgb_threshold;
 	return *this;
 }
+bool PIXELS::operator ==(const PIXELS& pixel)
+{
+	if(this == &pixel)
+		return true;
+	if(this->pix_X == pixel.pix_X &&
+			this->pix_Y == pixel.pix_Y)
+	{
+		return true;
+	}
+	return false;
+}
 
 //fix up the point position,if the point is edge point 
 void PIXELS::fix_PIXELS(int W,int H)

@@ -49,6 +49,7 @@ class PIXELS
 		PIXELS opposition();
 		PIXELS opposition(PIXELS& ppot);
 		PIXELS& operator=(const PIXELS& pixel);
+		bool operator==(const PIXELS& pixel);
 		//mix two color
 		PIXELS mix(PIXELS& ppot1,PIXELS& ppot2,U8 weight = 50);
 		void fix_PIXELS(int W,int H);//fix up the point position

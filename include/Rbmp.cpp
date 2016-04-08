@@ -5,8 +5,11 @@
 #define R2D(R) R*180/PI
 #define D2R(D) D*PI/180
 #define OUTRANGE(P) ((P > 255) || (P < 0))
+#define EQUALBackGround(rgb) ( !(rgb.rgbRed ^ backGround.rgbRed) && \
+		                           !(rgb.rgbGreen ^ backGround.rgbGreen) && \
+		                           !(rgb.rgbBlue ^ backGround.rgbBlue) )
 static int globalI = 0;
-Rbmp::Rbmp(const char *bmpname):fp(NULL), fpo(NULL), bmppath(bmpname), allData(NULL), pColorTable(NULL)
+Rbmp::Rbmp(const char *bmpname):fp(NULL), fpo(NULL), bmppath(bmpname), allData(NULL), pColorTable(NULL),granularity(10),pixelTrend(true)
 {
 	// 二进制读方式打开指定的图像文件
 	fp = fopen(bmppath.c_str(), "rb");
@@ -117,8 +120,13 @@ bool Rbmp::init_image()
 	}
 	delete[]linedata;
 	rewind(fp);
-	if(!setBackground(255,255,255))
+	if(!setBackground())//use default value
 		printf("In %s set Background error!\n",__FUNCTION__);
+	if(alikeBackground(allData[0][0]) == 1)
+	{
+		printf("This image maybe is lonely island!\n");
+		pixelTrend = false;
+	}
 	return true;
 }
 int Rbmp::alikeBackground(PIXELS pixel)
@@ -126,12 +134,20 @@ int Rbmp::alikeBackground(PIXELS pixel)
 	if(pixel.empty())
 		return -1;
 	RGBQUAD rgb = pixel.getRGB();
-	if(!(rgb.rgbRed ^ backGround.rgbRed) &&
-		 !(rgb.rgbGreen ^ backGround.rgbGreen) &&
-		 !(rgb.rgbBlue ^ backGround.rgbBlue))
-		return 1;
+	if(EQUALBackGround(rgb))
+	{
+		if(pixelTrend)
+			return 1;
+		else
+			return 0;
+	}
 	else
-		return 0;
+	{
+		if(pixelTrend)
+			return 0;
+		else
+			return 1;
+	}
 }
 int Rbmp::alikeBackground(int x,int y)
 {
@@ -139,19 +155,25 @@ int Rbmp::alikeBackground(int x,int y)
 	if(tmp.empty())
 		return -1;
 	RGBQUAD rgb = tmp.getRGB();
-	if(!(rgb.rgbRed ^ backGround.rgbRed) &&
-		 !(rgb.rgbGreen ^ backGround.rgbGreen) &&
-		 !(rgb.rgbBlue ^ backGround.rgbBlue))
-		return 1;
+	if(EQUALBackGround(rgb))
+	{
+		if(pixelTrend)
+			return 1;
+		else
+			return 0;
+	}
 	else
-		return 0;
+	{
+		if(pixelTrend)
+			return 0;
+		else
+			return 1;
+	}
 }
 
 bool Rbmp::alikeBackground(RGBQUAD rgb)
 {
-	if(!(rgb.rgbRed ^ backGround.rgbRed) &&
-		 !(rgb.rgbGreen ^ backGround.rgbGreen) &&
-		 !(rgb.rgbBlue ^ backGround.rgbBlue))
+	if(EQUALBackGround(rgb))
 		return true;
 	else
 		return false;
@@ -182,6 +204,7 @@ Rbmp::~Rbmp()
 		delete[]pColorTable;
 		pColorTable = NULL;
 	}
+	/*
 	if (allData)
 	{
 		for (int i = 0; i < bmpHeight; i++)
@@ -193,6 +216,8 @@ Rbmp::~Rbmp()
 		free(allData);
 		allData = NULL;
 	}
+	*/
+	delImageData(allData,bmpHeight);
 	if (fp)
 	{
 		fclose(fp);
@@ -348,7 +373,7 @@ void Rbmp::getBoundaryLine()
 			}
 		}
 	}
-HERE:	printf("OOOOOOKKKKK!\n");
+HERE:  printf("OOOOOOKKKKK!\n");
 }
 void Rbmp::show_line(vPIXELS boundaryline)
 {
@@ -359,7 +384,7 @@ void Rbmp::show_line(vPIXELS boundaryline)
 	}
 }
 //start track down by following clues(顺藤摸瓜)
-bool Rbmp::trackDown(PIXELS startPoint)
+int Rbmp::trackDown(PIXELS startPoint)
 {
 	printf("Starting track down by following clues(顺藤摸瓜)...\n");
 	int sx = startPoint.getX();
@@ -377,9 +402,9 @@ bool Rbmp::trackDown(PIXELS startPoint)
 	//each direction relative to the image
 	do
 	{
-		if(getLpoint(direction,x,y) && !isEdge(x,y))
+		if(getRpoint(direction,x,y) && !isEdge(x,y))
 		{
-			printf("x:%d y:%d\n",x,y);
+			//printf("x:%d y:%d\n",x,y);
 			boundaryline.push_back(get_pix(x,y));
 			/*
 			printf("push a: ");
@@ -390,15 +415,35 @@ bool Rbmp::trackDown(PIXELS startPoint)
 		else
 			break;
 	}while (x != sx || y != sy);
-	show_line(boundaryline);
-	printf("trackDown ok..... line len:%ld\n",boundaryline.size());
-	return true;
+	if(boundaryline.size() > granularity)
+		show_line(boundaryline);
+	if(startPoint == boundaryline.back())
+		printf("边界线闭合！\n");
+	else
+		printf("边界线开放！\n");
+	printf("granularity: %u trackDown ok..... line len:%ld\n",granularity,boundaryline.size());
+	PIXELS nextPoint;
+	size_t len = boundaryline.size();
+	for (int i = len - 1; i >= 0; i--)
+	{
+		boundaryline[i].show_PIXELS();
+			printf("\n");
+		if(boundaryline[i].getY() != sy)
+		{
+			nextPoint = boundaryline[i+1];
+			printf("==============\n");
+			boundaryline[i+1].show_PIXELS();
+			printf("\n");
+			break;
+		}
+	}
+	return nextPoint.getX();
 }
 
 // is Boundary 
 bool Rbmp::isBoundaryPoint(PIXELS pot)
 {
-	PIXPOT tmp;
+	/*PIXPOT tmp;
 	if(alikeBackground(pot) == 1)
 	{
 		tmp = get_pot(pot);
@@ -416,6 +461,10 @@ bool Rbmp::isBoundaryPoint(PIXELS pot)
 			printf("\n");
 			return true;
 		}
+	}*/
+	if(alikeBackground(pot) == 1)
+	{
+		return true;
 	}
 	else
 	{
@@ -670,6 +719,10 @@ bool Rbmp::deal_image(const char* dealType)
 				genHistogram(Green);
 				genHistogram(Blue);
 				genHistogram();
+				break;
+			case 'b':
+				cout << "  -b     backGround_ize   : get a image's part of backGround\n";
+				backGround_ize();
 				break;
 			default:
 				printf("Not deal with!\n");
@@ -1840,6 +1893,20 @@ bool Rbmp::getLpoint(Position& direction,int& x,int& y)
 			break;
 		default:
 			break;
+	}
+	return true;
+}
+bool Rbmp::backGround_ize()
+{
+	for (int y = 0;y < bmpHeight; y++)
+	{
+		for (int x = 0; x < bmpWidth; x++)
+		{
+			if(!alikeBackground(allData[y][x]))
+			{
+				allData[y][x].setRGB(0,0,0);
+			}
+		}
 	}
 	return true;
 }

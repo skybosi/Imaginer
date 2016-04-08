@@ -53,6 +53,10 @@ class Rbmp
 		BITMAPINFOHEADER infohead;
 		RGBQUAD backGround;
 		vvPIXELS boundarys;
+		U32 granularity;//图像碎片边缘最少像素
+		// pixelTrend: background -> non background : false
+		//             non background -> background : true
+		bool pixelTrend;
 	public:
 		~Rbmp();
 		Rbmp(const char* bmpname);
@@ -71,6 +75,8 @@ class Rbmp
 		PIXELS get_pix(PIXELS pixel);
 		//get the 8 point info. around a point
 		PIXPOT get_pot(PIXELS pixel);
+		//set image granularity
+		U32 setGranularity(U32 gran);
 	public:
 		//show the image all pixel all infomation
 		//about (x,y), RGB value, isEdge 
@@ -92,7 +98,7 @@ class Rbmp
 		//set BackGround with RGBQUAD
 		bool setBackground(RGBQUAD rgb);
 		//set BackGround with R,G,B
-		bool setBackground(U8 r,U8 g,U8 b);
+		bool setBackground(U8 r = 255,U8 g = 255,U8 b = 255);
 	private:
 		//alike background or not,Mean and the same color as 
 		//the background color 
@@ -160,6 +166,8 @@ class Rbmp
 		bool getRpoint(Position& direction,int& x,int& y);
 		//just want to get the left point of one point,if get x,y will be reset
 		bool getLpoint(Position& direction,int& x,int& y);
+		// ppPIXELS allData;//bmp image matrix
+		bool backGround_ize();
 	public://The function deal with the bmp image (Macroscopic)
 		//Function: generate the image's bar diagram 
 		bool     genBardiagram(colorType color = Pricolor);
@@ -202,7 +210,7 @@ class Rbmp
 	public://The function deal with the bmp image (Microcosmic)
 		//Gets the border(boundary) line
 		void getBoundaryLine();
-		bool trackDown(PIXELS startPoint);
+		int trackDown(PIXELS startPoint);
 
 };
 
