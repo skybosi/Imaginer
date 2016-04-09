@@ -8,6 +8,7 @@
 #define EQUALBackGround(rgb) ( !(rgb.rgbRed ^ backGround.rgbRed) && \
 		                           !(rgb.rgbGreen ^ backGround.rgbGreen) && \
 		                           !(rgb.rgbBlue ^ backGround.rgbBlue) )
+#define CLOSEOPEN(var)       ((var) ? ("close") : ("open"))
 static int globalI = 0;
 Rbmp::Rbmp(const char *bmpname):fp(NULL), fpo(NULL), bmppath(bmpname), allData(NULL), pColorTable(NULL),granularity(10),pixelTrend(true)
 {
@@ -369,25 +370,30 @@ void Rbmp::getBoundaryLine()
 		{
 			if(isBoundaryPoint(allData[y][x]))
 			{
-					if(allData[y][x].getEdge() != -1)
-					{
-				//start track down by following clues(顺藤摸瓜)
-						x = trackDown(allData[y][x]);
-						lineflags = true;
-					}
-					if(lineflags)
-						continue;
+				if(lineflags)
+					continue;
+				if(allData[y][x].getEdge() != -1)
+				{
+					//start track down by following clues(顺藤摸瓜)
+					x = trackDown(allData[y][x]);
+					lineflags = true;
+					/*
+					if(!isCloseOpen(boundarys.back()))
+						pixelTrend = false;
+						*/
+				}
 			}
-			lineflags = false;
+			else
+				lineflags = false;
 		}
 	}
 	printf("OOOOOOKKKKK!\n");
 	printf("granularity: %u boundarys size:%ld\n",granularity,boundarys.size());
 	for (size_t i =0; i < boundarys.size(); i++)
 	{
-		printf("$[%ld] boundary line len:%ld,(%u)\n",i,boundarys[i].size(),granularity);
+		printf("$[%ld]: close or open status: %s ;boundary line len: %ld,(%u)\n",
+				i,CLOSEOPEN(isCloseOpen(boundarys[i])),boundarys[i].size(),granularity);
 		show_line(boundarys[i]);
-		printf("==============\n");
 	}
 }
 void Rbmp::show_line(vPIXELS boundaryline)
@@ -397,6 +403,13 @@ void Rbmp::show_line(vPIXELS boundaryline)
 		boundaryline[i].show_PIXELS();
 		printf("\n");
 	}
+}
+bool Rbmp::isCloseOpen(vPIXELS boundaryline)
+{
+	if(boundaryline.empty())
+		return false;
+	else
+		return (boundaryline.front() == boundaryline.back());
 }
 //start track down by following clues(顺藤摸瓜)
 int Rbmp::trackDown(PIXELS startPoint)

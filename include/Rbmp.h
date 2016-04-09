@@ -166,8 +166,10 @@ class Rbmp
 		bool getRpoint(Position& direction,int& x,int& y);
 		//just want to get the left point of one point,if get x,y will be reset
 		bool getLpoint(Position& direction,int& x,int& y);
-		// ppPIXELS allData;//bmp image matrix
+		//ppPIXELS allData;//bmp image matrix
 		bool backGround_ize();
+		//is a close/open boundary line or not
+		bool isCloseOpen(vPIXELS boundaryline);
 	public://The function deal with the bmp image (Macroscopic)
 		//Function: generate the image's bar diagram 
 		bool     genBardiagram(colorType color = Pricolor);
