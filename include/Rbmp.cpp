@@ -365,15 +365,16 @@ void Rbmp::getBoundaryLine()
 	{
 		for (int x = 0; x < bmpWidth; x++)
 		{
-			if(isBoundaryPoint(allData[y][x]))
+			if(isBoundaryPoint(allData[y][x]) &&
+					allData[y][x].getEdge() != -1)
 			{
 				//start track down by following clues(顺藤摸瓜)
-				trackDown(allData[y][x]);
-				goto HERE;
+				x = trackDown(allData[y][x]);
+				//goto HERE;
 			}
 		}
 	}
-HERE:  printf("OOOOOOKKKKK!\n");
+	printf("OOOOOOKKKKK!\n");
 }
 void Rbmp::show_line(vPIXELS boundaryline)
 {
@@ -387,6 +388,7 @@ void Rbmp::show_line(vPIXELS boundaryline)
 int Rbmp::trackDown(PIXELS startPoint)
 {
 	printf("Starting track down by following clues(顺藤摸瓜)...\n");
+	startPoint.setEdge(-1);
 	int sx = startPoint.getX();
 	int x = sx;
 	int sy = startPoint.getY();
@@ -405,7 +407,9 @@ int Rbmp::trackDown(PIXELS startPoint)
 		if(getRpoint(direction,x,y) && !isEdge(x,y))
 		{
 			//printf("x:%d y:%d\n",x,y);
-			boundaryline.push_back(get_pix(x,y));
+			//boundaryline.push_back(get_pix(x,y));
+			allData[y][x].setEdge(-1);
+			boundaryline.push_back(allData[y][x]);
 			/*
 			printf("push a: ");
 			get_pix(x,y).show_PIXELS();
@@ -431,9 +435,9 @@ int Rbmp::trackDown(PIXELS startPoint)
 		if(boundaryline[i].getY() != sy)
 		{
 			nextPoint = boundaryline[i+1];
-			printf("==============\n");
-			boundaryline[i+1].show_PIXELS();
-			printf("\n");
+//			printf("==============\n");
+//			boundaryline[i+1].show_PIXELS();
+//			printf("\n");
 			break;
 		}
 	}

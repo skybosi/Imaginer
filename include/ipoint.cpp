@@ -145,7 +145,7 @@ bool PIXPOT::pixelSimilar()
 		return false;
 }
 
-PIXELS::PIXELS():pix_X(0),pix_Y(0),rgb_threshold(128),bEdge(false),bEmpty(true)
+PIXELS::PIXELS():pix_X(0),pix_Y(0),rgb_threshold(128),bEdge(0),bEmpty(true)
 {
 	memset(&prgb,0,sizeof(RGBQUAD));
 	//rgb_threshold  = 0;
@@ -276,6 +276,10 @@ void PIXELS::setempty(bool state)
 {
 	bEmpty = state;
 }
+void PIXELS::setEdge(int bedge)
+{
+	bEdge = bedge;
+}
 bool PIXELS::empty()
 {
 	return !bEmpty;
@@ -286,11 +290,11 @@ bool PIXELS::isEdge(PIXELS& pixel, int W,int H)
 			(pixel.pix_Y <= 0) | (pixel.pix_Y >= H-1))
 	{
 		pixel.bEdge = true;
-		return true;
+		return 1;
 	}
 	else
 	{
-		pixel.bEdge = false;
+		pixel.bEdge = 0;
 		return false;
 	}
 }
@@ -299,12 +303,12 @@ bool PIXELS::isEdge(int W,int H)
 	if((pix_X <= 0) | (pix_X >= W-1) |
 			(pix_Y <= 0) | (pix_Y >= H-1))
 	{
-		bEdge = true;
+		bEdge = 1;
 		return true;
 	}
 	else
 	{
-		bEdge = false;
+		bEdge = 0;
 		return false;
 	}
 }
@@ -348,7 +352,7 @@ int PIXELS::getY()
 {
 	return pix_Y;
 }
-bool PIXELS::getEdge()
+int PIXELS::getEdge()
 {
 	return bEdge;
 }

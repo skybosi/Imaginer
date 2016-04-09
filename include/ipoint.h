@@ -13,7 +13,7 @@ class PIXELS
 		int pix_Y;
 		RGBQUAD prgb;
 		U8 rgb_threshold;
-		bool bEdge;				// edge point
+		int bEdge;				// edge point
 		bool bEmpty;      //the pixel is NULL ,is false
 	public:
 		PIXELS();
@@ -31,6 +31,7 @@ class PIXELS
 		PIXELS setXY(int x, int y);
 		PIXELS resetXY(int x,int y);
 		void   setempty(bool state = false);
+		void   setEdge(int bedge = 0);
 		U8 set_threshold(PIXELS ppot);
 		RGBQUAD get_diff8RGB(PIXELS ppot);
 	public:
@@ -39,7 +40,7 @@ class PIXELS
 		U8  getRed();
 		U8  getGreen();
 		U8  getBlue();
-		bool getEdge();
+		int getEdge();
 		RGBQUAD getRGB();
 		//binaryzation image
 		void toBin();
