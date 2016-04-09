@@ -23,7 +23,7 @@ ${TARGET}:$(SRC) $(ISRC)
 	${CXX} $^ $(CC_FLAG) -I $(INCLUDE) -I $(SDK_INC) -L $(LIB) ${LLDFLAGS} -o ${TARGET}
 
 test:
-	./$(TARGET) source/test24.bmp 0 0 test.bmp
+	./$(TARGET) resource/test24.bmp 0 0 test.bmp
 initdir:
 	mkdir -p bin
 	mkdir -p $(LIB)
