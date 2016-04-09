@@ -361,20 +361,34 @@ void Rbmp::show_allData()
 }
 void Rbmp::getBoundaryLine()
 {
+	bool lineflags;
 	for (int y = 0;y < bmpHeight; y++)
 	{
+		lineflags = false;
 		for (int x = 0; x < bmpWidth; x++)
 		{
-			if(isBoundaryPoint(allData[y][x]) &&
-					allData[y][x].getEdge() != -1)
+			if(isBoundaryPoint(allData[y][x]))
 			{
+					if(allData[y][x].getEdge() != -1)
+					{
 				//start track down by following clues(顺藤摸瓜)
-				x = trackDown(allData[y][x]);
-				//goto HERE;
+						x = trackDown(allData[y][x]);
+						lineflags = true;
+					}
+					if(lineflags)
+						continue;
 			}
+			lineflags = false;
 		}
 	}
 	printf("OOOOOOKKKKK!\n");
+	printf("granularity: %u boundarys size:%ld\n",granularity,boundarys.size());
+	for (size_t i =0; i < boundarys.size(); i++)
+	{
+		printf("$[%ld] boundary line len:%ld,(%u)\n",i,boundarys[i].size(),granularity);
+		show_line(boundarys[i]);
+		printf("==============\n");
+	}
 }
 void Rbmp::show_line(vPIXELS boundaryline)
 {
@@ -387,7 +401,7 @@ void Rbmp::show_line(vPIXELS boundaryline)
 //start track down by following clues(顺藤摸瓜)
 int Rbmp::trackDown(PIXELS startPoint)
 {
-	printf("Starting track down by following clues(顺藤摸瓜)...\n");
+	//printf("Starting track down by following clues(顺藤摸瓜)...\n");
 	startPoint.setEdge(-1);
 	int sx = startPoint.getX();
 	int x = sx;
@@ -396,10 +410,10 @@ int Rbmp::trackDown(PIXELS startPoint)
 	vPIXELS boundaryline;
 	boundaryline.push_back(startPoint);
 	/*
-	printf("push s: ");
-	startPoint.show_PIXELS();
-	printf("\n");
-	*/
+		 printf("push s: ");
+		 startPoint.show_PIXELS();
+		 printf("\n");
+		 */
 	Position direction = Right;
 	//each direction relative to the image
 	do
@@ -408,40 +422,54 @@ int Rbmp::trackDown(PIXELS startPoint)
 		{
 			//printf("x:%d y:%d\n",x,y);
 			//boundaryline.push_back(get_pix(x,y));
-			allData[y][x].setEdge(-1);
-			boundaryline.push_back(allData[y][x]);
-			/*
-			printf("push a: ");
-			get_pix(x,y).show_PIXELS();
-			printf("\n");
-			*/
+			if(alikeBackground(x,y) == 1)
+			{
+				allData[y][x].setEdge(-1);
+				//allData[y][x].setRGB(0,0,0);
+				boundaryline.push_back(allData[y][x]);
+				/*
+					 printf("push a: ");
+					 get_pix(x,y).show_PIXELS();
+					 printf("\n");
+					 */
+			}
 		}
 		else
 			break;
 	}while (x != sx || y != sy);
+
+	//printf("granularity: %u trackDown ok..... line len:%ld\n",granularity,boundaryline.size());
 	if(boundaryline.size() > granularity)
-		show_line(boundaryline);
-	if(startPoint == boundaryline.back())
-		printf("边界线闭合！\n");
-	else
-		printf("边界线开放！\n");
-	printf("granularity: %u trackDown ok..... line len:%ld\n",granularity,boundaryline.size());
-	PIXELS nextPoint;
-	size_t len = boundaryline.size();
-	for (int i = len - 1; i >= 0; i--)
 	{
-		boundaryline[i].show_PIXELS();
-			printf("\n");
-		if(boundaryline[i].getY() != sy)
-		{
-			nextPoint = boundaryline[i+1];
-//			printf("==============\n");
-//			boundaryline[i+1].show_PIXELS();
-//			printf("\n");
-			break;
-		}
+		//show_line(boundaryline);
+		boundarys.push_back(boundaryline);
 	}
-	return nextPoint.getX();
+	if(startPoint == boundaryline.back())
+	{
+		//printf("边界线闭合！\n");
+		PIXELS nextPoint;
+		size_t len = boundaryline.size();
+		for (int i = len - 1; i >= 0; i--)
+		{
+			//boundaryline[i].show_PIXELS();
+			//printf("\n");
+			if(boundaryline[i].getY() != sy)
+			{
+				nextPoint = boundaryline[i+1];
+				//			printf("==============\n");
+				//			boundaryline[i+1].show_PIXELS();
+				//			printf("\n");
+				break;
+			}
+		}
+		return nextPoint.getX();
+	}
+	else
+	{
+		printf("边界线开放！\n");
+		return sx;
+	}
+	//vPIXELS(boundaryline).swap(boundaryline);
 }
 
 // is Boundary 
