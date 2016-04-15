@@ -289,8 +289,8 @@ bool PIXELS::isEdge(PIXELS& pixel, int W,int H)
 	if((pixel.pix_X <= 0) | (pixel.pix_X >= W-1) |
 			(pixel.pix_Y <= 0) | (pixel.pix_Y >= H-1))
 	{
-		pixel.bEdge = true;
-		return 1;
+		pixel.bEdge = 1;
+		return true;
 	}
 	else
 	{

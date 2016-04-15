@@ -9,6 +9,12 @@
 		                           !(rgb.rgbGreen ^ backGround.rgbGreen) && \
 		                           !(rgb.rgbBlue ^ backGround.rgbBlue) )
 #define CLOSEOPEN(var)       ((var) ? ("close") : ("open"))
+#define DIRECTION(var)       switch(var) {\
+                               case Right: direction = Right; x++; break;\
+                               case Down:  direction = Down;  y++; break;\
+                               case Left:  direction = Left;  x--; break;\
+                               case Up:    direction = Up;    y--; break;\
+                               default:    break; }
 static int globalI = 0;
 Rbmp::Rbmp(const char *bmpname):fp(NULL), fpo(NULL), bmppath(bmpname), allData(NULL), pColorTable(NULL),granularity(10),pixelTrend(true)
 {
@@ -198,6 +204,31 @@ bool Rbmp::initSpatialize(const char** imagePath)
 	return true;
 }
 
+bool Rbmp::boundarysHL()
+{
+	int color;
+	if(pixelTrend)
+		color = 128;
+	else
+		color = 0;
+	//printf("+++++++++++++++++++++++++\n");
+	if(boundarys.empty())
+		return false;
+	for (int y = 0; y < bmpHeight; y++)
+	{
+		for (int x = 0; x < bmpWidth; x++)
+		{
+			if(allData[y][x].getEdge() == -1)
+			{
+				allData[y][x].setRGB(color,color,color);
+				/*allData[y][x].show_PIXELS();
+				printf("\n");*/
+			}
+		}
+	}
+	return true;
+}
+
 Rbmp::~Rbmp()
 {
 	if (pColorTable && biBitCount == 8)
@@ -362,30 +393,28 @@ void Rbmp::show_allData()
 }
 void Rbmp::getBoundaryLine()
 {
-	bool lineflags;
+	bool lineflags = false;
 	for (int y = 0;y < bmpHeight; y++)
 	{
-		lineflags = false;
 		for (int x = 0; x < bmpWidth; x++)
 		{
 			if(isBoundaryPoint(allData[y][x]))
 			{
-				if(lineflags)
-					continue;
 				if(allData[y][x].getEdge() != -1)
 				{
 					//start track down by following clues(顺藤摸瓜)
-					x = trackDown(allData[y][x]);
-					lineflags = true;
-					/*
-					if(!isCloseOpen(boundarys.back()))
-						pixelTrend = false;
-						*/
+					if(!lineflags)
+					{
+						x = trackDown(allData[y][x]);
+					}
+				}
+				else
+				{
+					lineflags = !lineflags;
 				}
 			}
-			else
-				lineflags = false;
 		}
+		lineflags = false;
 	}
 	printf("OOOOOOKKKKK!\n");
 	printf("granularity: %u boundarys size:%ld\n",granularity,boundarys.size());
@@ -412,9 +441,9 @@ bool Rbmp::isCloseOpen(vPIXELS boundaryline)
 		return (boundaryline.front() == boundaryline.back());
 }
 //start track down by following clues(顺藤摸瓜)
-int Rbmp::trackDown(PIXELS startPoint)
+int Rbmp::trackDown(PIXELS& startPoint)
 {
-	//printf("Starting track down by following clues(顺藤摸瓜)...\n");
+	globalI++;
 	startPoint.setEdge(-1);
 	int sx = startPoint.getX();
 	int x = sx;
@@ -431,7 +460,8 @@ int Rbmp::trackDown(PIXELS startPoint)
 	//each direction relative to the image
 	do
 	{
-		if(getRpoint(direction,x,y) && !isEdge(x,y))
+		//if(getRpoint(direction,x,y)&& !isEdge(x,y))
+		if(getRpoint(direction,x,y))
 		{
 			//printf("x:%d y:%d\n",x,y);
 			//boundaryline.push_back(get_pix(x,y));
@@ -457,6 +487,8 @@ int Rbmp::trackDown(PIXELS startPoint)
 		//show_line(boundaryline);
 		boundarys.push_back(boundaryline);
 	}
+	printf("$[%d]> close or open status: %s,Starting track down by following clues(顺藤摸瓜)...\n",
+			globalI,CLOSEOPEN(isCloseOpen(boundaryline)));
 	if(startPoint == boundaryline.back())
 	{
 		//printf("边界线闭合！\n");
@@ -768,6 +800,10 @@ bool Rbmp::deal_image(const char* dealType)
 			case 'b':
 				cout << "  -b     backGround_ize   : get a image's part of backGround\n";
 				backGround_ize();
+				break;
+			case 'h':
+				cout << "  -h     boundarysHL      : change boundarys line to HightLight\n";
+				boundarysHL();
 				break;
 			default:
 				printf("Not deal with!\n");
@@ -1728,8 +1764,9 @@ bool Rbmp::getRpoint(Position& direction,int& x,int& y)
 			flagxy = alikeBackground(x,y + 1);
 			if (flagxy == 1)
 			{
-				direction = Down;
-				y++;
+				//direction = Down;
+				//y++;
+				DIRECTION(Down);
 			}
 			else if (flagxy == 0)
 			{
@@ -1740,8 +1777,21 @@ bool Rbmp::getRpoint(Position& direction,int& x,int& y)
 				}
 				else if(flagxy == 0)
 				{
-					direction = Up;
-					y--;
+					flagxy = alikeBackground(x,y - 1);
+					if (flagxy == 1)
+					{
+						//direction = Up;
+						//y--;
+						DIRECTION(Up);
+					}
+					else if (flagxy == 0)
+					{
+						//direction = Left;
+						//x--;
+						DIRECTION(Left);
+					}
+					else
+						return false;
 				}
 				else
 					return false;
@@ -1753,8 +1803,9 @@ bool Rbmp::getRpoint(Position& direction,int& x,int& y)
 			flagxy = alikeBackground(x - 1,y);
 			if (flagxy == 1)
 			{
-				direction = Left;
-				x--;
+				//direction = Left;
+				//x--;
+				DIRECTION(Left);
 			}
 			else if (flagxy == 0)
 			{
@@ -1765,8 +1816,21 @@ bool Rbmp::getRpoint(Position& direction,int& x,int& y)
 				}
 				else if(flagxy == 0)
 				{
-					direction = Right;
-					x++;
+					flagxy = alikeBackground(x + 1,y);
+					if (flagxy == 1)
+					{
+						//direction = Right;
+						//x++;
+						DIRECTION(Right);
+					}
+					else if (flagxy == 0)
+					{
+						//direction = Up;
+						//y--;
+						DIRECTION(Up);
+					}
+					else
+						return false;
 				}
 				else
 					return false;
@@ -1778,8 +1842,9 @@ bool Rbmp::getRpoint(Position& direction,int& x,int& y)
 			flagxy = alikeBackground(x + 1,y);
 			if (flagxy == 1)
 			{
-				direction = Right;
-				x++;
+				//direction = Right;
+				//x++;
+				DIRECTION(Right);
 			}
 			else if (flagxy == 0)
 			{
@@ -1790,8 +1855,21 @@ bool Rbmp::getRpoint(Position& direction,int& x,int& y)
 				}
 				else if(flagxy == 0)
 				{
-					direction = Left;
-					x--;
+					flagxy = alikeBackground(x - 1,y);
+					if (flagxy == 1)
+					{
+						//direction = Left;
+						//x--;
+						DIRECTION(Left);
+					}
+					else if (flagxy == 0)
+					{
+						//direction = Down;
+						//y++;
+						DIRECTION(Down);
+					}
+					else
+						return false;
 				}
 				else
 					return false;
@@ -1803,8 +1881,9 @@ bool Rbmp::getRpoint(Position& direction,int& x,int& y)
 			flagxy = alikeBackground(x ,y - 1);
 			if (flagxy == 1)
 			{
-				direction = Up;
-				y--;
+				//direction = Up;
+				//y--;
+				DIRECTION(Up);
 			}
 			else if (flagxy == 0)
 			{
@@ -1815,8 +1894,21 @@ bool Rbmp::getRpoint(Position& direction,int& x,int& y)
 				}
 				else if(flagxy == 0)
 				{
-					direction = Down;
-					y++;
+					flagxy = alikeBackground(x,y + 1);
+					if (flagxy == 1)
+					{
+						//direction = Down;
+						//y++;
+						DIRECTION(Down);
+					}
+					else if(flagxy == 0)
+					{
+						//direction = Right;
+						//x++;
+						DIRECTION(Right);
+					}
+					else
+						return false;
 				}
 				else
 					return false;
@@ -1941,6 +2033,7 @@ bool Rbmp::getLpoint(Position& direction,int& x,int& y)
 	}
 	return true;
 }
+
 bool Rbmp::backGround_ize()
 {
 	for (int y = 0;y < bmpHeight; y++)

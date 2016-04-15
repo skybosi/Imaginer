@@ -82,6 +82,14 @@ enum colorType
 	Blue,
 	Pricolor
 };
-
-
+enum Position
+{
+	Up,
+	Down,
+	Left,
+	Right,
+	Front,
+	Back,
+	None
+};
 #endif // ibmp.h :[]

@@ -26,16 +26,6 @@ class Rbmp
 		UR,
 		NONE
 	};
-	enum Position
-	{
-		Up,
-		Down,
-		Left,
-		Right,
-		Front,
-		Back,
-		None
-	};
 	private:
 		FILE* fp;     //input file path
 		FILE* fpo;   //output file path
@@ -212,7 +202,9 @@ class Rbmp
 	public://The function deal with the bmp image (Microcosmic)
 		//Gets the border(boundary) line
 		void getBoundaryLine();
-		int trackDown(PIXELS startPoint);
+		int trackDown(PIXELS& startPoint);
+		//Boundary  highlight
+		bool boundarysHL();
 
 };
 
