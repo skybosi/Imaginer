@@ -6,6 +6,7 @@
 #include <string.h>
 #include <stdexcept>
 #include <vector>
+#include <deque>
 #include <map>
 #include "ibmp.h"
 #include "image.h"
@@ -13,8 +14,8 @@
 typedef PIXELS* pPIXELS;
 typedef pPIXELS* ppPIXELS;
 
-typedef vector<PIXELS> vPIXELS;
-typedef vector<vPIXELS> vvPIXELS;
+typedef deque<PIXELS> dPIXELS;
+typedef vector<dPIXELS> vdPIXELS;
 using namespace std;
 //class Rbmp: public Image
 class Rbmp
@@ -42,7 +43,7 @@ class Rbmp
 		BITMAPFILEHEADER head;
 		BITMAPINFOHEADER infohead;
 		RGBQUAD backGround;
-		vvPIXELS boundarys;
+		vdPIXELS boundarys;
 		U32 granularity;//图像碎片边缘最少像素
 		// pixelTrend: background -> non background : false
 		//             non background -> background : true
@@ -126,7 +127,7 @@ class Rbmp
 		//show bmp path list
 		void show_6path(map<Position,string> pathl);
 		//show bmp path list
-		void show_line(vPIXELS boundaryline);
+		void show_line(dPIXELS boundaryline);
 		//Get Position's string
 		string Pos2str(Position pos);
 		//Get colorType's string
@@ -159,7 +160,7 @@ class Rbmp
 		//ppPIXELS allData;//bmp image matrix
 		bool backGround_ize();
 		//is a close/open boundary line or not
-		bool isCloseOpen(vPIXELS boundaryline);
+		bool isCloseOpen(dPIXELS boundaryline);
 	public://The function deal with the bmp image (Macroscopic)
 		//Function: generate the image's bar diagram 
 		bool     genBardiagram(colorType color = Pricolor);

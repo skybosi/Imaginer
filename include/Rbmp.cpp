@@ -425,7 +425,7 @@ void Rbmp::getBoundaryLine()
 		show_line(boundarys[i]);
 	}
 }
-void Rbmp::show_line(vPIXELS boundaryline)
+void Rbmp::show_line(dPIXELS boundaryline)
 {
 	for (size_t i =0; i < boundaryline.size(); i ++)
 	{
@@ -433,7 +433,7 @@ void Rbmp::show_line(vPIXELS boundaryline)
 		printf("\n");
 	}
 }
-bool Rbmp::isCloseOpen(vPIXELS boundaryline)
+bool Rbmp::isCloseOpen(dPIXELS boundaryline)
 {
 	if(boundaryline.empty())
 		return false;
@@ -449,7 +449,7 @@ int Rbmp::trackDown(PIXELS& startPoint)
 	int x = sx;
 	int sy = startPoint.getY();
 	int y = sy;
-	vPIXELS boundaryline;
+	dPIXELS boundaryline;
 	boundaryline.push_back(startPoint);
 	/*
 		 printf("push s: ");
