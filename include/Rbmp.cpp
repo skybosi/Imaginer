@@ -399,6 +399,7 @@ void Rbmp::show_allData()
 }
 void Rbmp::getBoundaryLine()
 {
+#define debug1
 	bool lineflags = false;
 	map<pPIXELS,pPIXELS> skipTable;
 	pair<pPIXELS,pPIXELS> footprint;
@@ -417,7 +418,10 @@ void Rbmp::getBoundaryLine()
 						x = trackDown(allData[y][x]);
 						footprint.second = &allData[y][x];
 						skipTable.insert(footprint);
-						//goto here;
+						//printf("next footprint'x value:%d\n",x+1);
+#ifdef debug
+						goto here;
+#endif
 					}
 				}
 				else
@@ -428,7 +432,9 @@ void Rbmp::getBoundaryLine()
 		}
 		lineflags = false;
 	}
-//here:	printf("OOOOOOKKKKK!\n");
+#ifdef debug
+here:	printf("OOOOOOKKKKK!\n");
+#endif
 	printf("granularity: %u boundarys size:%ld\n",granularity,boundarys.size());
 	for (size_t i =0; i < boundarys.size(); i++)
 	{
@@ -459,7 +465,7 @@ int Rbmp::trackDown(PIXELS& startPoint)
 	bool openstatus = true;
 	if(startPoint.getEdge() != 1)
 		openstatus = !openstatus;
-	startPoint.setEdge(-1);
+	startPoint.setEdge(-1);//cannnot modify the x,y and rgb value
 	int sx = startPoint.getX();
 	int x = sx;
 	int sy = startPoint.getY();
@@ -532,30 +538,27 @@ int Rbmp::trackDown(PIXELS& startPoint)
 	}
 	printf("$[%d]> close or open status: %s,Starting track down by following clues(顺藤摸瓜)...\n",
 			globalI,CLOSEOPEN(isCloseOpen(boundaryline)));
-	if(startPoint == boundaryline.back())
-	{
-		//printf("边界线闭合！\n");
-		PIXELS nextPoint;
-		size_t len = boundaryline.size();
-		for (int i = len - 1; i >= 0; i--)
-		{
-			//boundaryline[i].show_PIXELS();
-			//printf("\n");
-			if(boundaryline[i].getY() != sy)
-			{
-				nextPoint = boundaryline[i+1];
-				//			printf("==============\n");
-				//			boundaryline[i+1].show_PIXELS();
-				//			printf("\n");
-				break;
-			}
-		}
-		return nextPoint.getX();
-	}
-	else if(openstatus)
+	if(openstatus)
 	{
 		printf("边界线半开放！\n");
-		return sx;
+		int i = 0;
+		while(boundaryline[++i].getY() != sy);
+		//printf("The max x %d will be nextpoint\n",boundaryline[i].getX());
+		return boundaryline[i].getX();
+	}
+	else if(isCloseOpen(boundaryline))
+	{
+		printf("边界线闭合！\n");
+		int maxX = sx;
+		int i = boundaryline.size() - 1;
+		//printf("sx %d sy %d size %d\n",sx,sy,i);
+		while(boundaryline[i].getY() == sy && boundaryline[i].getX() >= maxX)
+		{
+			i--;
+			maxX = boundaryline[i].getX();
+		}
+		//printf("The max x %d will be nextpoint\n",maxX);
+		return maxX;
 	}
 	else
 	{
