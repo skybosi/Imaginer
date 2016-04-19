@@ -543,11 +543,11 @@ int Rbmp::trackDown(PIXELS& startPoint)
 			globalI,CLOSEOPEN(isCloseOpen(boundaryline)),boundaryline.size(),granularity);
 	//get next point's x value
 	int maxX = sx;
-	while(boundaryline[nextx].getY() == sy
+	while(--nextx >= 0 && boundaryline[nextx].getY() == sy
 			&& boundaryline[nextx].getX() >= maxX)
 	{
-		nextx--;
 		maxX = boundaryline[nextx].getX();
+		//printf("%d mx %d\n",nextx,maxX);
 	}
 	printf("The max x %d will be nextpoint\n",maxX);
 	return maxX;
