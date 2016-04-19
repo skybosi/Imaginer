@@ -399,7 +399,7 @@ void Rbmp::show_allData()
 }
 void Rbmp::getBoundaryLine()
 {
-#define debug1
+#define debug
 	bool lineflags = false;
 	map<pPIXELS,pPIXELS> skipTable;
 	pair<pPIXELS,pPIXELS> footprint;
@@ -470,6 +470,7 @@ int Rbmp::trackDown(PIXELS& startPoint)
 	int x = sx;
 	int sy = startPoint.getY();
 	int y = sy;
+	int nextx = 0;
 	dPIXELS boundaryline;
 	boundaryline.push_back(startPoint);
 	/*
@@ -524,48 +525,32 @@ int Rbmp::trackDown(PIXELS& startPoint)
 					get_pix(x,y).show_PIXELS();
 					printf("\n");
 					*/
+					nextx++;
 				}
 			}
 			else
 				break;
 		}while (x != sx || y != sy);
 	}
-	//printf("granularity: %u trackDown ok..... line len:%ld\n",granularity,boundaryline.size());
+	else
+		nextx =  boundaryline.size() - 1;
 	if(boundaryline.size() > granularity)
 	{
 		//show_line(boundaryline);
 		boundarys.push_back(boundaryline);
 	}
-	printf("$[%d]> close or open status: %s,Starting track down by following clues(顺藤摸瓜)...\n",
-			globalI,CLOSEOPEN(isCloseOpen(boundaryline)));
-	if(openstatus)
+	printf("$[%d]> close or open status: %s Track down by following clues(顺藤摸瓜) OK... len:%ld(%u)\n",
+			globalI,CLOSEOPEN(isCloseOpen(boundaryline)),boundaryline.size(),granularity);
+	//get next point's x value
+	int maxX = sx;
+	while(boundaryline[nextx].getY() == sy
+			&& boundaryline[nextx].getX() >= maxX)
 	{
-		printf("边界线半开放！\n");
-		int i = 0;
-		while(boundaryline[++i].getY() != sy);
-		//printf("The max x %d will be nextpoint\n",boundaryline[i].getX());
-		return boundaryline[i].getX();
+		nextx--;
+		maxX = boundaryline[nextx].getX();
 	}
-	else if(isCloseOpen(boundaryline))
-	{
-		printf("边界线闭合！\n");
-		int maxX = sx;
-		int i = boundaryline.size() - 1;
-		//printf("sx %d sy %d size %d\n",sx,sy,i);
-		while(boundaryline[i].getY() == sy && boundaryline[i].getX() >= maxX)
-		{
-			i--;
-			maxX = boundaryline[i].getX();
-		}
-		//printf("The max x %d will be nextpoint\n",maxX);
-		return maxX;
-	}
-	else
-	{
-		printf("边界线开放！\n");
-		return sx;
-	}
-	//vPIXELS(boundaryline).swap(boundaryline);
+	printf("The max x %d will be nextpoint\n",maxX);
+	return maxX;
 }
 
 // is Boundary 
