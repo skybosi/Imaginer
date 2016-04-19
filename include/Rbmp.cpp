@@ -220,16 +220,14 @@ bool Rbmp::boundarysHL()
 	//printf("+++++++++++++++++++++++++\n");
 	if(boundarys.empty())
 		return false;
-	for (int y = 0; y < bmpHeight; y++)
+	int x = 0,y = 0;
+	for (size_t i =0; i < boundarys.size(); i++)
 	{
-		for (int x = 0; x < bmpWidth; x++)
+		for (size_t j =0; j < boundarys[i].size(); j ++)
 		{
-			if(allData[y][x].getEdge() == -1)
-			{
-				allData[y][x].setRGB(color,color,color);
-				/*allData[y][x].show_PIXELS();
-				printf("\n");*/
-			}
+			y = boundarys[i][j].getY();
+			x = boundarys[i][j].getX();
+			allData[y][x].setRGB(color,color,color);
 		}
 	}
 	return true;
@@ -399,10 +397,11 @@ void Rbmp::show_allData()
 }
 void Rbmp::getBoundaryLine()
 {
-#define debug
+#define debug1
 	bool lineflags = false;
-	map<pPIXELS,pPIXELS> skipTable;
-	pair<pPIXELS,pPIXELS> footprint;
+	map<int,int> skipTable;
+	map<int,int>::const_iterator it;
+	pair<int,int> footprint;
 	for (int y = 0;y < bmpHeight; y++)
 	{
 		for (int x = 0; x < bmpWidth; x++)
@@ -412,21 +411,20 @@ void Rbmp::getBoundaryLine()
 				if(allData[y][x].getEdge() != -1)
 				{
 					//start track down by following clues(顺藤摸瓜)
-					if(!lineflags)
-					{
-						footprint.first = &allData[y][x];
-						x = trackDown(allData[y][x]);
-						footprint.second = &allData[y][x];
-						skipTable.insert(footprint);
-						//printf("next footprint'x value:%d\n",x+1);
+					footprint.first = x;
+					x = trackDown(allData[y][x]);
+					footprint.second = x;;
+					skipTable.insert(footprint);
+					//printf("next footprint'x value:%d\n",x+1);
 #ifdef debug
-						goto here;
+					goto here;
 #endif
-					}
 				}
 				else
 				{
-					lineflags = !lineflags;
+					it = skipTable.find(x);
+					if(it != skipTable.end())
+						x = it->second;
 				}
 			}
 		}
@@ -498,7 +496,8 @@ int Rbmp::trackDown(PIXELS& startPoint)
 					 printf("\n");
 					 */
 			}
-
+			else
+				break;
 		}
 		else
 		{
@@ -527,6 +526,8 @@ int Rbmp::trackDown(PIXELS& startPoint)
 					*/
 					nextx++;
 				}
+				else
+					break;
 			}
 			else
 				break;
@@ -539,8 +540,8 @@ int Rbmp::trackDown(PIXELS& startPoint)
 		//show_line(boundaryline);
 		boundarys.push_back(boundaryline);
 	}
-	printf("$[%d]> close or open status: %s Track down by following clues(顺藤摸瓜) OK... len:%ld(%u)\n",
-			globalI,CLOSEOPEN(isCloseOpen(boundaryline)),boundaryline.size(),granularity);
+	//printf("$[%d]> close or open status: %s Track down by following clues(顺藤摸瓜) OK... len:%ld(%u)\n",
+			//globalI,CLOSEOPEN(isCloseOpen(boundaryline)),boundaryline.size(),granularity);
 	//get next point's x value
 	int maxX = sx;
 	while(--nextx >= 0 && boundaryline[nextx].getY() == sy
@@ -549,7 +550,7 @@ int Rbmp::trackDown(PIXELS& startPoint)
 		maxX = boundaryline[nextx].getX();
 		//printf("%d mx %d\n",nextx,maxX);
 	}
-	printf("The max x %d will be nextpoint\n",maxX);
+	//printf("The max x %d will be nextpoint\n",maxX);
 	return maxX;
 }
 
