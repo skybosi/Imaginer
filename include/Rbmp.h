@@ -16,6 +16,7 @@ typedef pPIXELS* ppPIXELS;
 
 typedef deque<PIXELS> dPIXELS;
 typedef vector<dPIXELS> vdPIXELS;
+typedef map<int,int> mTracktable;
 using namespace std;
 //class Rbmp: public Image
 class Rbmp
@@ -48,6 +49,8 @@ class Rbmp
 		// pixelTrend: background -> non background : false
 		//             non background -> background : true
 		bool pixelTrend;
+		mTracktable skipTable;//用于抠出轨迹内的部分
+		//record the trackdown's result,just for cutout the image
 	public:
 		~Rbmp();
 		Rbmp(const char* bmpname);

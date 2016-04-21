@@ -398,8 +398,6 @@ void Rbmp::show_allData()
 void Rbmp::getBoundaryLine()
 {
 #define debug1
-	bool lineflags = false;
-	map<int,int> skipTable;
 	map<int,int>::const_iterator it;
 	pair<int,int> footprint;
 	for (int y = 0;y < bmpHeight; y++)
@@ -428,7 +426,6 @@ void Rbmp::getBoundaryLine()
 				}
 			}
 		}
-		lineflags = false;
 	}
 #ifdef debug
 here:	printf("OOOOOOKKKKK!\n");
