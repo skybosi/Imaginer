@@ -16,7 +16,12 @@ typedef pPIXELS* ppPIXELS;
 
 typedef deque<PIXELS> dPIXELS;
 typedef vector<dPIXELS> vdPIXELS;
-typedef map<int,int> mTracktable;
+typedef struct pointxy
+{
+	int x;
+	int y;
+}x_y;
+typedef map<int,x_y> mTracktable;
 using namespace std;
 //class Rbmp: public Image
 class Rbmp
@@ -164,6 +169,8 @@ class Rbmp
 		bool backGround_ize();
 		//is a close/open boundary line or not
 		bool isCloseOpen(dPIXELS boundaryline);
+		//deburr: delete The Burr on the track
+		bool deburrTrack(dPIXELS boundaryline);
 	public://The function deal with the bmp image (Macroscopic)
 		//Function: generate the image's bar diagram 
 		bool     genBardiagram(colorType color = Pricolor);

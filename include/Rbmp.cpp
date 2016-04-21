@@ -398,8 +398,9 @@ void Rbmp::show_allData()
 void Rbmp::getBoundaryLine()
 {
 #define debug1
-	map<int,int>::const_iterator it;
-	pair<int,int> footprint;
+	map<int,x_y>::const_iterator it;
+	pair<int,x_y> footprint;
+	bool finded = false;
 	for (int y = 0;y < bmpHeight; y++)
 	{
 		for (int x = 0; x < bmpWidth; x++)
@@ -411,7 +412,8 @@ void Rbmp::getBoundaryLine()
 					//start track down by following clues(顺藤摸瓜)
 					footprint.first = x;
 					x = trackDown(allData[y][x]);
-					footprint.second = x;;
+					footprint.second.x = x;
+					footprint.second.y = y;
 					skipTable.insert(footprint);
 					//printf("next footprint'x value:%d\n",x+1);
 #ifdef debug
@@ -420,9 +422,24 @@ void Rbmp::getBoundaryLine()
 				}
 				else
 				{
-					it = skipTable.find(x);
-					if(it != skipTable.end())
-						x = it->second;
+					footprint.first = x;
+					while(allData[y][x].getEdge() == -1)
+					{
+						if(!finded)
+						{
+							it = skipTable.find(x);
+							if(it != skipTable.end())
+							{
+								finded = true;
+								x = it->second.x;
+							}
+						}
+						x++;
+					}
+					finded = false;
+					footprint.second.x = x-1;
+					footprint.second.y = y;
+					skipTable.insert(footprint);
 				}
 			}
 		}
@@ -535,6 +552,7 @@ int Rbmp::trackDown(PIXELS& startPoint)
 	if(boundaryline.size() > granularity)
 	{
 		//show_line(boundaryline);
+		//deburrTrack(boundaryline);
 		boundarys.push_back(boundaryline);
 	}
 	//printf("$[%d]> close or open status: %s Track down by following clues(顺藤摸瓜) OK... len:%ld(%u)\n",
@@ -549,6 +567,28 @@ int Rbmp::trackDown(PIXELS& startPoint)
 	}
 	//printf("The max x %d will be nextpoint\n",maxX);
 	return maxX;
+}
+
+bool Rbmp::deburrTrack(dPIXELS boundaryline)
+{
+	if(boundaryline.empty())
+		return false;
+	PIXELS frontPoint = boundaryline[0];
+	for (size_t i = 1; i < boundaryline.size(); i ++)
+	{
+		if(frontPoint == boundaryline[i])
+		{
+			printf("??\t");
+			boundaryline[i].show_PIXELS();
+			printf("\n");
+		}
+		else
+		{
+			boundaryline[i].show_PIXELS();
+			printf("\n");
+		}
+	}
+	return true;
 }
 
 // is Boundary 

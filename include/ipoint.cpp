@@ -278,7 +278,7 @@ void PIXELS::setempty(bool state)
 }
 void PIXELS::setEdge(int bedge)
 {
-	bEdge = bedge;
+	bEdge += bedge;
 }
 bool PIXELS::empty()
 {
