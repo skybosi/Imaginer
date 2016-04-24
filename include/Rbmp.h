@@ -18,10 +18,11 @@ typedef deque<PIXELS> dPIXELS;
 typedef vector<dPIXELS> vdPIXELS;
 typedef struct pointxy
 {
-	int x;
-	int y;
-}x_y;
-typedef map<int,x_y> mTracktable;
+	int sttx; //start point x
+	int endx; //end point x
+	int ally; //communal x
+}xx_y;
+typedef vector<xx_y> vTracktable;
 using namespace std;
 //class Rbmp: public Image
 class Rbmp
@@ -54,7 +55,7 @@ class Rbmp
 		// pixelTrend: background -> non background : false
 		//             non background -> background : true
 		bool pixelTrend;
-		mTracktable skipTable;//用于抠出轨迹内的部分
+		vTracktable skipTable;//用于抠出轨迹内的部分
 		//record the trackdown's result,just for cutout the image
 	public:
 		~Rbmp();
@@ -216,6 +217,7 @@ class Rbmp
 		int trackDown(PIXELS& startPoint);
 		//Boundary  highlight
 		bool boundarysHL();
+		bool imageCutOut();
 
 };
 
