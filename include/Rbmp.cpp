@@ -440,7 +440,7 @@ void Rbmp::getBoundaryLine()
 		{
 			if(isBoundaryPoint(allData[y][x]))
 			{
-				if(allData[y][x].getEdge() != -1)
+				if(allData[y][x].getEdge() == 0)
 				{
 					//start track down by following clues(顺藤摸瓜)
 					footprint.sttx = x;
@@ -458,12 +458,14 @@ void Rbmp::getBoundaryLine()
 				{
 					footprint.sttx = x;
 					x++;
-					while( allData[y][x].getEdge() != -1)
+					while(isBoundaryPoint(allData[y][x]))
 					{
-						if(isBoundaryPoint(allData[y][x]))
-							break;
-						else
+						if(allData[y][x].getEdge() != -1)
 							x++;
+						else
+						{
+							break;
+						}
 					}
 					footprint.endx = x;
 					footprint.ally = y;
