@@ -220,7 +220,6 @@ bool Rbmp::boundarysHL()
 	//printf("+++++++++++++++++++++++++\n");
 	if(boundarys.empty())
 		return false;
-	/*
 	int x = 0,y = 0;
 	for (size_t i =0; i < boundarys.size(); i++)
 	{
@@ -233,7 +232,7 @@ bool Rbmp::boundarysHL()
 			//if(allData[y][x].getEdge() == -1)
 				allData[y][x].setRGB(color,color,color);
 		}
-	}*/
+	}
 	vector<xx_y>::const_iterator it;
 	for(it = skipTable.begin(); it != skipTable.end();++it)
 	{
@@ -244,16 +243,17 @@ bool Rbmp::boundarysHL()
 }
 bool Rbmp::imageCutOut()
 {
+	setBackground(0,0,0);
 	if(skipTable.empty())
 		return false;
 	vector<xx_y>::const_iterator it = skipTable.begin();
-	for (int y = 0; y < bmpHeight; y++,++it)
+	for (int y = 0; y < bmpHeight; y++)
 	{
 		if(it->ally != y)
 		{
 			for (int x = 0; x < bmpWidth; x++)
 			{
-				allData[y][x].setRGB(0,0,0);
+				allData[y][x].setRGB(backGround);
 			}
 		}
 		else
@@ -261,7 +261,9 @@ bool Rbmp::imageCutOut()
 			for (int x = 0; x < bmpWidth; x++)
 			{
 				if(x < it->sttx || x > it->endx)
-					allData[y][x].setRGB(0,0,0);
+					allData[y][x].setRGB(backGround);
+				if(x == it->endx + 1)
+					++it;
 			}
 		}
 	}
