@@ -262,9 +262,10 @@ bool Rbmp::imageCutOut()
 			{
 				if(x < it->sttx || x > it->endx)
 					allData[y][x].setRGB(backGround);
-				if(x == it->endx + 1)
+				if(x == it->endx && (it + 1)->ally == y)
 					++it;
 			}
+			++it;
 		}
 	}
 	return true;
