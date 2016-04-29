@@ -260,8 +260,13 @@ bool Rbmp::imageCutOut()
 		{
 			for (int x = 0; x < bmpWidth; x++)
 			{
+				//set other part to backGround
 				if(x < it->sttx || x > it->endx)
 					allData[y][x].setRGB(backGround);
+				//set the cutOut part to you color that you want
+				if(x >= it->sttx && x <= it->endx)
+					allData[y][x].setRGB(0,0,255);
+				//use and contrl the skipTable
 				if(x == it->endx && (it + 1)->ally == y)
 					++it;
 			}
@@ -481,13 +486,14 @@ void Rbmp::getBoundaryLine()
 #ifdef debug
 here:	printf("OOOOOOKKKKK!\n");
 #endif
+			/*
 	printf("granularity: %u boundarys size:%ld\n",granularity,boundarys.size());
 	for (size_t i =0; i < boundarys.size(); i++)
 	{
 		printf("$[%ld]: close or open status: %s ;boundary line len: %ld,(%u)\n",
 				i,CLOSEOPEN(isCloseOpen(boundarys[i])),boundarys[i].size(),granularity);
 		show_line(boundarys[i]);
-	}
+	}*/
 	printf("skip Table size:%ld\n",skipTable.size());
 	for(it = skipTable.begin(); it != skipTable.end();++it)
 	{
@@ -538,49 +544,47 @@ int Rbmp::trackDown(PIXELS& startPoint)
 		if(getRpoint(direction,x,y))
 		{
 			//printf("x:%d y:%d\n",x,y);
-			//boundaryline.push_back(get_pix(x,y));
 			//printf("direction:%s x:%d y:%d\n",Pos2str(direction).c_str(),x,y);
 			if(alikeBackground(x,y) == 1)
 			{
 				allData[y][x].setEdge(-1);
-				if(prevPoint.getY() == y)
+				switch(direction)
 				{
-					if(prevPoint.getEdge() != 2 &&
-							allData[y][x].getEdge() != 2 &&
-							direction == Right)
-					{
-						if(downs)
-							allData[y][x].setEdge(-2);
-						else
-							prevPoint.setEdge(-2);
-					}
-					if(prevPoint.getEdge() != 2 &&
-							allData[y][x].getEdge() != 2 &&
-							direction == Left)
-					{
+					case Left:
 						if(downs)
 							prevPoint.setEdge(-2);
 						else
 							allData[y][x].setEdge(-2);
-					}
+						break;
+					case Right:
+						if(downs)
+							allData[y][x].setEdge(-2);
+						else
+							prevPoint.setEdge(-2);
+						break;
+					case Up:
+						if(downs)
+						{
+							prevPoint.setEdge(-1);
+							downs = false;
+						}
+						break;
+					case Down:
+						if(!downs)
+						{
+							prevPoint.setEdge(-2);
+							downs = true;
+						}
+						break;
+					default:
+						break;
 				}
-				//allData[y][x].setRGB(0,0,0);
 				boundaryline.push_back(allData[y][x]);
 				/*
 					 printf("push a: ");
 					 get_pix(x,y).show_PIXELS();
 					 printf("\n");
 					 */
-				if(downs && direction == Up)
-				{
-					prevPoint.setEdge(-1);
-					downs = false;
-				}
-				if(!downs && direction == Down)
-				{
-					prevPoint.setEdge(-2);
-					downs = true;
-				}
 			}
 			else
 				break;
@@ -599,51 +603,51 @@ int Rbmp::trackDown(PIXELS& startPoint)
 		do
 		{
 			PIXELS& prevPoint = allData[y][x];
+			//printf("direction:%s x:%d y:%d\n",Pos2str(direction).c_str(),x,y);
 			if(getLpoint(direction,x,y))
 			{
 				if(alikeBackground(x,y) == 1)
 				{
 					allData[y][x].setEdge(-1);
-					if(prevPoint.getY() == y)
+					switch(direction)
 					{
-						if(prevPoint.getEdge() != 2 &&
-								allData[y][x].getEdge() != 2 &&
-								direction == Right)
-						{
+						case Right:
 							if(downs)
 								prevPoint.setEdge(-2);
 							else
 								allData[y][x].setEdge(-2);
-						}
-						if(prevPoint.getEdge() != 2 &&
-								allData[y][x].getEdge() != 2 &&
-								direction == Left)
-						{
+							break;
+						case Left:
 							if(downs)
 								allData[y][x].setEdge(-2);
 							else
 								prevPoint.setEdge(-2);
-						}
+							break;
+						case Up:
+							if(downs)
+							{
+								prevPoint.setEdge(-2);
+								downs = false;
+							}
+							break;
+						case Down:
+							if(!downs)
+							{
+								prevPoint.setEdge(-1);
+								downs = true;
+							}
+							break;
+						default:
+							break;
 					}
-
 					//allData[y][x].setRGB(0,0,0);
 					boundaryline.push_front(allData[y][x]);
 					/*
-					printf("push a: ");
-					get_pix(x,y).show_PIXELS();
-					printf("\n");
-					*/
+						 printf("push a: ");
+						 get_pix(x,y).show_PIXELS();
+						 printf("\n");
+						 */
 					nextx++;
-					if(downs && direction == Up)
-					{
-						prevPoint.setEdge(-2);
-						downs = false;
-					}
-					if(!downs && direction == Down)
-					{
-						prevPoint.setEdge(-1);
-						downs = true;
-					}
 				}
 				else
 					break;
@@ -656,6 +660,7 @@ int Rbmp::trackDown(PIXELS& startPoint)
 	{
 		nextx =  boundaryline.size() - 1;
 	}
+	startPoint.setEdge(-1);//cannnot modify the x,y and rgb value
 	if(boundaryline.size() > granularity)
 	{
 		//show_line(boundaryline);
@@ -671,7 +676,6 @@ int Rbmp::trackDown(PIXELS& startPoint)
 			boundaryline.pop_front();
 		}
 	}
-	startPoint.setEdge(-1);//cannnot modify the x,y and rgb value
 	//printf("$[%d]> close or open status: %s Track down by following clues(顺藤摸瓜) OK... len:%ld(%u)\n",
 			//globalI,CLOSEOPEN(isCloseOpen(boundaryline)),boundaryline.size(),granularity);
 	//get next point's x value
