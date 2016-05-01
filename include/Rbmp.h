@@ -20,7 +20,7 @@ typedef struct pointxy
 {
 	int sttx; //start point x
 	int endx; //end point x
-	int ally; //communal x
+	int ally; //communal y
 }xx_y;
 typedef vector<xx_y> vTracktable;
 using namespace std;
@@ -171,7 +171,7 @@ class Rbmp
 		//is a close/open boundary line or not
 		bool isCloseOpen(dPIXELS boundaryline);
 		//deburr: delete The Burr on the track
-		bool deburrTrack(dPIXELS boundaryline);
+		bool deburrTrack(dPIXELS& boundaryline);
 	public://The function deal with the bmp image (Macroscopic)
 		//Function: generate the image's bar diagram 
 		bool     genBardiagram(colorType color = Pricolor);

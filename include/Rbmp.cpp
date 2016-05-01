@@ -689,29 +689,76 @@ int Rbmp::trackDown(PIXELS& startPoint)
 	//printf("The max x %d will be nextpoint\n",maxX);
 	return maxX;
 }
-
-bool Rbmp::deburrTrack(dPIXELS boundaryline)
+bool Rbmp::deburrTrack(dPIXELS& boundaryline)
 {
+	printf("in deburrTrack...\n");
 	if(boundaryline.empty())
 		return false;
-	PIXELS frontPoint = boundaryline[0];
-	for (size_t i = 1; i < boundaryline.size(); i ++)
+	int j = 1;
+	int x ,y;
+	dPIXELS::iterator itPoint = boundaryline.begin();
+	for (;itPoint != boundaryline.end(); ++itPoint)
 	{
-		if(frontPoint == boundaryline[i])
+		if(itPoint->getEdge() == -1)
 		{
-			printf("??\t");
-			boundaryline[i].show_PIXELS();
-			printf("\n");
-		}
-		else
-		{
-			boundaryline[i].show_PIXELS();
-			printf("\n");
+			while((itPoint-j != boundaryline.begin())
+					&& (*(itPoint-j) == *(itPoint+j)))
+			{
+				y = (itPoint-j)->getY();
+				x = (itPoint-j)->getX();
+				printf("find back point! j:%d\n",j);
+				//(itPoint-j)->setEdge(-3);
+				boundaryline.erase(itPoint-j);
+				allData[y][x].setEdge(-3);
+				(itPoint-j)->show_PIXELS();
+				printf("\n===============\n");
+				y = (itPoint+j)->getY();
+				x = (itPoint+j)->getX();
+				(itPoint+j)->setEdge(-3);
+				allData[y][x].setEdge(-3);
+				(itPoint+j)->show_PIXELS();
+				printf("\n");
+				j++;
+			}
+			j = 1;
 		}
 	}
 	return true;
 }
-
+/*
+bool Rbmp::deburrTrack(dPIXELS& boundaryline)
+{
+	printf("in deburrTrack...\n");
+	if(boundaryline.empty())
+		return false;
+	int j = 1;
+	int x ,y;
+	for (size_t i = 1; i < boundaryline.size(); i ++)
+	{
+		if(boundaryline[i].getEdge() == -1)
+		{
+			while((i-j > 0) && (boundaryline[i-j] == boundaryline[i+j]))
+			{
+				y = boundaryline[i-j].getY();
+				x = boundaryline[i-j].getX();
+				printf("find back point! j:%d\n",j);
+				boundaryline[i-j].setEdge(-3);
+				allData[y][x].setEdge(-3);
+				boundaryline[i-j].show_PIXELS();
+				printf("\n===============\n");
+				y = boundaryline[i+j].getY();
+				x = boundaryline[i+j].getX();
+				boundaryline[i+j].setEdge(-3);
+				allData[y][x].setEdge(-3);
+				boundaryline[i+j].show_PIXELS();
+				printf("\n");
+				j++;
+			}
+			j = 1;
+		}
+	}
+	return true;
+}*/
 // is Boundary 
 bool Rbmp::isBoundaryPoint(PIXELS pot)
 {
