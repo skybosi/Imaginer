@@ -1,4 +1,5 @@
 #include "ipoint.h"
+#include <cmath>
 #define LOS(RGBvar) ((ABS((char)RGBvar.rgbRed) <= 25) && \
 	                  (ABS((char)RGBvar.rgbGreen) <= 25) &&\
 	                  (ABS((char)RGBvar.rgbBlue) <= 25))        //level of similarity
@@ -404,10 +405,10 @@ PIXELS PIXELS::operator-(const PIXELS& pixel)
 	PIXELS diff;
 	diff.pix_X = pix_X;
 	diff.pix_Y = pix_Y;
-	diff.prgb.rgbRed = prgb.rgbRed - pixel.prgb.rgbRed;
-	diff.prgb.rgbGreen = prgb.rgbGreen - pixel.prgb.rgbGreen;
-	diff.prgb.rgbBlue = prgb.rgbBlue - pixel.prgb.rgbBlue;
-	diff.prgb.rgbReserved = prgb.rgbReserved - pixel.prgb.rgbReserved;
+	diff.prgb.rgbRed = abs(prgb.rgbRed - pixel.prgb.rgbRed);
+	diff.prgb.rgbGreen = abs(prgb.rgbGreen - pixel.prgb.rgbGreen);
+	diff.prgb.rgbBlue = abs(prgb.rgbBlue - pixel.prgb.rgbBlue);
+	diff.prgb.rgbReserved = abs(prgb.rgbReserved - pixel.prgb.rgbReserved);
 	return diff;
 }
 //just diff of two pixel
@@ -416,10 +417,13 @@ const PIXELS operator-(const PIXELS& pixel1,const PIXELS& pixel2)
 	PIXELS diff;
 	diff.pix_X = pixel1.pix_X;
 	diff.pix_Y = pixel1.pix_Y;
-	diff.prgb.rgbRed = pixel1.prgb.rgbRed - pixel2.prgb.rgbRed;
-	diff.prgb.rgbGreen = pixel1.prgb.rgbGreen - pixel2.prgb.rgbGreen;
-	diff.prgb.rgbBlue = pixel1.prgb.rgbBlue - pixel2.prgb.rgbBlue;
-	diff.prgb.rgbReserved = pixel1.prgb.rgbReserved - pixel2.prgb.rgbReserved;
+	diff.prgb.rgbRed = abs(pixel1.prgb.rgbRed - pixel2.prgb.rgbRed);
+	//printf("diff Red:%d\n",diff.prgb.rgbRed);
+	diff.prgb.rgbGreen = abs(pixel1.prgb.rgbGreen - pixel2.prgb.rgbGreen);
+	//printf("diff Green:%d\n",diff.prgb.rgbGreen);
+	diff.prgb.rgbBlue = abs(pixel1.prgb.rgbBlue - pixel2.prgb.rgbBlue);
+	//printf("diff Blue:%d\n",diff.prgb.rgbBlue);
+	diff.prgb.rgbReserved = abs(pixel1.prgb.rgbReserved - pixel2.prgb.rgbReserved);
 	return diff;
 }
 bool PIXELS::operator ==(const PIXELS& pixel)

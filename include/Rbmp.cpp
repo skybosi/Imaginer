@@ -439,14 +439,15 @@ void Rbmp::show_allData()
 }
 void Rbmp::getBoundaryLine()
 {
-#define debug1
+#define debug
 	vector<xx_y>::const_iterator it;
 	xx_y footprint;
 	for (int y = 0;y < bmpHeight; y++)
 	{
 		for (int x = 0; x < bmpWidth; x++)
 		{
-			if(isBoundaryPoint(allData[y][x]))
+			//if(isBoundaryPoint(allData[y][x]))
+			if(isBoundaryPoint(x,y))
 			{
 				if(allData[y][x].getEdge() >= 0)
 				{
@@ -799,7 +800,7 @@ bool Rbmp::isBoundaryPoint(int& x,int& y)
 	for(;i < bmpWidth; ++i)
 	{
 		similarity = getSimilarity(Right,i,y);
-		if(Similarity < similarity)
+		if(Similarity > similarity)
 			Similarity = similarity;
 	}
 	return true;
@@ -841,8 +842,25 @@ float Rbmp::getSimilarity(Position direction,int x,int y)
 			break;
 	}
 	PIXELS diff = potCurnt - potRight;
+	/*
+	printf("curr:\n");
+	potCurnt.show_PIXELS();
+	printf("\n");
+	printf("Right:\n");
+	potRight.show_PIXELS();
+	printf("\n");
+	printf("diff:\n");
+	diff.show_PIXELS();
+	printf("\n");
+	printf("~diff:\n");
+	*/
 	diff = ~diff;
+	/*
+	diff.show_PIXELS();
+	printf("\n");
+	*/
 	Similarity = (diff.getRed() + diff.getGreen() + diff.getBlue())/765.0;
+	printf("x: %2d y: %2d Similarity: %.3f\n",x,y,Similarity);
 	return Similarity;
 }
 /* 函数名称readNline() */
