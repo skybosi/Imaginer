@@ -83,6 +83,8 @@ class Rbmp
 		void show_allData();
 		//Test a line's Boundary
 		bool isBoundaryPoint(PIXELS pot);
+		//Test a line's Boundary
+		bool isBoundaryPoint(int& x,int& y);
 		//deal with image with a series of function
 		//@ dealType: deal with the image's type way
 		bool deal_image(const char* dealType = NULL);
@@ -172,6 +174,8 @@ class Rbmp
 		bool isCloseOpen(dPIXELS boundaryline);
 		//deburr: delete The Burr on the track
 		bool deburrTrack(dPIXELS& boundaryline);
+		//test two border upon point similarity
+		float getSimilarity(Position direction,int x,int y);
 	public://The function deal with the bmp image (Macroscopic)
 		//Function: generate the image's bar diagram 
 		bool     genBardiagram(colorType color = Pricolor);

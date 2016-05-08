@@ -49,7 +49,11 @@ class PIXELS
 		//opposition the point color
 		PIXELS opposition();
 		PIXELS opposition(PIXELS& ppot);
+		//opposition the point color
+		PIXELS&  operator~();
 		PIXELS& operator=(const PIXELS& pixel);
+		PIXELS  operator-(const PIXELS& pixel);
+		friend const PIXELS operator-(const PIXELS& pixel1,const PIXELS& pixel2);
 		bool operator==(const PIXELS& pixel);
 		bool operator!=(const PIXELS& pixel);
 		//mix two color

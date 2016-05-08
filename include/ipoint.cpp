@@ -1,7 +1,7 @@
 #include "ipoint.h"
-#define LOS(RGBvar) ((ABS((char)RGBvar.rgbRed) <= 15) && \
-	                  (ABS((char)RGBvar.rgbGreen) <= 15) &&\
-	                  (ABS((char)RGBvar.rgbBlue) <= 15))        //level of similarity 
+#define LOS(RGBvar) ((ABS((char)RGBvar.rgbRed) <= 25) && \
+	                  (ABS((char)RGBvar.rgbGreen) <= 25) &&\
+	                  (ABS((char)RGBvar.rgbBlue) <= 25))        //level of similarity
 PIXPOT::PIXPOT()
 {
 	//memset(this,0,sizeof(PIXPOT));
@@ -133,13 +133,14 @@ bool PIXPOT::pixelSimilar()
 	int i = 0;
 	while(i<4)
 	{
-		if(LOS(diff4a[i]) ||  LOS(diff4s[i]))
-		{
+		if(LOS(diff4a[i]))
 			level++;
-		}
+		if( LOS(diff4s[i]))
+			level++;
 		i++;
 	}
-	if(level >= 1)
+	printf("level:%d\n",level);
+	if(level >= 6)
 		return true;
 	else
 		return false;
@@ -387,6 +388,39 @@ PIXELS& PIXELS::operator=(const PIXELS& pixel)
 	memcpy(&prgb,&pixel.prgb,sizeof(RGBQUAD));
 	rgb_threshold = pixel.rgb_threshold;
 	return *this;
+}
+//opposition the point color
+PIXELS& PIXELS::operator~()
+{
+	prgb.rgbRed = 255 - prgb.rgbRed;
+	prgb.rgbGreen = 255 - prgb.rgbGreen;
+	prgb.rgbBlue = 255 - prgb.rgbBlue;
+	prgb.rgbReserved = 255 - prgb.rgbReserved;
+	return *this;
+}
+//just diff of two pixel
+PIXELS PIXELS::operator-(const PIXELS& pixel)
+{
+	PIXELS diff;
+	diff.pix_X = pix_X;
+	diff.pix_Y = pix_Y;
+	diff.prgb.rgbRed = prgb.rgbRed - pixel.prgb.rgbRed;
+	diff.prgb.rgbGreen = prgb.rgbGreen - pixel.prgb.rgbGreen;
+	diff.prgb.rgbBlue = prgb.rgbBlue - pixel.prgb.rgbBlue;
+	diff.prgb.rgbReserved = prgb.rgbReserved - pixel.prgb.rgbReserved;
+	return diff;
+}
+//just diff of two pixel
+const PIXELS operator-(const PIXELS& pixel1,const PIXELS& pixel2)
+{
+	PIXELS diff;
+	diff.pix_X = pixel1.pix_X;
+	diff.pix_Y = pixel1.pix_Y;
+	diff.prgb.rgbRed = pixel1.prgb.rgbRed - pixel2.prgb.rgbRed;
+	diff.prgb.rgbGreen = pixel1.prgb.rgbGreen - pixel2.prgb.rgbGreen;
+	diff.prgb.rgbBlue = pixel1.prgb.rgbBlue - pixel2.prgb.rgbBlue;
+	diff.prgb.rgbReserved = pixel1.prgb.rgbReserved - pixel2.prgb.rgbReserved;
+	return diff;
 }
 bool PIXELS::operator ==(const PIXELS& pixel)
 {

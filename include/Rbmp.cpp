@@ -264,8 +264,8 @@ bool Rbmp::imageCutOut()
 				if(x < it->sttx || x > it->endx)
 					allData[y][x].setRGB(backGround);
 				//set the cutOut part to you color that you want
-				if(x >= it->sttx && x <= it->endx)
-					allData[y][x].setRGB(0,0,255);
+				//if(x >= it->sttx && x <= it->endx)
+				//	allData[y][x].setRGB(0,0,255);
 				//use and contrl the skipTable
 				if(x == it->endx && (it + 1)->ally == y)
 					++it;
@@ -790,7 +790,61 @@ bool Rbmp::isBoundaryPoint(PIXELS pot)
 		return false;
 	}
 }
-
+// is Boundary 
+bool Rbmp::isBoundaryPoint(int& x,int& y)
+{
+	int i = x;
+	int Similarity = 0;
+	int similarity = 0;
+	for(;i < bmpWidth; ++i)
+	{
+		similarity = getSimilarity(Right,i,y);
+		if(Similarity < similarity)
+			Similarity = similarity;
+	}
+	return true;
+}
+float Rbmp::getSimilarity(Position direction,int x,int y)
+{
+	float Similarity = 0;
+	if(get_pix(x,y).empty())
+		return -1;
+	PIXELS potCurnt;
+	PIXELS potRight;
+	switch(direction)
+	{
+		case Right:
+			if(x+1 >= bmpWidth)
+				return -1;
+			potCurnt = allData[y][x];
+			potRight = allData[y][x+1];
+			break;
+		case Left:
+			if(x-1 < 0)
+				return -1;
+			potCurnt = allData[y][x];
+			potRight = allData[y][x-1];
+			break;
+		case Up:
+			if(y-1 < 0)
+				return -1;
+			potCurnt = allData[y][x];
+			potRight = allData[y-1][x];
+			break;
+		case Down:
+			if(y+1 >= bmpHeight)
+				return -1;
+			potCurnt = allData[y][x];
+			potRight = allData[y+1][x];
+			break;
+		default:
+			break;
+	}
+	PIXELS diff = potCurnt - potRight;
+	diff = ~diff;
+	Similarity = (diff.getRed() + diff.getGreen() + diff.getBlue())/765.0;
+	return Similarity;
+}
 /* 函数名称readNline() */
 ppPIXELS Rbmp::readNline(int beginY, int rows)
 {
