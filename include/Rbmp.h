@@ -54,9 +54,11 @@ class Rbmp
 		U32 granularity;//图像碎片边缘最少像素
 		// pixelTrend: background -> non background : false
 		//             non background -> background : true
+		bool granOpeartor;
 		bool pixelTrend;
 		vTracktable skipTable;//用于抠出轨迹内的部分
 		//record the trackdown's result,just for cutout the image
+		float baseSmlrty;//base Similarity
 	public:
 		~Rbmp();
 		Rbmp(const char* bmpname);
@@ -76,7 +78,7 @@ class Rbmp
 		//get the 8 point info. around a point
 		PIXPOT get_pot(PIXELS pixel);
 		//set image granularity
-		U32 setGranularity(U32 gran);
+		U32 setGranularity(U32 gran,bool opeartor=true);
 	public:
 		//show the image all pixel all infomation
 		//about (x,y), RGB value, isEdge 
