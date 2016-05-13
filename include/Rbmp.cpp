@@ -22,7 +22,7 @@
 #define DIRECTION_Right    {direction = Right; x++;}
 #define DIRECTION_Left     {direction = Left;  x--;}
 static int globalI = 0;
-Rbmp::Rbmp(const char *bmpname):fp(NULL), fpo(NULL), bmppath(bmpname), allData(NULL), pColorTable(NULL),granularity(10),granOpeartor(true),pixelTrend(true),baseSmlrty(1.0)
+Rbmp::Rbmp(const char *bmpname):fp(NULL), fpo(NULL), bmppath(bmpname), allData(NULL), pColorTable(NULL),granularity(10),pixelTrend(true),granOpeartor(true),baseSmlrty(1.0)
 {
 	// 二进制读方式打开指定的图像文件
 	fp = fopen(bmppath.c_str(), "rb");
