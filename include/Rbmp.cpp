@@ -230,7 +230,8 @@ bool Rbmp::boundarysHL()
 			//if(allData[y][x].getEdge() == -2)
 				//allData[y][x].setRGB(0,0,255);
 			//if(allData[y][x].getEdge() == -1)
-				allData[y][x].setRGB(color,color,color);
+				//allData[y][x].setRGB(color,color,color);
+				allData[y][x].setRGB(0,0,255);
 		}
 	}
 	vector<xx_y>::const_iterator it;
@@ -439,15 +440,14 @@ void Rbmp::show_allData()
 }
 void Rbmp::getBoundaryLine()
 {
-#define debug
+#define debug1
 	vector<xx_y>::const_iterator it;
-	//xx_y footprint;
+	xx_y footprint;
 	for (int y = 0;y < bmpHeight; y++)
 	{
 		for (int x = 0; x < bmpWidth; x++)
 		{
-			isBoundaryPoint(x,y);
-			/*
+			//isBoundaryPoint(x,y);
 			//if(isBoundaryPoint(allData[y][x]))
 			if(isBoundaryPoint(x,y))
 			{
@@ -469,7 +469,8 @@ void Rbmp::getBoundaryLine()
 				{
 					footprint.sttx = x;
 					x++;
-					while(isBoundaryPoint(allData[y][x]))
+					//while(isBoundaryPoint(allData[y][x]))
+					while(isBoundaryPoint(x,y))
 					{
 						if(allData[y][x].getEdge() != -1)
 							x++;
@@ -483,25 +484,25 @@ void Rbmp::getBoundaryLine()
 					skipTable.push_back(footprint);
 					//printf("skip table.... insert\n");
 				}
-			}*/
+			}
 		}
 	}
 #ifdef debug
-//here:	printf("OOOOOOKKKKK!\n");
+here:	printf("OOOOOOKKKKK!\n");
 #endif
-			/*
 	printf("granularity: %u boundarys size:%ld\n",granularity,boundarys.size());
 	for (size_t i =0; i < boundarys.size(); i++)
 	{
 		printf("$[%ld]: close or open status: %s ;boundary line len: %ld,(%u)\n",
 				i,CLOSEOPEN(isCloseOpen(boundarys[i])),boundarys[i].size(),granularity);
 		show_line(boundarys[i]);
-	}*/
+	}
+	/*
 	printf("skip Table size:%ld\n",skipTable.size());
 	for(it = skipTable.begin(); it != skipTable.end();++it)
 	{
 		printf("start x:%d end x:%d communal y:%d\n", it->sttx,it->endx,it->ally);
-	}
+	}*/
 }
 void Rbmp::show_line(dPIXELS boundaryline)
 {
@@ -533,11 +534,9 @@ int Rbmp::trackDown(PIXELS& startPoint)
 	bool downs = true;
 	dPIXELS boundaryline;
 	boundaryline.push_back(startPoint);
-	/*
 		 printf("push s: ");
 		 startPoint.show_PIXELS();
 		 printf("\n");
-		 */
 	Position direction = Right;
 	//each direction relative to the image
 	do
@@ -548,8 +547,11 @@ int Rbmp::trackDown(PIXELS& startPoint)
 		{
 			//printf("x:%d y:%d\n",x,y);
 			//printf("direction:%s x:%d y:%d\n",Pos2str(direction).c_str(),x,y);
-			if(alikeBackground(x,y) == 1)
-			{
+			//if(alikeBackground(x,y) == 1)
+			//flagxy = gddetSimilarity(Down,x,y);
+			//if (flagxy == 1)
+			//if (flagxy > baseSmlrty)
+			//{
 				allData[y][x].setEdge(-1);
 				switch(direction)
 				{
@@ -581,7 +583,7 @@ int Rbmp::trackDown(PIXELS& startPoint)
 						break;
 					default:
 						break;
-				}
+				//}
 				boundaryline.push_back(allData[y][x]);
 				/*
 					 printf("push a: ");
@@ -589,8 +591,8 @@ int Rbmp::trackDown(PIXELS& startPoint)
 					 printf("\n");
 					 */
 			}
-			else
-				break;
+			//else
+			//	break;
 		}
 		else
 		{
@@ -609,8 +611,8 @@ int Rbmp::trackDown(PIXELS& startPoint)
 			//printf("direction:%s x:%d y:%d\n",Pos2str(direction).c_str(),x,y);
 			if(getLpoint(direction,x,y))
 			{
-				if(alikeBackground(x,y) == 1)
-				{
+				//if(alikeBackground(x,y) == 1)
+				//{
 					allData[y][x].setEdge(-1);
 					switch(direction)
 					{
@@ -651,9 +653,9 @@ int Rbmp::trackDown(PIXELS& startPoint)
 						 printf("\n");
 						 */
 					nextx++;
-				}
-				else
-					break;
+				//}
+				//else
+					//break;
 			}
 			else
 				break;
@@ -668,7 +670,7 @@ int Rbmp::trackDown(PIXELS& startPoint)
 	{
 		if(boundaryline.size() > granularity)
 		{
-			//show_line(boundaryline);
+			show_line(boundaryline);
 			//deburrTrack(boundaryline);
 			boundarys.push_back(boundaryline);
 		}
@@ -686,7 +688,7 @@ int Rbmp::trackDown(PIXELS& startPoint)
 	{
 		if(boundaryline.size() <= granularity)
 		{
-			//show_line(boundaryline);
+			show_line(boundaryline);
 			//deburrTrack(boundaryline);
 			boundarys.push_back(boundaryline);
 		}
@@ -817,26 +819,31 @@ bool Rbmp::isBoundaryPoint(PIXELS pot)
 // is Boundary 
 bool Rbmp::isBoundaryPoint(int& x,int& y)
 {
-	int i = x;
-	//float Similarity = 0;
-	float similarity = 0;
-	float avg=1.0;
-	float beavg = 0.0;
-	for(;i < bmpWidth-1; ++i)
+	int i = 0;
+	float similarity = getSimilarity(Right,x,y);
+	float avgSimi = 0;
+	float diffSim = 0;
+	for (i = 0; x < bmpWidth-1; ++i,++x)
 	{
-		printf("y:%d\tx:%3d\t" ,y, i);
-		beavg = avg;
-		printf("before avg:%lf\t" , beavg);
-		similarity = getSimilarity(Right,i,y);
-		printf("similarity:%lf\t" , similarity);
-		avg += (similarity - avg) / (i+1);
-		printf("after avg:%lf\t" , avg);
-		printf("avg diff:%lf\n" , fabs(beavg-avg));
-		//if(Similarity > similarity)
-			//Similarity = similarity;
+		//allData[y][x].show_PIXELS();
+		//printf("\n");
+		diffSim  = similarity - avgSimi;
+		similarity = getSimilarity(Right,x,y);
+		//printf("%3d: num:%lf\tavg:%lf\tdiff:%lf\n", i + 1, similarity, avgSimi, fabs(diffSim));
+		avgSimi += diffSim / (i + 1);
+		if (fabs(similarity - avgSimi) > 0.1)
+		{
+			printf("finded :%lf\n", similarity);
+			++x;
+			break;
+		}
 	}
-	x=i;
-	return true;
+	baseSmlrty = similarity;
+	printf("baseSmlrty:%lf\n",baseSmlrty);
+	if(x <= bmpWidth-1)
+		return true;
+	else
+		return false;
 }
 float Rbmp::getSimilarity(Position direction,int x,int y)
 {
@@ -2113,7 +2120,7 @@ bool Rbmp::isEdge(int x,int y)
 }
 bool Rbmp::getRpoint(Position& direction,int& x,int& y)
 {
-	int flagxy = 0;
+	float flagxy = 0;
 	PIXELS pot;
 	//printf("direction:%s x:%d y:%d\t",Pos2str(direction).c_str(),x,y);
 	switch (direction)
@@ -2121,31 +2128,37 @@ bool Rbmp::getRpoint(Position& direction,int& x,int& y)
 		case Right:
 			//flagxy = alikeBackground(x,y + 1);
 			flagxy = getSimilarity(Down,x,y);
-			if (flagxy == 1)
+			//if (flagxy == 1)
+			if (flagxy > baseSmlrty)
 			{
 				//direction = Down;
 				//y++;
 				DIRECTION_Down;
 			}
-			else if (flagxy == 0)
+			//else if (flagxy == 0)
+			else if (flagxy <= baseSmlrty)
 			{
 				//flagxy = alikeBackground(x + 1,y);
 				flagxy = getSimilarity(Right,x,y);
-				if (flagxy == 1)
+				//if (flagxy == 1)
+				if (flagxy > baseSmlrty)
 				{
 					x++;
 				}
-				else if(flagxy == 0)
+				//else if(flagxy == 0)
+				else if (flagxy <= baseSmlrty)
 				{
 					//flagxy = alikeBackground(x,y - 1);
 					flagxy = getSimilarity(Up,x,y);
-					if (flagxy == 1)
+					//if (flagxy == 1)
+					if (flagxy > baseSmlrty)
 					{
 						//direction = Up;
 						//y--;
 						DIRECTION_Up;
 					}
-					else if (flagxy == 0)
+					//else if (flagxy == 0)
+					else if (flagxy <= baseSmlrty)
 					{
 						//direction = Left;
 						//x--;
@@ -2163,31 +2176,37 @@ bool Rbmp::getRpoint(Position& direction,int& x,int& y)
 		case Down:
 			//flagxy = alikeBackground(x - 1,y);
 			flagxy = getSimilarity(Left,x,y);
-			if (flagxy == 1)
+			//if (flagxy == 1)
+			if (flagxy > baseSmlrty)
 			{
 				//direction = Left;
 				//x--;
 				DIRECTION_Left;
 			}
-			else if (flagxy == 0)
+			//else if (flagxy == 0)
+			else if (flagxy <= baseSmlrty)
 			{
 				//flagxy = alikeBackground(x,y + 1);
 				flagxy = getSimilarity(Down,x,y);
-				if (flagxy == 1)
+				//if (flagxy == 1)
+				if (flagxy > baseSmlrty)
 				{
 					y++;
 				}
-				else if(flagxy == 0)
+				//else if(flagxy == 0)
+				else if (flagxy <= baseSmlrty)
 				{
 					//flagxy = alikeBackground(x + 1,y);
 					flagxy = getSimilarity(Right,x,y);
-					if (flagxy == 1)
+					//if (flagxy == 1)
+					if (flagxy > baseSmlrty)
 					{
 						//direction = Right;
 						//x++;
 						DIRECTION_Right;
 					}
-					else if (flagxy == 0)
+					//else if (flagxy == 0)
+					else if (flagxy <= baseSmlrty)
 					{
 						//direction = Up;
 						//y--;
@@ -2205,31 +2224,37 @@ bool Rbmp::getRpoint(Position& direction,int& x,int& y)
 		case Up:
 			//flagxy = alikeBackground(x + 1,y);
 			flagxy = getSimilarity(Right,x,y);
-			if (flagxy == 1)
+			//if (flagxy == 1)
+			if (flagxy > baseSmlrty)
 			{
 				//direction = Right;
 				//x++;
 				DIRECTION_Right;
 			}
-			else if (flagxy == 0)
+			//else if (flagxy == 0)
+			else if (flagxy <= baseSmlrty)
 			{
 				//flagxy = alikeBackground(x,y - 1);
 				flagxy = getSimilarity(Up,x,y);
-				if (flagxy == 1)
+				//if (flagxy == 1)
+				if (flagxy > baseSmlrty)
 				{
 					y--;
 				}
-				else if(flagxy == 0)
+				//else if(flagxy == 0)
+				else if (flagxy <= baseSmlrty)
 				{
 					//flagxy = alikeBackground(x - 1,y);
 					flagxy = getSimilarity(Left,x,y);
-					if (flagxy == 1)
+					//if (flagxy == 1)
+					if (flagxy > baseSmlrty)
 					{
 						//direction = Left;
 						//x--;
 						DIRECTION_Left;
 					}
-					else if (flagxy == 0)
+					//else if (flagxy == 0)
+					else if (flagxy <= baseSmlrty)
 					{
 						//direction = Down;
 						//y++;
@@ -2247,31 +2272,37 @@ bool Rbmp::getRpoint(Position& direction,int& x,int& y)
 		case Left:
 			//flagxy = alikeBackground(x ,y - 1);
 			flagxy = getSimilarity(Up,x,y);
-			if (flagxy == 1)
+			//if (flagxy == 1)
+			if (flagxy > baseSmlrty)
 			{
 				//direction = Up;
 				//y--;
 				DIRECTION_Up;
 			}
-			else if (flagxy == 0)
+			//else if (flagxy == 0)
+			else if (flagxy <= baseSmlrty)
 			{
 				//flagxy = alikeBackground(x - 1,y);
 				flagxy = getSimilarity(Left,x,y);
-				if (flagxy == 1)
+				//if (flagxy == 1)
+				if (flagxy > baseSmlrty)
 				{
 					x--;
 				}
-				else if(flagxy == 0)
+				//else if(flagxy == 0)
+				else if (flagxy <= baseSmlrty)
 				{
 					//flagxy = alikeBackground(x,y + 1);
 					flagxy = getSimilarity(Down,x,y);
-					if (flagxy == 1)
+					//if (flagxy == 1)
+					if (flagxy > baseSmlrty)
 					{
 						//direction = Down;
 						//y++;
 						DIRECTION_Down;
 					}
-					else if(flagxy == 0)
+					//else if(flagxy == 0)
+					else if (flagxy <= baseSmlrty)
 					{
 						//direction = Right;
 						//x++;
@@ -2294,7 +2325,7 @@ bool Rbmp::getRpoint(Position& direction,int& x,int& y)
 
 bool Rbmp::getLpoint(Position& direction,int& x,int& y)
 {
-	int flagxy = 0;
+	float flagxy = 0;
 	PIXELS pot;
 	//printf("direction:%s x:%d y:%d\n",Pos2str(direction).c_str(),x,y);
 	switch (direction)
@@ -2302,31 +2333,37 @@ bool Rbmp::getLpoint(Position& direction,int& x,int& y)
 		case Right:
 			//flagxy = alikeBackground(x ,y - 1);
 			flagxy = getSimilarity(Up,x,y);
-			if (flagxy == 1)
+			//if (flagxy == 1)
+			if (flagxy > baseSmlrty)
 			{
 				// direction = Up;
 				// y--;
 				DIRECTION_Up;
 			}
-			else if (flagxy == 0)
+			//else if (flagxy == 0)
+			else if (flagxy <= baseSmlrty)
 			{
 				//flagxy = alikeBackground(x + 1,y);
 				flagxy = getSimilarity(Right,x,y);
-				if (flagxy == 1)
+				//if (flagxy == 1)
+				if (flagxy > baseSmlrty)
 				{
 					x++;
 				}
-				else if(flagxy == 0)
+				//else if(flagxy == 0)
+				else if (flagxy <= baseSmlrty)
 				{
 					//flagxy = alikeBackground(x,y + 1);
 					flagxy = getSimilarity(Down,x,y);
-					if (flagxy == 1)
+					//if (flagxy == 1)
+					if (flagxy > baseSmlrty)
 					{
 						// direction = Down;
 						// y++;
 						DIRECTION_Down;
 					}
-					else if (flagxy == 0)
+					//else if (flagxy == 0)
+					else if (flagxy <= baseSmlrty)
 					{
 						//direction = Left;
 						//x--;
@@ -2344,31 +2381,37 @@ bool Rbmp::getLpoint(Position& direction,int& x,int& y)
 		case Down:
 			//flagxy = alikeBackground(x + 1,y);
 			flagxy = getSimilarity(Right,x,y);
-			if (flagxy == 1)
+			//if (flagxy == 1)
+			if (flagxy > baseSmlrty)
 			{
 				// direction = Right;
 				// x++;
 				DIRECTION_Right;
 			}
-			else if (flagxy == 0)
+			//else if (flagxy == 0)
+			else if (flagxy <= baseSmlrty)
 			{
 				//flagxy = alikeBackground(x,y + 1);
 				flagxy = getSimilarity(Down,x,y);
-				if (flagxy == 1)
+				//if (flagxy == 1)
+				if (flagxy > baseSmlrty)
 				{
 					y++;
 				}
-				else if(flagxy == 0)
+				//else if(flagxy == 0)
+				else if (flagxy <= baseSmlrty)
 				{
 					//flagxy = alikeBackground(x - 1,y);
 					flagxy = getSimilarity(Up,x,y);
-					if (flagxy == 1)
+					//if (flagxy == 1)
+					if (flagxy > baseSmlrty)
 					{
 						// direction = Left;
 						// x--;
 						DIRECTION_Left;
 					}
-					else if (flagxy == 0)
+					//else if (flagxy == 0)
+					else if (flagxy <= baseSmlrty)
 					{
 						//direction = Up;
 						//y--;
@@ -2386,31 +2429,37 @@ bool Rbmp::getLpoint(Position& direction,int& x,int& y)
 		case Up:
 			//flagxy = alikeBackground(x - 1,y);
 			flagxy = getSimilarity(Left,x,y);
-			if (flagxy == 1)
+			//if (flagxy == 1)
+			if (flagxy > baseSmlrty)
 			{
 				// direction = Left;
 				// x--;
 				DIRECTION_Left;
 			}
-			else if (flagxy == 0)
+			//else if (flagxy == 0)
+			else if (flagxy <= baseSmlrty)
 			{
 				//flagxy = alikeBackground(x,y - 1);
 				flagxy = getSimilarity(Down,x,y);
-				if (flagxy == 1)
+				//if (flagxy == 1)
+				if (flagxy > baseSmlrty)
 				{
 					y--;
 				}
-				else if(flagxy == 0)
+				//else if(flagxy == 0)
+				else if (flagxy <= baseSmlrty)
 				{
 					//flagxy = alikeBackground(x + 1,y);
 					flagxy = getSimilarity(Right,x,y);
-					if (flagxy == 1)
+					//if (flagxy == 1)
+					if (flagxy > baseSmlrty)
 					{
 						// direction = Right;
 						// x++;
 						DIRECTION_Right;
 					}
-					else if (flagxy == 0)
+					//else if (flagxy == 0)
+					else if (flagxy <= baseSmlrty)
 					{
 						//direction = Down;
 						//y++;
@@ -2428,31 +2477,37 @@ bool Rbmp::getLpoint(Position& direction,int& x,int& y)
 		case Left:
 			//flagxy = alikeBackground(x ,y + 1);
 			flagxy = getSimilarity(Down,x,y);
-			if (flagxy == 1)
+			//if (flagxy == 1)
+			if (flagxy > baseSmlrty)
 			{
 				// direction = Down;
 				// y++;
 				DIRECTION_Down;
 			}
-			else if (flagxy == 0)
+			//else if (flagxy == 0)
+			else if (flagxy <= baseSmlrty)
 			{
 				//flagxy = alikeBackground(x - 1,y);
 				flagxy = getSimilarity(Left,x,y);
-				if (flagxy == 1)
+				//if (flagxy == 1)
+				if (flagxy > baseSmlrty)
 				{
 					x--;
 				}
-				else if(flagxy == 0)
+				//else if(flagxy == 0)
+				else if (flagxy <= baseSmlrty)
 				{
 					//flagxy = alikeBackground(x,y - 1);
 					flagxy = getSimilarity(Up,x,y);
-					if (flagxy == 1)
+					//if (flagxy == 1)
+					if (flagxy > baseSmlrty)
 					{
 						//direction = Up;
 						//y--;
 						DIRECTION_Up;
 					}
-					else if (flagxy == 0)
+					//else if (flagxy == 0)
+					else if (flagxy <= baseSmlrty)
 					{
 						//direction = Right;
 						//x++;
