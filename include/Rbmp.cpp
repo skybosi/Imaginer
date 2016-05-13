@@ -231,15 +231,16 @@ bool Rbmp::boundarysHL()
 				//allData[y][x].setRGB(0,0,255);
 			//if(allData[y][x].getEdge() == -1)
 				//allData[y][x].setRGB(color,color,color);
-				allData[y][x].setRGB(0,0,255);
+                allData[y][x].setRGB(0,255,0);
 		}
 	}
+    /*
 	vector<xx_y>::const_iterator it;
 	for(it = skipTable.begin(); it != skipTable.end();++it)
 	{
 		allData[it->ally][it->sttx].setRGB(0,255,0);
 		allData[it->ally][it->endx].setRGB(0,255,0);
-	}
+    }*/
 	return true;
 }
 bool Rbmp::imageCutOut()
@@ -459,6 +460,7 @@ void Rbmp::getBoundaryLine()
 					footprint.endx = x;
 					footprint.ally = y;
 					skipTable.push_back(footprint);
+					baseSmlrty = 1.0;
 					//printf("next footprint'x value:%d\n",x+1);
 					//printf("trackDown.... insert\n");
 #ifdef debug
@@ -548,10 +550,8 @@ int Rbmp::trackDown(PIXELS& startPoint)
 			//printf("x:%d y:%d\n",x,y);
 			//printf("direction:%s x:%d y:%d\n",Pos2str(direction).c_str(),x,y);
 			//if(alikeBackground(x,y) == 1)
-			//flagxy = gddetSimilarity(Down,x,y);
-			//if (flagxy == 1)
-			//if (flagxy > baseSmlrty)
-			//{
+			if ( getSimilarity(direction,x,y) > baseSmlrty)
+			{
 				allData[y][x].setEdge(-1);
 				switch(direction)
 				{
@@ -583,7 +583,7 @@ int Rbmp::trackDown(PIXELS& startPoint)
 						break;
 					default:
 						break;
-				//}
+                }
 				boundaryline.push_back(allData[y][x]);
 				/*
 					 printf("push a: ");
@@ -591,8 +591,8 @@ int Rbmp::trackDown(PIXELS& startPoint)
 					 printf("\n");
 					 */
 			}
-			//else
-			//	break;
+			else
+				break;
 		}
 		else
 		{
@@ -612,7 +612,8 @@ int Rbmp::trackDown(PIXELS& startPoint)
 			if(getLpoint(direction,x,y))
 			{
 				//if(alikeBackground(x,y) == 1)
-				//{
+				if (getSimilarity(direction,x,y) > baseSmlrty)
+				{
 					allData[y][x].setEdge(-1);
 					switch(direction)
 					{
@@ -653,9 +654,9 @@ int Rbmp::trackDown(PIXELS& startPoint)
 						 printf("\n");
 						 */
 					nextx++;
-				//}
-				//else
-					//break;
+				}
+				else
+					break;
 			}
 			else
 				break;
@@ -840,7 +841,7 @@ bool Rbmp::isBoundaryPoint(int& x,int& y)
 	}
 	baseSmlrty = similarity;
 	printf("baseSmlrty:%lf\n",baseSmlrty);
-	if(x <= bmpWidth-1)
+    if(x < bmpWidth-1)
 		return true;
 	else
 		return false;
