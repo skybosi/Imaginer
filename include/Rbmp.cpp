@@ -539,6 +539,8 @@ int Rbmp::trackDown(PIXELS& startPoint)
 	int x = sx;
 	int sy = startPoint.getY();
 	int y = sy;
+	if(testStartP(startPoint))
+		return sx;
 	int nextx = 0;
 	bool downs = true;
 	dPIXELS boundaryline;
@@ -550,27 +552,27 @@ int Rbmp::trackDown(PIXELS& startPoint)
 		{
 			sx--;
 			return sx;
-        }
+		}
 	}
 	printf("baseSimilarity: %f\t",baseSmlrty);
 	boundaryline.push_back(startPoint);
 	printf("push s: ");
 	startPoint.show_PIXELS();
 	printf("\n");
-    if(y != sy)
-    {
-        allData[y][x].setEdge(-1);
-    }
-    else
-    {
-         allData[y][x].setEdge(-2);
-    }
-    boundaryline.push_back(allData[y][x]);
-
+	if(y != sy)
+	{
+		allData[y][x].setEdge(-1);
+	}
+	else
+	{
+		allData[y][x].setEdge(-2);
+	}
+	boundaryline.push_back(allData[y][x]);
 	do
 	{
 		//if(getRpoint(direction,x,y)&& !isEdge(x,y))
 		PIXELS& prevPoint = allData[y][x];
+		//if(getRpoint(direction,x,y) && allData[y][x].getEdge() >= 0)
 		if(getRpoint(direction,x,y))
 		{
 			//printf("x:%d y:%d\n",x,y);
@@ -630,6 +632,7 @@ int Rbmp::trackDown(PIXELS& startPoint)
 			PIXELS& prevPoint = allData[y][x];
 			//printf("direction:%s x:%d y:%d\n",Pos2str(direction).c_str(),x,y);
 			if(getLpoint(direction,x,y))
+			//if(getLpoint(direction,x,y) && allData[y][x].getEdge() >= 0)
 			{
 				allData[y][x].setEdge(-1);
 				switch(direction)
@@ -683,7 +686,7 @@ int Rbmp::trackDown(PIXELS& startPoint)
 #define GRANOPERATION(size) (granOpeartor)?(size > granularity):(size <= granularity)
 	if(GRANOPERATION(boundaryline.size()))
 	{
-		show_line(boundaryline);
+		//show_line(boundaryline);
 		//deburrTrack(boundaryline);
 		boundarys.push_back(boundaryline);
 	}
@@ -2538,4 +2541,25 @@ bool Rbmp::backGround_ize()
 		}
 	}
 	return true;
+}
+
+bool Rbmp::testStartP(PIXELS pixel)
+{
+	int x = pixel.getX();
+	int y = pixel.getY();
+	if(allData[y][x-1].getEdge() < 0 ||
+			allData[y+1][x-1].getEdge() < 0 ||
+			allData[y-1][x-1].getEdge() < 0 ||
+			allData[y+1][x].getEdge() < 0 ||
+			allData[y-1][x].getEdge() < 0)
+		return false;
+	if( allData[y][x-2].getEdge() < 0 ||
+			allData[y+1][x-2].getEdge() < 0 ||
+			allData[y-1][x-2].getEdge() < 0 ||
+			allData[y+2][x-2].getEdge() < 0 ||
+			allData[y-2][x-2].getEdge() < 0 ||
+			allData[y+2][x-1].getEdge() < 0 ||
+			allData[y-2][x-1].getEdge() < 0)
+		return true;
+	return false;
 }

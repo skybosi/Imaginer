@@ -180,6 +180,8 @@ class Rbmp
 		bool deburrTrack(dPIXELS& boundaryline);
 		//test two border upon point similarity
 		float getSimilarity(Position direction,int x,int y);
+		//Test whether around the start point has been visited
+		bool testStartP(PIXELS pixel);
 	public://The function deal with the bmp image (Macroscopic)
 		//Function: generate the image's bar diagram 
 		bool     genBardiagram(colorType color = Pricolor);
