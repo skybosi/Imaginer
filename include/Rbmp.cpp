@@ -16,7 +16,7 @@
                                case Left:  direction = Left;  x--; break;\
                                case Up:    direction = Up;    y--; break;\
                                default:    break; }
-															 */
+*/
 #define DIRECTION_Up       {direction = Up;    y--;}
 #define DIRECTION_Down     {direction = Down;  y++;}
 #define DIRECTION_Right    {direction = Right; x++;}
@@ -26,6 +26,17 @@ Rbmp::Rbmp(const char *bmpname):fp(NULL), fpo(NULL), bmppath(bmpname), allData(N
 {
 	// 二进制读方式打开指定的图像文件
 	fp = fopen(bmppath.c_str(), "rb");
+	if(!fp)
+	{
+		printf("image file cannot find!\n");
+		exit(-1);
+	}
+	/*
+	if(!fp)
+	{
+		printf("image file cannot find!\n");
+		return;
+	}*/
 	if (init_image())
 	{
 		printf("In %s init bmp image is OK!\n",__FUNCTION__);
@@ -231,7 +242,7 @@ bool Rbmp::boundarysHL()
 				//allData[y][x].setRGB(0,0,255);
 			//if(allData[y][x].getEdge() == -1)
 				//allData[y][x].setRGB(color,color,color);
-                allData[y][x].setRGB(0,255,0);
+                allData[y][x].setRGB(0,0,255);
 		}
 	}
     /*
@@ -472,14 +483,10 @@ void Rbmp::getBoundaryLine()
 					footprint.sttx = x;
 					x++;
 					//while(isBoundaryPoint(allData[y][x]))
-					while(isBoundaryPoint(x,y))
+					//while(isBoundaryPoint(x,y))
+					while(allData[y][x].getEdge() != -1 && getSimilarity(Right,x,y) > baseSmlrty)
 					{
-						if(allData[y][x].getEdge() != -1)
-							x++;
-						else
-						{
-							break;
-						}
+						x++;
 					}
 					footprint.endx = x;
 					footprint.ally = y;
@@ -535,12 +542,31 @@ int Rbmp::trackDown(PIXELS& startPoint)
 	int nextx = 0;
 	bool downs = true;
 	dPIXELS boundaryline;
-	boundaryline.push_back(startPoint);
-		 printf("push s: ");
-		 startPoint.show_PIXELS();
-		 printf("\n");
 	Position direction = Right;
 	//each direction relative to the image
+	if(getRpoint(direction,x,y))
+	{
+		if (x < sx || y < sy)
+		{
+			sx--;
+			return sx;
+        }
+	}
+	printf("baseSimilarity: %f\t",baseSmlrty);
+	boundaryline.push_back(startPoint);
+	printf("push s: ");
+	startPoint.show_PIXELS();
+	printf("\n");
+    if(y != sy)
+    {
+        allData[y][x].setEdge(-1);
+    }
+    else
+    {
+         allData[y][x].setEdge(-2);
+    }
+    boundaryline.push_back(allData[y][x]);
+
 	do
 	{
 		//if(getRpoint(direction,x,y)&& !isEdge(x,y))
@@ -549,50 +575,44 @@ int Rbmp::trackDown(PIXELS& startPoint)
 		{
 			//printf("x:%d y:%d\n",x,y);
 			//printf("direction:%s x:%d y:%d\n",Pos2str(direction).c_str(),x,y);
-			//if(alikeBackground(x,y) == 1)
-			if ( getSimilarity(direction,x,y) > baseSmlrty)
+			allData[y][x].setEdge(-1);
+			switch(direction)
 			{
-				allData[y][x].setEdge(-1);
-				switch(direction)
-				{
-					case Left:
-						if(downs)
-							prevPoint.setEdge(-2);
-						else
-							allData[y][x].setEdge(-2);
-						break;
-					case Right:
-						if(downs)
-							allData[y][x].setEdge(-2);
-						else
-							prevPoint.setEdge(-2);
-						break;
-					case Up:
-						if(downs)
-						{
-							prevPoint.setEdge(-1);
-							downs = false;
-						}
-						break;
-					case Down:
-						if(!downs)
-						{
-							prevPoint.setEdge(-2);
-							downs = true;
-						}
-						break;
-					default:
-						break;
-                }
-				boundaryline.push_back(allData[y][x]);
-				/*
-					 printf("push a: ");
-					 get_pix(x,y).show_PIXELS();
-					 printf("\n");
-					 */
+				case Left:
+					if(downs)
+						prevPoint.setEdge(-2);
+					else
+						allData[y][x].setEdge(-2);
+					break;
+				case Right:
+					if(downs)
+						allData[y][x].setEdge(-2);
+					else
+						prevPoint.setEdge(-2);
+					break;
+				case Up:
+					if(downs)
+					{
+						prevPoint.setEdge(-1);
+						downs = false;
+					}
+					break;
+				case Down:
+					if(!downs)
+					{
+						prevPoint.setEdge(-2);
+						downs = true;
+					}
+					break;
+				default:
+					break;
 			}
-			else
-				break;
+			boundaryline.push_back(allData[y][x]);
+			/*
+				 printf("push a: ");
+				 get_pix(x,y).show_PIXELS();
+				 printf("\n");
+				 */
 		}
 		else
 		{
@@ -611,52 +631,45 @@ int Rbmp::trackDown(PIXELS& startPoint)
 			//printf("direction:%s x:%d y:%d\n",Pos2str(direction).c_str(),x,y);
 			if(getLpoint(direction,x,y))
 			{
-				//if(alikeBackground(x,y) == 1)
-				if (getSimilarity(direction,x,y) > baseSmlrty)
+				allData[y][x].setEdge(-1);
+				switch(direction)
 				{
-					allData[y][x].setEdge(-1);
-					switch(direction)
-					{
-						case Right:
-							if(downs)
-								prevPoint.setEdge(-2);
-							else
-								allData[y][x].setEdge(-2);
-							break;
-						case Left:
-							if(downs)
-								allData[y][x].setEdge(-2);
-							else
-								prevPoint.setEdge(-2);
-							break;
-						case Up:
-							if(downs)
-							{
-								prevPoint.setEdge(-2);
-								downs = false;
-							}
-							break;
-						case Down:
-							if(!downs)
-							{
-								prevPoint.setEdge(-1);
-								downs = true;
-							}
-							break;
-						default:
-							break;
-					}
-					//allData[y][x].setRGB(0,0,0);
-					boundaryline.push_front(allData[y][x]);
-					/*
-						 printf("push a: ");
-						 get_pix(x,y).show_PIXELS();
-						 printf("\n");
-						 */
-					nextx++;
+					case Right:
+						if(downs)
+							prevPoint.setEdge(-2);
+						else
+							allData[y][x].setEdge(-2);
+						break;
+					case Left:
+						if(downs)
+							allData[y][x].setEdge(-2);
+						else
+							prevPoint.setEdge(-2);
+						break;
+					case Up:
+						if(downs)
+						{
+							prevPoint.setEdge(-2);
+							downs = false;
+						}
+						break;
+					case Down:
+						if(!downs)
+						{
+							prevPoint.setEdge(-1);
+							downs = true;
+						}
+						break;
+					default:
+						break;
 				}
-				else
-					break;
+				boundaryline.push_front(allData[y][x]);
+				/*
+					 printf("push a: ");
+					 get_pix(x,y).show_PIXELS();
+					 printf("\n");
+					 */
+				nextx++;
 			}
 			else
 				break;
@@ -667,44 +680,24 @@ int Rbmp::trackDown(PIXELS& startPoint)
 		nextx =  boundaryline.size() - 1;
 	}
 	startPoint.setEdge(-1);//cannnot modify the x,y and rgb value
-	if(granOpeartor)
+#define GRANOPERATION(size) (granOpeartor)?(size > granularity):(size <= granularity)
+	if(GRANOPERATION(boundaryline.size()))
 	{
-		if(boundaryline.size() > granularity)
-		{
-			show_line(boundaryline);
-			//deburrTrack(boundaryline);
-			boundarys.push_back(boundaryline);
-		}
-		else
-		{
-			nextx = 0;
-			while(!boundaryline.empty())
-			{
-				boundaryline.front().setEdge(0);
-				boundaryline.pop_front();
-			}
-		}
+		show_line(boundaryline);
+		//deburrTrack(boundaryline);
+		boundarys.push_back(boundaryline);
 	}
 	else
 	{
-		if(boundaryline.size() <= granularity)
+		nextx = 0;
+		while(!boundaryline.empty())
 		{
-			show_line(boundaryline);
-			//deburrTrack(boundaryline);
-			boundarys.push_back(boundaryline);
-		}
-		else
-		{
-			nextx = 0;
-			while(!boundaryline.empty())
-			{
-				boundaryline.front().setEdge(0);
-				boundaryline.pop_front();
-			}
+			boundaryline.front().setEdge(0);
+			boundaryline.pop_front();
 		}
 	}
 	//printf("$[%d]> close or open status: %s Track down by following clues(顺藤摸瓜) OK... len:%ld(%u)\n",
-			//globalI,CLOSEOPEN(isCloseOpen(boundaryline)),boundaryline.size(),granularity);
+	//globalI,CLOSEOPEN(isCloseOpen(boundaryline)),boundaryline.size(),granularity);
 	//get next point's x value
 	int maxX = sx;
 	while(--nextx >= 0 && boundaryline[nextx].getY() == sy
@@ -821,7 +814,8 @@ bool Rbmp::isBoundaryPoint(PIXELS pot)
 bool Rbmp::isBoundaryPoint(int& x,int& y)
 {
 	int i = 0;
-	float similarity = getSimilarity(Right,x,y);
+    float similarity = 1;
+    float checkSmlrty = 0;
 	float avgSimi = 0;
 	float diffSim = 0;
 	for (i = 0; x < bmpWidth-1; ++i,++x)
@@ -834,13 +828,16 @@ bool Rbmp::isBoundaryPoint(int& x,int& y)
 		avgSimi += diffSim / (i + 1);
 		if (fabs(similarity - avgSimi) > 0.1)
 		{
-			printf("finded :%lf\n", similarity);
+            //printf("finded :%lf\n", similarity);
 			++x;
 			break;
 		}
 	}
-	baseSmlrty = similarity;
-	printf("baseSmlrty:%lf\n",baseSmlrty);
+    checkSmlrty = getSimilarity(Right,x,y);
+    if(checkSmlrty != 1 && checkSmlrty > similarity)
+        similarity = checkSmlrty;
+    baseSmlrty = similarity;
+    //printf("baseSmlrty:%lf\n",baseSmlrty);
     if(x < bmpWidth-1)
 		return true;
 	else
