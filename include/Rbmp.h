@@ -15,14 +15,26 @@ typedef PIXELS* pPIXELS;
 typedef pPIXELS* ppPIXELS;
 
 typedef deque<PIXELS> dPIXELS;
+typedef vector<PIXELS> vPIXELS;
 typedef vector<dPIXELS> vdPIXELS;
-typedef struct pointxy
+struct limitXXY
 {
+	limitXXY():sttx(0),endx(0),ally(0){}
+	bool change(){return (sttx != endx); }
+	bool add(PIXELS begin,PIXELS end)
+	{
+		if(begin.getY() != end.getY())
+			return false;
+		sttx = begin.getX();
+		endx = end.getX();
+		ally = begin.getY();
+		return true;
+	}
 	int sttx; //start point x
 	int endx; //end point x
 	int ally; //communal y
-}xx_y;
-typedef vector<xx_y> vTracktable;
+};
+typedef vector<limitXXY> vTracktable;
 using namespace std;
 //class Rbmp: public Image
 class Rbmp
@@ -59,6 +71,7 @@ class Rbmp
 		//granOpeartor: boundarys will save only largger than granularity value's boundaryline :true
 		//              boundarys will save only smaller than granularity value's boundaryline :false
 		vTracktable skipTable;//用于抠出轨迹内的部分
+		vPIXELS    skipPoint;
 		//record the trackdown's result,just for cutout the image
 		float baseSmlrty;//base Similarity,use to judge is boundary point or not
 	public:
@@ -182,6 +195,8 @@ class Rbmp
 		float getSimilarity(Position direction,int x,int y);
 		//Test whether around the start point has been visited
 		bool testStartP(PIXELS pixel);
+		//get Edge point for create skipTable
+		bool getSkipTable(vPIXELS& skipPoint);
 	public://The function deal with the bmp image (Macroscopic)
 		//Function: generate the image's bar diagram 
 		bool     genBardiagram(colorType color = Pricolor);

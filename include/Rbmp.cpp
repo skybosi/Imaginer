@@ -240,18 +240,18 @@ bool Rbmp::boundarysHL()
 			x = boundarys[i][j].getX();
 			//if(allData[y][x].getEdge() == -2)
 				//allData[y][x].setRGB(0,0,255);
-			//if(allData[y][x].getEdge() == -1)
-				//allData[y][x].setRGB(color,color,color);
-                allData[y][x].setRGB(0,0,255);
+            //if(allData[y][x].getEdge() == -1)
+                //allData[y][x].setRGB(color,color,color);
+			allData[y][x].setRGB(0,0,255);
 		}
 	}
-    /*
-	vector<xx_y>::const_iterator it;
+
+	vector<limitXXY>::const_iterator it;
 	for(it = skipTable.begin(); it != skipTable.end();++it)
 	{
-		allData[it->ally][it->sttx].setRGB(0,255,0);
-		allData[it->ally][it->endx].setRGB(0,255,0);
-    }*/
+		allData[it->ally][it->sttx].setRGB(0,0,0);
+		allData[it->ally][it->endx].setRGB(0,0,0);
+	}
 	return true;
 }
 bool Rbmp::imageCutOut()
@@ -259,7 +259,7 @@ bool Rbmp::imageCutOut()
 	setBackground(0,0,0);
 	if(skipTable.empty())
 		return false;
-	vector<xx_y>::const_iterator it = skipTable.begin();
+	vector<limitXXY>::const_iterator it = skipTable.begin();
 	for (int y = 0; y < bmpHeight; y++)
 	{
 		if(it->ally != y)
@@ -453,25 +453,25 @@ void Rbmp::show_allData()
 void Rbmp::getBoundaryLine()
 {
 #define debug1
-	vector<xx_y>::const_iterator it;
-	xx_y footprint;
+	vector<limitXXY>::const_iterator it;
+	limitXXY footprint;
+	int beforeX;
 	for (int y = 0;y < bmpHeight; y++)
 	{
 		for (int x = 0; x < bmpWidth; x++)
 		{
-			//isBoundaryPoint(x,y);
-			//if(isBoundaryPoint(allData[y][x]))
 			if(isBoundaryPoint(x,y))
 			{
 				if(allData[y][x].getEdge() >= 0)
 				{
 					//start track down by following clues(顺藤摸瓜)
-					footprint.sttx = x;
+					beforeX = x;
 					x = trackDown(allData[y][x]);
-					footprint.endx = x;
-					footprint.ally = y;
-					skipTable.push_back(footprint);
-					baseSmlrty = 1.0;
+					if(x != beforeX)
+					{
+						skipPoint.push_back(allData[y][beforeX]);
+						skipPoint.push_back(allData[y][x]);
+					}
 					//printf("next footprint'x value:%d\n",x+1);
 					//printf("trackDown.... insert\n");
 #ifdef debug
@@ -480,21 +480,11 @@ void Rbmp::getBoundaryLine()
 				}
 				else
 				{
-					footprint.sttx = x;
-					x++;
-					//while(isBoundaryPoint(allData[y][x]))
-					//while(isBoundaryPoint(x,y))
-					while(allData[y][x].getEdge() != -1 && getSimilarity(Right,x,y) > baseSmlrty)
-					{
-						x++;
-					}
-					footprint.endx = x;
-					footprint.ally = y;
-					skipTable.push_back(footprint);
-					//printf("skip table.... insert\n");
+					skipPoint.push_back(allData[y][x]);
 				}
 			}
 		}
+		getSkipTable(skipPoint);
 	}
 #ifdef debug
 here:	printf("OOOOOOKKKKK!\n");
@@ -539,7 +529,7 @@ int Rbmp::trackDown(PIXELS& startPoint)
 	int x = sx;
 	int sy = startPoint.getY();
 	int y = sy;
-	if(testStartP(startPoint))
+    if(x >= 2 && y >= 2 && testStartP(startPoint))
 		return sx;
 	int nextx = 0;
 	bool downs = true;
@@ -682,7 +672,8 @@ int Rbmp::trackDown(PIXELS& startPoint)
 	{
 		nextx =  boundaryline.size() - 1;
 	}
-	startPoint.setEdge(-1);//cannnot modify the x,y and rgb value
+    //startPoint.setEdge(-1);//cannnot modify the x,y and rgb value
+    allData[sy][sx].setEdge(-1);
 #define GRANOPERATION(size) (granOpeartor)?(size > granularity):(size <= granularity)
 	if(GRANOPERATION(boundaryline.size()))
 	{
@@ -827,6 +818,8 @@ bool Rbmp::isBoundaryPoint(int& x,int& y)
 		//printf("\n");
 		diffSim  = similarity - avgSimi;
 		similarity = getSimilarity(Right,x,y);
+        if(allData[y][x].getEdge() == -1)
+             skipPoint.push_back(allData[y][x]);
 		//printf("%3d: num:%lf\tavg:%lf\tdiff:%lf\n", i + 1, similarity, avgSimi, fabs(diffSim));
 		avgSimi += diffSim / (i + 1);
 		if (fabs(similarity - avgSimi) > 0.1)
@@ -842,7 +835,9 @@ bool Rbmp::isBoundaryPoint(int& x,int& y)
     baseSmlrty = similarity;
     //printf("baseSmlrty:%lf\n",baseSmlrty);
     if(x < bmpWidth-1)
+    {
 		return true;
+    }
 	else
 		return false;
 }
@@ -2552,8 +2547,8 @@ bool Rbmp::testStartP(PIXELS pixel)
 			allData[y-1][x-1].getEdge() < 0 ||
 			allData[y+1][x].getEdge() < 0 ||
 			allData[y-1][x].getEdge() < 0)
-		return false;
-	if( allData[y][x-2].getEdge() < 0 ||
+        return true;
+	else if( allData[y][x-2].getEdge() < 0 ||
 			allData[y+1][x-2].getEdge() < 0 ||
 			allData[y-1][x-2].getEdge() < 0 ||
 			allData[y+2][x-2].getEdge() < 0 ||
@@ -2561,5 +2556,19 @@ bool Rbmp::testStartP(PIXELS pixel)
 			allData[y+2][x-1].getEdge() < 0 ||
 			allData[y-2][x-1].getEdge() < 0)
 		return true;
-	return false;
+	else
+		return false;
+}
+bool Rbmp::getSkipTable(vPIXELS& skipPoint)
+{
+    if(skipPoint.empty())
+        return false;
+    limitXXY footPrint;
+    for (size_t i =0; i < skipPoint.size(); i ++)
+    {
+        if(footPrint.add(skipPoint[i],skipPoint[i+1]))
+            skipTable.push_back(footPrint);
+    }
+    skipPoint.clear();
+    return true;
 }
