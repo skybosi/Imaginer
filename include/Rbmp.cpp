@@ -1,5 +1,6 @@
 #include <unistd.h>
 #include <math.h>
+#include <algorithm>
 #include "Rbmp.h"
 #define PI 3.14159
 #define R2D(R) R*180/PI
@@ -232,31 +233,38 @@ bool Rbmp::boundarysHL()
 	if(boundarys.empty())
 		return false;
 	int x = 0,y = 0;
-	for (size_t i =0; i < boundarys.size(); i++)
+	int avg  = 0;
+	size_t boundarysLen  = boundarys.size();
+	if(boundarysLen)
+		avg = 255/ boundarysLen;
+	for (size_t i = 0; i < boundarysLen; i++)
 	{
-		for (size_t j =0; j < boundarys[i].size(); j ++)
+		for (size_t j = 0; j < boundarys[i].size(); j ++)
 		{
 			y = boundarys[i][j].getY();
 			x = boundarys[i][j].getX();
 			//if(allData[y][x].getEdge() == -2)
-				//allData[y][x].setRGB(0,0,255);
-            //if(allData[y][x].getEdge() == -1)
-                //allData[y][x].setRGB(color,color,color);
-			allData[y][x].setRGB(0,0,255);
+			//allData[y][x].setRGB(0,0,255);
+			//if(allData[y][x].getEdge() == -1)
+			//allData[y][x].setRGB(color,color,color);
+			allData[y][x].setRGB(0,0,i*avg);
 		}
+		//get first point
+		//y = boundarys[i][0].getY();
+		//x = boundarys[i][0].getX();
+		//allData[y][x].setRGB(255,255,255);
 	}
-
+/*
 	vector<limitXXY>::const_iterator it;
 	for(it = skipTable.begin(); it != skipTable.end();++it)
 	{
 		allData[it->ally][it->sttx].setRGB(0,0,0);
 		allData[it->ally][it->endx].setRGB(0,0,0);
-	}
+	}*/
 	return true;
 }
 bool Rbmp::imageCutOut()
 {
-	setBackground(0,0,0);
 	if(skipTable.empty())
 		return false;
 	vector<limitXXY>::const_iterator it = skipTable.begin();
@@ -529,7 +537,7 @@ int Rbmp::trackDown(PIXELS& startPoint)
 	int x = sx;
 	int sy = startPoint.getY();
 	int y = sy;
-    if(x >= 2 && y >= 2 && testStartP(startPoint))
+    if(x >= 3 && y >= 3 && testStartP(startPoint))
 		return sx;
 	int nextx = 0;
 	bool downs = true;
@@ -808,8 +816,8 @@ bool Rbmp::isBoundaryPoint(PIXELS pot)
 bool Rbmp::isBoundaryPoint(int& x,int& y)
 {
 	int i = 0;
-    float similarity = 1;
-    float checkSmlrty = 0;
+	float similarity = 1;
+	float checkSmlrty = 0;
 	float avgSimi = 0;
 	float diffSim = 0;
 	for (i = 0; x < bmpWidth-1; ++i,++x)
@@ -818,26 +826,29 @@ bool Rbmp::isBoundaryPoint(int& x,int& y)
 		//printf("\n");
 		diffSim  = similarity - avgSimi;
 		similarity = getSimilarity(Right,x,y);
-        if(allData[y][x].getEdge() == -1)
-             skipPoint.push_back(allData[y][x]);
+		if(allData[y][x].getEdge() == -1)
+			skipPoint.push_back(allData[y][x]);
 		//printf("%3d: num:%lf\tavg:%lf\tdiff:%lf\n", i + 1, similarity, avgSimi, fabs(diffSim));
 		avgSimi += diffSim / (i + 1);
 		if (fabs(similarity - avgSimi) > 0.1)
 		{
-            //printf("finded :%lf\n", similarity);
+			//printf("finded :%lf\n", similarity);
 			++x;
 			break;
 		}
 	}
-    checkSmlrty = getSimilarity(Right,x,y);
-    if(checkSmlrty != 1 && checkSmlrty > similarity)
-        similarity = checkSmlrty;
-    baseSmlrty = similarity;
-    //printf("baseSmlrty:%lf\n",baseSmlrty);
-    if(x < bmpWidth-1)
-    {
+	checkSmlrty = getSimilarity(Right,x,y);
+	if(checkSmlrty != 1 && checkSmlrty != similarity)
+	{
+		similarity = checkSmlrty;
+		++x;
+	}
+	baseSmlrty = similarity;
+	//printf("baseSmlrty:%lf\n",baseSmlrty);
+	if(x < bmpWidth-1)
+	{
 		return true;
-    }
+	}
 	else
 		return false;
 }
@@ -897,6 +908,8 @@ float Rbmp::getSimilarity(Position direction,int x,int y)
 	*/
 	Similarity = (diff.getRed() + diff.getGreen() + diff.getBlue())/765.0;
 	//printf("x: %2d y: %2d Similarity: %.3f\n",x,y,Similarity);
+    if(Similarity != 1 && Similarity > baseSmlrty)
+        baseSmlrty = Similarity;
 	return Similarity;
 }
 /* 函数名称readNline() */
@@ -2549,18 +2562,36 @@ bool Rbmp::testStartP(PIXELS pixel)
 	else
 		return false;
 }
+bool sortByx(PIXELS pixel1,PIXELS pixel2)
+{
+	return pixel1.getX() < pixel2.getX();//up sort
+}
 bool Rbmp::getSkipTable(vPIXELS& skipPoint)
 {
-    if(skipPoint.empty())
-        return false;
-    limitXXY footPrint;
-		size_t i = 0;
-		size_t sizenum =  skipPoint.size() - 1;
-    for (; i < sizenum; i ++)
-    {
-        if(footPrint.add(skipPoint[i],skipPoint[i+1]))
-            skipTable.push_back(footPrint);
-    }
-    skipPoint.clear();
-    return true;
+	if(skipPoint.empty())
+		return false;
+	/*
+		 for (size_t j = 0; j < skipPoint.size(); j ++)
+		 {
+		 skipPoint[j].show_PIXELS();
+		 printf("\n");
+		 }*/
+	sort(skipPoint.begin(),skipPoint.end(),sortByx);
+	/*
+		 printf("================================\n");
+		 for (size_t j = 0; j < skipPoint.size(); j ++)
+		 {
+		 skipPoint[j].show_PIXELS();
+		 printf("\n");
+		 }*/
+	limitXXY footPrint;
+	size_t i = 0;
+	size_t sizenum =  skipPoint.size() - 1;
+	for (; i < sizenum; i ++)
+	{
+		if(footPrint.add(skipPoint[i],skipPoint[i+1]))
+			skipTable.push_back(footPrint);
+	}
+	skipPoint.clear();
+	return true;
 }
