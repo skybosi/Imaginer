@@ -2542,19 +2542,9 @@ bool Rbmp::testStartP(PIXELS pixel)
 {
 	int x = pixel.getX();
 	int y = pixel.getY();
-	if(allData[y][x-1].getEdge() < 0 ||
-			allData[y+1][x-1].getEdge() < 0 ||
-			allData[y-1][x-1].getEdge() < 0 ||
-			allData[y+1][x].getEdge() < 0 ||
-			allData[y-1][x].getEdge() < 0)
-        return true;
-	else if( allData[y][x-2].getEdge() < 0 ||
-			allData[y+1][x-2].getEdge() < 0 ||
-			allData[y-1][x-2].getEdge() < 0 ||
-			allData[y+2][x-2].getEdge() < 0 ||
-			allData[y-2][x-2].getEdge() < 0 ||
-			allData[y+2][x-1].getEdge() < 0 ||
-			allData[y-2][x-1].getEdge() < 0)
+	if(allData[y][x-3].getEdge() < 0 || allData[y][x-2].getEdge() < 0 ||
+			allData[y][x-1].getEdge() < 0 || allData[y][x].getEdge() < 0 ||
+			allData[y][x+1].getEdge() < 0 || allData[y][x-1].getEdge() < 0)
 		return true;
 	else
 		return false;
@@ -2564,7 +2554,9 @@ bool Rbmp::getSkipTable(vPIXELS& skipPoint)
     if(skipPoint.empty())
         return false;
     limitXXY footPrint;
-    for (size_t i =0; i < skipPoint.size(); i ++)
+		size_t i = 0;
+		size_t sizenum =  skipPoint.size() - 1;
+    for (; i < sizenum; i ++)
     {
         if(footPrint.add(skipPoint[i],skipPoint[i+1]))
             skipTable.push_back(footPrint);
