@@ -1,6 +1,5 @@
 #include <unistd.h>
 #include <math.h>
-#include <algorithm>
 #include "Rbmp.h"
 #define PI 3.14159
 #define R2D(R) R*180/PI
@@ -25,7 +24,7 @@
 #define ISV(_var) (_var <= Down)   //vertically
 #define ISH(_var) (_var >= Left)//  horizontally
 static int globalI = 0;
-Rbmp::Rbmp(const char *bmpname):fp(NULL), fpo(NULL), bmppath(bmpname), allData(NULL), pColorTable(NULL),granularity(10),pixelTrend(true),granOpeartor(true),baseSmlrty(1.0)
+Rbmp::Rbmp(const char *bmpname):fp(NULL), fpo(NULL), bmppath(bmpname), allData(NULL), pColorTable(NULL),granularity(10),pixelTrend(true),granOpeartor(true),baseSmlrty(1.0),testRange(1)
 {
 	// 二进制读方式打开指定的图像文件
 	fp = fopen(bmppath.c_str(), "rb");
@@ -466,6 +465,7 @@ void Rbmp::getBoundaryLine()
 	vector<limitXXY>::const_iterator it;
 	limitXXY footprint;
 	int beforeX;
+	int StartPointX = 0;
 	for (int y = 0;y < bmpHeight; y++)
 	{
 		for (int x = 0; x < bmpWidth; x++)
@@ -475,12 +475,11 @@ void Rbmp::getBoundaryLine()
 				if(allData[y][x].getEdge() >= 0)
 				{
 					//start track down by following clues(顺藤摸瓜)
-					beforeX = x;
+						beforeX = x;
 					x = trackDown(allData[y][x]);
 					if(x != beforeX)
 					{
-						skipPoint.push_back(allData[y][beforeX]);
-						skipPoint.push_back(allData[y][x]);
+						footprint.add(allData[y][beforeX],allData[y][x],skipTable);
 					}
 					//printf("next footprint'x value:%d\n",x+1);
 					//printf("trackDown.... insert\n");
@@ -490,34 +489,26 @@ void Rbmp::getBoundaryLine()
 				}
 				else
 				{
-					skipPoint.push_back(allData[y][x]);
-				}
-				if(skipPoint.size() >= 2)
-				{
-					if(footprint.add(skipPoint[0],skipPoint[1]))
+					beforeX = x++;
+					while(ABS(allData[y][x].getEdge()) != 1)
 					{
-						skipTable.push_back(footprint);
-						skipPoint.pop_front();
-						skipPoint.pop_front();
+						if(getSimilarity(Right,x,y) < baseSmlrty)
+							StartPointX = x;
+						x++;
 					}
-					else
+					if(x != bmpWidth - 1)
+						footprint.add(allData[y][beforeX],allData[y][x],skipTable);
+					else// deal with the half open boundary line
+						footprint.add(allData[y][beforeX],allData[y][bmpWidth-1],skipTable);
+					if(StartPointX != 0)
 					{
-						footprint.add(skipPoint[0],skipPoint[0]);
-						skipTable.push_back(footprint);
-						skipPoint.pop_front();
+						x = --StartPointX;
+						StartPointX  = 0;
 					}
+					//printf("skip table.... insert\n");
 				}
 			}
 		}
-		/*
-		if(!skipPoint.empty())
-		{
-			skipPoint.push_back(allData[y][bmpWidth-1]);
-			footprint.add(skipPoint[0],skipPoint[1]);
-			skipTable.push_back(footprint);
-			skipPoint.pop_front();
-		}*/
-		//getSkipTable(skipPoint);
 	}
 #ifdef debug
 here:	printf("OOOOOOKKKKK!\n");
@@ -563,7 +554,7 @@ int Rbmp::trackDown(PIXELS& startPoint)
 	int sy = startPoint.getY();
 	int y = sy;
 	//make sure not trackDown again
-	if(testStartP(startPoint))
+	if(!boundarys.empty() && testStartP(startPoint))
 		return sx;
 	int nextx = 0;
 	dPIXELS boundaryline;
@@ -635,8 +626,7 @@ int Rbmp::trackDown(PIXELS& startPoint)
 		direction = Right;
 		x = sx;
 		y = sy;
-		while ((x < bmpWidth) && (y < bmpHeight) &&
-				(x > 0) && (y > 0))
+		while (1)
 		{
 			PIXELS& prevPoint = allData[y][x];
 			Position prevDiret = direction;
@@ -667,14 +657,14 @@ int Rbmp::trackDown(PIXELS& startPoint)
 				nextx++;
 			}
 			else
-				break;
+				break;//jump out while loop
 		}
 	}
-    else
-    {
-        nextx =  boundaryline.size() - 1;
-    }
-    startPoint.setEdge(-1);//cannnot modify the x,y and rgb value
+	else
+	{
+		nextx =  boundaryline.size() - 1;
+	}
+	startPoint.setEdge(-1);//cannnot modify the x,y and rgb value
 #define GRANOPERATION(size) (granOpeartor)?(size > granularity):(size <= granularity)
 	if(GRANOPERATION(boundaryline.size()))
 	{
@@ -819,29 +809,23 @@ bool Rbmp::isBoundaryPoint(int& x,int& y)
 		//printf("\n");
 		diffSim  = similarity - avgSimi;
 		similarity = getSimilarity(Right,x,y);
-		if(allData[y][x].getEdge() == -1)
-			skipPoint.push_back(allData[y][x]);
-		if(allData[y][x].getEdge() == -3)
-		{
-			skipPoint.push_back(allData[y][x]);
-			skipPoint.push_back(allData[y][x]);
-		}
 		//printf("%3d: num:%lf\tavg:%lf\tdiff:%lf\n", i + 1, similarity, avgSimi, fabs(diffSim));
 		avgSimi += diffSim / (i + 1);
 		if (fabs(similarity - avgSimi) > 0.1)
 		{
+			++x;
 			//printf("finded :%lf\n", similarity);
-			++x;
+			//make sure the edge point is not a shade
+			//work is not stable, need TODO
+			if(allData[y][x].getEdge() >= 0)
+			{
+				checkSmlrty = getSimilarity(Right,x,y);
+				if(checkSmlrty != 1 && checkSmlrty < similarity)
+				{
+					++x;
+				}
+			}
 			break;
-		}
-	}
-	if(allData[y][x].getEdge() >= 0)
-	{
-		checkSmlrty = getSimilarity(Right,x,y);
-		if(checkSmlrty != 1 && checkSmlrty != similarity)
-		{
-			similarity = checkSmlrty;
-			++x;
 		}
 	}
 	baseSmlrty = similarity;
@@ -853,7 +837,7 @@ bool Rbmp::isBoundaryPoint(int& x,int& y)
 	else
 		return false;
 }
-float Rbmp::getSimilarity(Position direction,int x,int y)
+float Rbmp::getSimilarity(Position direction,int x,int y,int step)
 {
 	float Similarity = 0;
 	if(get_pix(x,y).empty())
@@ -863,28 +847,28 @@ float Rbmp::getSimilarity(Position direction,int x,int y)
 	switch(direction)
 	{
 		case Down:
-			if(y+1 >= bmpHeight)
+			if(y+step >= bmpHeight)
 				return -1;
 			potCurnt = allData[y][x];
-			potRight = allData[y+1][x];
+			potRight = allData[y+step][x];
 			break;
 		case Right:
-			if(x+1 >= bmpWidth)
+			if(x+step >= bmpWidth)
 				return -1;
 			potCurnt = allData[y][x];
-			potRight = allData[y][x+1];
+			potRight = allData[y][x+step];
 			break;
 		case Up:
-			if(y-1 < 0)
+			if(y-step < 0)
 				return -1;
 			potCurnt = allData[y][x];
-			potRight = allData[y-1][x];
+			potRight = allData[y-step][x];
 			break;
 		case Left:
-			if(x-1 < 0)
+			if(x-step < 0)
 				return -1;
 			potCurnt = allData[y][x];
-			potRight = allData[y][x-1];
+			potRight = allData[y][x-step];
 			break;
 		default:
 			break;
@@ -2412,7 +2396,7 @@ bool Rbmp::getLpoint(Position& direction,int& x,int& y)
 				else if (flagxy != -1 && flagxy <= baseSmlrty)
 				{
 					//flagxy = alikeBackground(x - 1,y);
-					flagxy = getSimilarity(Up,x,y);
+					flagxy = getSimilarity(Left,x,y);
 					//if (flagxy == 1)
 					if (flagxy > baseSmlrty)
 					{
@@ -2450,7 +2434,7 @@ bool Rbmp::getLpoint(Position& direction,int& x,int& y)
 			else if (flagxy != -1 && flagxy <= baseSmlrty)
 			{
 				//flagxy = alikeBackground(x,y - 1);
-				flagxy = getSimilarity(Down,x,y);
+				flagxy = getSimilarity(Up,x,y);
 				//if (flagxy == 1)
 				if (flagxy > baseSmlrty)
 				{
@@ -2554,6 +2538,8 @@ bool Rbmp::backGround_ize()
 //return: true trackDown again
 bool Rbmp::testStartP(PIXELS pixel,int range)
 {
+#define MAXRANGE(_v1,_v2) ((_v1 < _v2)?(_v2):(_v1))
+	range = testRange;
 	int x = pixel.getX();
 	int y = pixel.getY();
 	if(x < range || x > bmpWidth - 1 - range)
@@ -2562,7 +2548,11 @@ bool Rbmp::testStartP(PIXELS pixel,int range)
 	while(i <= range)
 	{
 		if(allData[y][x-i].getEdge() < 0 || allData[y][x+i].getEdge() < 0)
+		{
+			testRange = MAXRANGE(i,testRange);
+			printf("testRange:%d\n",testRange);
 			return true;
+		}
 		i++;
 	}
 	return false;
@@ -2573,36 +2563,4 @@ bool Rbmp::testStartP(PIXELS pixel,int range)
 	//    else
 	//        return false;
 }
-bool sortByx(PIXELS pixel1,PIXELS pixel2)
-{
-	return pixel1.getX() < pixel2.getX();//up sort
-}
-bool Rbmp::getSkipTable(vPIXELS& skipPoint)
-{
-	if(skipPoint.empty())
-		return false;
-	/*
-		 for (size_t j = 0; j < skipPoint.size(); j ++)
-		 {
-		 skipPoint[j].show_PIXELS();
-		 printf("\n");
-		 }*/
-	sort(skipPoint.begin(),skipPoint.end(),sortByx);
-	/*
-		 printf("================================\n");
-		 for (size_t j = 0; j < skipPoint.size(); j ++)
-		 {
-		 skipPoint[j].show_PIXELS();
-		 printf("\n");
-		 }*/
-	limitXXY footPrint;
-	size_t i = 0;
-	size_t sizenum =  skipPoint.size() - 1;
-	for (; i < sizenum; i ++)
-	{
-		if(footPrint.add(skipPoint[i],skipPoint[i+1]))
-			skipTable.push_back(footPrint);
-	}
-	skipPoint.clear();
-	return true;
-}
+

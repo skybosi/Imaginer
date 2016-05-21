@@ -21,13 +21,14 @@ struct limitXXY
 {
 	limitXXY():sttx(0),endx(0),ally(0){}
 	bool change(){return (sttx != endx); }
-	bool add(PIXELS begin,PIXELS end)
+	bool add(PIXELS begin,PIXELS end,vector<limitXXY>& skipTable)
 	{
 		if(begin.getY() != end.getY())
 			return false;
 		sttx = begin.getX();
 		endx = end.getX();
 		ally = begin.getY();
+		skipTable.push_back(*this);
 		return true;
 	}
 	int sttx; //start point x
@@ -74,6 +75,7 @@ class Rbmp
 		dPIXELS    skipPoint;
 		//record the trackdown's result,just for cutout the image
 		float baseSmlrty;//base Similarity,use to judge is boundary point or not
+		U8    testRange;//for use to set the test Range,that can sure a Edge Point is not trackdown again
 	public:
 		~Rbmp();
 		Rbmp(const char* bmpname);
@@ -192,11 +194,9 @@ class Rbmp
 		//deburr: delete The Burr on the track
 		bool deburrTrack(dPIXELS& boundaryline);
 		//test two border upon point similarity
-		float getSimilarity(Position direction,int x,int y);
+		float getSimilarity(Position direction,int x,int y,int step = 1);
 		//Test whether around the start point has been visited
-		bool testStartP(PIXELS pixel,int range = 3);
-		//get Edge point for create skipTable
-		bool getSkipTable(vPIXELS& skipPoint);
+		bool testStartP(PIXELS pixel,int range = 2);
 	public://The function deal with the bmp image (Macroscopic)
 		//Function: generate the image's bar diagram 
 		bool     genBardiagram(colorType color = Pricolor);
