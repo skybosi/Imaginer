@@ -71,7 +71,7 @@ class Rbmp
 		//granOpeartor: boundarys will save only largger than granularity value's boundaryline :true
 		//              boundarys will save only smaller than granularity value's boundaryline :false
 		vTracktable skipTable;//用于抠出轨迹内的部分
-		vPIXELS    skipPoint;
+		dPIXELS    skipPoint;
 		//record the trackdown's result,just for cutout the image
 		float baseSmlrty;//base Similarity,use to judge is boundary point or not
 	public:
@@ -194,7 +194,7 @@ class Rbmp
 		//test two border upon point similarity
 		float getSimilarity(Position direction,int x,int y);
 		//Test whether around the start point has been visited
-		bool testStartP(PIXELS pixel);
+		bool testStartP(PIXELS pixel,int range = 3);
 		//get Edge point for create skipTable
 		bool getSkipTable(vPIXELS& skipPoint);
 	public://The function deal with the bmp image (Macroscopic)

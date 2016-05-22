@@ -22,6 +22,8 @@
 #define DIRECTION_Down     {direction = Down;  y++;}
 #define DIRECTION_Right    {direction = Right; x++;}
 #define DIRECTION_Left     {direction = Left;  x--;}
+#define ISV(_var) (_var <= Down)   //vertically
+#define ISH(_var) (_var >= Left)//  horizontally
 static int globalI = 0;
 Rbmp::Rbmp(const char *bmpname):fp(NULL), fpo(NULL), bmppath(bmpname), allData(NULL), pColorTable(NULL),granularity(10),pixelTrend(true),granOpeartor(true),baseSmlrty(1.0)
 {
@@ -490,9 +492,32 @@ void Rbmp::getBoundaryLine()
 				{
 					skipPoint.push_back(allData[y][x]);
 				}
+				if(skipPoint.size() >= 2)
+				{
+					if(footprint.add(skipPoint[0],skipPoint[1]))
+					{
+						skipTable.push_back(footprint);
+						skipPoint.pop_front();
+						skipPoint.pop_front();
+					}
+					else
+					{
+						footprint.add(skipPoint[0],skipPoint[0]);
+						skipTable.push_back(footprint);
+						skipPoint.pop_front();
+					}
+				}
 			}
 		}
-		getSkipTable(skipPoint);
+		/*
+		if(!skipPoint.empty())
+		{
+			skipPoint.push_back(allData[y][bmpWidth-1]);
+			footprint.add(skipPoint[0],skipPoint[1]);
+			skipTable.push_back(footprint);
+			skipPoint.pop_front();
+		}*/
+		//getSkipTable(skipPoint);
 	}
 #ifdef debug
 here:	printf("OOOOOOKKKKK!\n");
@@ -537,10 +562,10 @@ int Rbmp::trackDown(PIXELS& startPoint)
 	int x = sx;
 	int sy = startPoint.getY();
 	int y = sy;
-    if(x >= 3 && y >= 3 && testStartP(startPoint))
+	//make sure not trackDown again
+	if(testStartP(startPoint))
 		return sx;
 	int nextx = 0;
-	bool downs = true;
 	dPIXELS boundaryline;
 	Position direction = Right;
 	//each direction relative to the image
@@ -553,6 +578,7 @@ int Rbmp::trackDown(PIXELS& startPoint)
 		}
 	}
 	printf("baseSimilarity: %f\t",baseSmlrty);
+	startPoint.setEdge(-1);//cannnot modify the x,y and rgb value
 	boundaryline.push_back(startPoint);
 	printf("push s: ");
 	startPoint.show_PIXELS();
@@ -566,47 +592,31 @@ int Rbmp::trackDown(PIXELS& startPoint)
 		allData[y][x].setEdge(-2);
 	}
 	boundaryline.push_back(allData[y][x]);
-	do
+	while (x != sx || y != sy)
 	{
-		//if(getRpoint(direction,x,y)&& !isEdge(x,y))
 		PIXELS& prevPoint = allData[y][x];
-		//if(getRpoint(direction,x,y) && allData[y][x].getEdge() >= 0)
+		Position prevDiret = direction;
+		//printf("x:%d y:%d\n",x,y);
+		//printf("direction:%s x:%d y:%d\n",Pos2str(direction).c_str(),x,y);
 		if(getRpoint(direction,x,y))
 		{
-			//printf("x:%d y:%d\n",x,y);
-			//printf("direction:%s x:%d y:%d\n",Pos2str(direction).c_str(),x,y);
-			allData[y][x].setEdge(-1);
-			switch(direction)
+			if(prevDiret + direction == 3)
+				prevDiret = direction;
+			if(ISV(prevDiret))
+				prevPoint.setEdge(-1);
+			if(ISH(prevDiret))
+				prevPoint.setEdge(-2);
+			if(ISV(direction))
 			{
-				case Left:
-					if(downs)
-						prevPoint.setEdge(-2);
-					else
-						allData[y][x].setEdge(-2);
-					break;
-				case Right:
-					if(downs)
-						allData[y][x].setEdge(-2);
-					else
-						prevPoint.setEdge(-2);
-					break;
-				case Up:
-					if(downs)
-					{
-						prevPoint.setEdge(-1);
-						downs = false;
-					}
-					break;
-				case Down:
-					if(!downs)
-					{
-						prevPoint.setEdge(-2);
-						downs = true;
-					}
-					break;
-				default:
-					break;
+				if(allData[y][x].getEdge() == -1)
+					allData[y][x].setEdge(-3);
+				else
+					allData[y][x].setEdge(-1);
 			}
+			if(ISH(direction))
+				allData[y][x].setEdge(-2);
+			if(prevDiret + direction == 5)
+				prevPoint.setEdge(-1);
 			boundaryline.push_back(allData[y][x]);
 			/*
 				 printf("push a: ");
@@ -619,51 +629,35 @@ int Rbmp::trackDown(PIXELS& startPoint)
 			openstatus = !openstatus;
 			break;
 		}
-	}while (x != sx || y != sy);
+	}
 	if(openstatus)
 	{
 		direction = Right;
 		x = sx;
 		y = sy;
-		do
+		while ((x < bmpWidth) && (y < bmpHeight) &&
+				(x > 0) && (y > 0))
 		{
 			PIXELS& prevPoint = allData[y][x];
+			Position prevDiret = direction;
+			//printf("x:%d y:%d\n",x,y);
 			//printf("direction:%s x:%d y:%d\n",Pos2str(direction).c_str(),x,y);
 			if(getLpoint(direction,x,y))
-			//if(getLpoint(direction,x,y) && allData[y][x].getEdge() >= 0)
 			{
-				allData[y][x].setEdge(-1);
-				switch(direction)
-				{
-					case Right:
-						if(downs)
-							prevPoint.setEdge(-2);
-						else
-							allData[y][x].setEdge(-2);
-						break;
-					case Left:
-						if(downs)
-							allData[y][x].setEdge(-2);
-						else
-							prevPoint.setEdge(-2);
-						break;
-					case Up:
-						if(downs)
-						{
-							prevPoint.setEdge(-2);
-							downs = false;
-						}
-						break;
-					case Down:
-						if(!downs)
-						{
-							prevPoint.setEdge(-1);
-							downs = true;
-						}
-						break;
-					default:
-						break;
-				}
+				if((prevDiret != direction) &&
+						(prevDiret + direction == 2 ||
+						 prevDiret + direction == 4))
+					prevDiret = direction;
+				if(ISV(prevDiret))
+					prevPoint.setEdge(-1);
+				if(ISH(prevDiret))
+					prevPoint.setEdge(-2);
+				if(ISV(direction))
+					allData[y][x].setEdge(-1);
+				if(ISH(direction))
+					allData[y][x].setEdge(-2);
+				if(prevDiret + direction == 5)
+					prevPoint.setEdge(-1);
 				boundaryline.push_front(allData[y][x]);
 				/*
 					 printf("push a: ");
@@ -674,14 +668,13 @@ int Rbmp::trackDown(PIXELS& startPoint)
 			}
 			else
 				break;
-		}while (x != sx || y != sy);
+		}
 	}
-	else
-	{
-		nextx =  boundaryline.size() - 1;
-	}
-    //startPoint.setEdge(-1);//cannnot modify the x,y and rgb value
-    allData[sy][sx].setEdge(-1);
+    else
+    {
+        nextx =  boundaryline.size() - 1;
+    }
+    startPoint.setEdge(-1);//cannnot modify the x,y and rgb value
 #define GRANOPERATION(size) (granOpeartor)?(size > granularity):(size <= granularity)
 	if(GRANOPERATION(boundaryline.size()))
 	{
@@ -828,6 +821,11 @@ bool Rbmp::isBoundaryPoint(int& x,int& y)
 		similarity = getSimilarity(Right,x,y);
 		if(allData[y][x].getEdge() == -1)
 			skipPoint.push_back(allData[y][x]);
+		if(allData[y][x].getEdge() == -3)
+		{
+			skipPoint.push_back(allData[y][x]);
+			skipPoint.push_back(allData[y][x]);
+		}
 		//printf("%3d: num:%lf\tavg:%lf\tdiff:%lf\n", i + 1, similarity, avgSimi, fabs(diffSim));
 		avgSimi += diffSim / (i + 1);
 		if (fabs(similarity - avgSimi) > 0.1)
@@ -837,11 +835,14 @@ bool Rbmp::isBoundaryPoint(int& x,int& y)
 			break;
 		}
 	}
-	checkSmlrty = getSimilarity(Right,x,y);
-	if(checkSmlrty != 1 && checkSmlrty != similarity)
+	if(allData[y][x].getEdge() >= 0)
 	{
-		similarity = checkSmlrty;
-		++x;
+		checkSmlrty = getSimilarity(Right,x,y);
+		if(checkSmlrty != 1 && checkSmlrty != similarity)
+		{
+			similarity = checkSmlrty;
+			++x;
+		}
 	}
 	baseSmlrty = similarity;
 	//printf("baseSmlrty:%lf\n",baseSmlrty);
@@ -2145,7 +2146,7 @@ bool Rbmp::getRpoint(Position& direction,int& x,int& y)
 				DIRECTION_Down;
 			}
 			//else if (flagxy == 0)
-			else if (flagxy <= baseSmlrty)
+			else if (flagxy != -1 && flagxy <= baseSmlrty)
 			{
 				//flagxy = alikeBackground(x + 1,y);
 				flagxy = getSimilarity(Right,x,y);
@@ -2155,7 +2156,7 @@ bool Rbmp::getRpoint(Position& direction,int& x,int& y)
 					x++;
 				}
 				//else if(flagxy == 0)
-				else if (flagxy <= baseSmlrty)
+				else if (flagxy != -1 && flagxy <= baseSmlrty)
 				{
 					//flagxy = alikeBackground(x,y - 1);
 					flagxy = getSimilarity(Up,x,y);
@@ -2167,7 +2168,7 @@ bool Rbmp::getRpoint(Position& direction,int& x,int& y)
 						DIRECTION_Up;
 					}
 					//else if (flagxy == 0)
-					else if (flagxy <= baseSmlrty)
+					else if (flagxy != -1 && flagxy <= baseSmlrty)
 					{
 						//direction = Left;
 						//x--;
@@ -2193,7 +2194,7 @@ bool Rbmp::getRpoint(Position& direction,int& x,int& y)
 				DIRECTION_Left;
 			}
 			//else if (flagxy == 0)
-			else if (flagxy <= baseSmlrty)
+			else if (flagxy != -1 && flagxy <= baseSmlrty)
 			{
 				//flagxy = alikeBackground(x,y + 1);
 				flagxy = getSimilarity(Down,x,y);
@@ -2203,7 +2204,7 @@ bool Rbmp::getRpoint(Position& direction,int& x,int& y)
 					y++;
 				}
 				//else if(flagxy == 0)
-				else if (flagxy <= baseSmlrty)
+				else if (flagxy != -1 && flagxy <= baseSmlrty)
 				{
 					//flagxy = alikeBackground(x + 1,y);
 					flagxy = getSimilarity(Right,x,y);
@@ -2215,7 +2216,7 @@ bool Rbmp::getRpoint(Position& direction,int& x,int& y)
 						DIRECTION_Right;
 					}
 					//else if (flagxy == 0)
-					else if (flagxy <= baseSmlrty)
+					else if (flagxy != -1 && flagxy <= baseSmlrty)
 					{
 						//direction = Up;
 						//y--;
@@ -2241,7 +2242,7 @@ bool Rbmp::getRpoint(Position& direction,int& x,int& y)
 				DIRECTION_Right;
 			}
 			//else if (flagxy == 0)
-			else if (flagxy <= baseSmlrty)
+			else if (flagxy != -1 && flagxy <= baseSmlrty)
 			{
 				//flagxy = alikeBackground(x,y - 1);
 				flagxy = getSimilarity(Up,x,y);
@@ -2251,7 +2252,7 @@ bool Rbmp::getRpoint(Position& direction,int& x,int& y)
 					y--;
 				}
 				//else if(flagxy == 0)
-				else if (flagxy <= baseSmlrty)
+				else if (flagxy != -1 && flagxy <= baseSmlrty)
 				{
 					//flagxy = alikeBackground(x - 1,y);
 					flagxy = getSimilarity(Left,x,y);
@@ -2263,7 +2264,7 @@ bool Rbmp::getRpoint(Position& direction,int& x,int& y)
 						DIRECTION_Left;
 					}
 					//else if (flagxy == 0)
-					else if (flagxy <= baseSmlrty)
+					else if (flagxy != -1 && flagxy <= baseSmlrty)
 					{
 						//direction = Down;
 						//y++;
@@ -2289,7 +2290,7 @@ bool Rbmp::getRpoint(Position& direction,int& x,int& y)
 				DIRECTION_Up;
 			}
 			//else if (flagxy == 0)
-			else if (flagxy <= baseSmlrty)
+			else if (flagxy != -1 && flagxy <= baseSmlrty)
 			{
 				//flagxy = alikeBackground(x - 1,y);
 				flagxy = getSimilarity(Left,x,y);
@@ -2299,7 +2300,7 @@ bool Rbmp::getRpoint(Position& direction,int& x,int& y)
 					x--;
 				}
 				//else if(flagxy == 0)
-				else if (flagxy <= baseSmlrty)
+				else if (flagxy != -1 && flagxy <= baseSmlrty)
 				{
 					//flagxy = alikeBackground(x,y + 1);
 					flagxy = getSimilarity(Down,x,y);
@@ -2311,7 +2312,7 @@ bool Rbmp::getRpoint(Position& direction,int& x,int& y)
 						DIRECTION_Down;
 					}
 					//else if(flagxy == 0)
-					else if (flagxy <= baseSmlrty)
+					else if (flagxy != -1 && flagxy <= baseSmlrty)
 					{
 						//direction = Right;
 						//x++;
@@ -2350,7 +2351,7 @@ bool Rbmp::getLpoint(Position& direction,int& x,int& y)
 				DIRECTION_Up;
 			}
 			//else if (flagxy == 0)
-			else if (flagxy <= baseSmlrty)
+			else if (flagxy != -1 && flagxy <= baseSmlrty)
 			{
 				//flagxy = alikeBackground(x + 1,y);
 				flagxy = getSimilarity(Right,x,y);
@@ -2360,7 +2361,7 @@ bool Rbmp::getLpoint(Position& direction,int& x,int& y)
 					x++;
 				}
 				//else if(flagxy == 0)
-				else if (flagxy <= baseSmlrty)
+				else if (flagxy != -1 && flagxy <= baseSmlrty)
 				{
 					//flagxy = alikeBackground(x,y + 1);
 					flagxy = getSimilarity(Down,x,y);
@@ -2372,7 +2373,7 @@ bool Rbmp::getLpoint(Position& direction,int& x,int& y)
 						DIRECTION_Down;
 					}
 					//else if (flagxy == 0)
-					else if (flagxy <= baseSmlrty)
+					else if (flagxy != -1 && flagxy <= baseSmlrty)
 					{
 						//direction = Left;
 						//x--;
@@ -2398,7 +2399,7 @@ bool Rbmp::getLpoint(Position& direction,int& x,int& y)
 				DIRECTION_Right;
 			}
 			//else if (flagxy == 0)
-			else if (flagxy <= baseSmlrty)
+			else if (flagxy != -1 && flagxy <= baseSmlrty)
 			{
 				//flagxy = alikeBackground(x,y + 1);
 				flagxy = getSimilarity(Down,x,y);
@@ -2408,7 +2409,7 @@ bool Rbmp::getLpoint(Position& direction,int& x,int& y)
 					y++;
 				}
 				//else if(flagxy == 0)
-				else if (flagxy <= baseSmlrty)
+				else if (flagxy != -1 && flagxy <= baseSmlrty)
 				{
 					//flagxy = alikeBackground(x - 1,y);
 					flagxy = getSimilarity(Up,x,y);
@@ -2420,7 +2421,7 @@ bool Rbmp::getLpoint(Position& direction,int& x,int& y)
 						DIRECTION_Left;
 					}
 					//else if (flagxy == 0)
-					else if (flagxy <= baseSmlrty)
+					else if (flagxy != -1 && flagxy <= baseSmlrty)
 					{
 						//direction = Up;
 						//y--;
@@ -2446,7 +2447,7 @@ bool Rbmp::getLpoint(Position& direction,int& x,int& y)
 				DIRECTION_Left;
 			}
 			//else if (flagxy == 0)
-			else if (flagxy <= baseSmlrty)
+			else if (flagxy != -1 && flagxy <= baseSmlrty)
 			{
 				//flagxy = alikeBackground(x,y - 1);
 				flagxy = getSimilarity(Down,x,y);
@@ -2456,7 +2457,7 @@ bool Rbmp::getLpoint(Position& direction,int& x,int& y)
 					y--;
 				}
 				//else if(flagxy == 0)
-				else if (flagxy <= baseSmlrty)
+				else if (flagxy != -1 && flagxy <= baseSmlrty)
 				{
 					//flagxy = alikeBackground(x + 1,y);
 					flagxy = getSimilarity(Right,x,y);
@@ -2468,7 +2469,7 @@ bool Rbmp::getLpoint(Position& direction,int& x,int& y)
 						DIRECTION_Right;
 					}
 					//else if (flagxy == 0)
-					else if (flagxy <= baseSmlrty)
+					else if (flagxy != -1 && flagxy <= baseSmlrty)
 					{
 						//direction = Down;
 						//y++;
@@ -2494,7 +2495,7 @@ bool Rbmp::getLpoint(Position& direction,int& x,int& y)
 				DIRECTION_Down;
 			}
 			//else if (flagxy == 0)
-			else if (flagxy <= baseSmlrty)
+			else if (flagxy != -1 && flagxy <= baseSmlrty)
 			{
 				//flagxy = alikeBackground(x - 1,y);
 				flagxy = getSimilarity(Left,x,y);
@@ -2504,7 +2505,7 @@ bool Rbmp::getLpoint(Position& direction,int& x,int& y)
 					x--;
 				}
 				//else if(flagxy == 0)
-				else if (flagxy <= baseSmlrty)
+				else if (flagxy != -1 && flagxy <= baseSmlrty)
 				{
 					//flagxy = alikeBackground(x,y - 1);
 					flagxy = getSimilarity(Up,x,y);
@@ -2516,7 +2517,7 @@ bool Rbmp::getLpoint(Position& direction,int& x,int& y)
 						DIRECTION_Up;
 					}
 					//else if (flagxy == 0)
-					else if (flagxy <= baseSmlrty)
+					else if (flagxy != -1 && flagxy <= baseSmlrty)
 					{
 						//direction = Right;
 						//x++;
@@ -2550,17 +2551,27 @@ bool Rbmp::backGround_ize()
 	}
 	return true;
 }
-
-bool Rbmp::testStartP(PIXELS pixel)
+//return: true trackDown again
+bool Rbmp::testStartP(PIXELS pixel,int range)
 {
 	int x = pixel.getX();
 	int y = pixel.getY();
-	if(allData[y][x-3].getEdge() < 0 || allData[y][x-2].getEdge() < 0 ||
-			allData[y][x-1].getEdge() < 0 || allData[y][x].getEdge() < 0 ||
-			allData[y][x+1].getEdge() < 0 || allData[y][x-1].getEdge() < 0)
+	if(x < range || x > bmpWidth - 1 - range)
 		return true;
-	else
-		return false;
+	int i = 1;
+	while(i <= range)
+	{
+		if(allData[y][x-i].getEdge() < 0 || allData[y][x+i].getEdge() < 0)
+			return true;
+		i++;
+	}
+	return false;
+	//    if(allData[y][x-3].getEdge() < 0 || allData[y][x-2].getEdge() < 0 ||
+	//            allData[y][x-1].getEdge() < 0 || allData[y][x].getEdge() < 0 ||
+	//            allData[y][x+1].getEdge() < 0 || allData[y][x-1].getEdge() < 0)
+	//        return true;
+	//    else
+	//        return false;
 }
 bool sortByx(PIXELS pixel1,PIXELS pixel2)
 {
