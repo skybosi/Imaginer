@@ -15,10 +15,16 @@ class OPt
 {
 #define ECc "-"    // Explain characters
 #define SCMP(_V) (!strncmp(_V,ECc,1))
-
 public:
 	typedef vector < string > vstr;
-	typedef vector < vstr > vvstr;
+	struct MultiOption
+	{
+		string longOpt;
+		char   aliasChar;
+		vstr   margv;
+	};
+	typedef vector < MultiOption > mvstr;//record Mulit option's arguments
+	typedef vector < vstr > vvstr; //record single option's arguments
 public:
 	OPt(int argc, char **argv):_argc(argc), _argv(argv)
 	{
@@ -28,24 +34,25 @@ public:
 	}
 public:
 	bool getOpt();
-	vvstr getOptArray();
+	bool getMultiArgv(const char* opt, int &i);
 	void showOptArray();
 	bool setoptStr(const char *optstr);
-	bool setMultioptStr();
+	bool setMultioptStr(const char *Multioptstr);
 	string OPtState2Str(OPtState State);
 
+	OPtState isMultiOpt(string optstr,int& pos);
 private:
-	OPtState isOpt(char optChar);
-	OPtState isMultiOpt(string optstr);
-	bool getArgv(const char* opt, int &i);
+	OPtState isSingleOpt(char optChar);
+	bool getSingleArgv(const char* opt, int &i);
 	bool dealMixopt(char* argv,vstr& argvs);
 
 private:
 	int _argc;
 	char **_argv;
 	string _optStr;
-	vvstr OptArray;
-	vstr _multioptStr;
+	string _moptStr;
+	vvstr _singleoptArray; //single option's arguments
+	mvstr _multioptArray;//Mulit option's arguments
 };
 
 // Set the Option string
@@ -55,20 +62,23 @@ bool OPt::setoptStr(const char *optstr)
 	if (!optstr)
 		return false;
 	_optStr = optstr;
-	printf("You set option string is %s\n\n", optstr);
+	printf("You set Single-option string is %s\n\n", optstr);
 	return true;
 }
 
 // Set the multi Option string
-bool OPt::setMultioptStr()
+bool OPt::setMultioptStr(const char *Multioptstr)
 {
-	return false;
+	if(!Multioptstr)
+		return false;
+	_moptStr = Multioptstr;
+	printf("You set Multi-option string is %s\n\n", Multioptstr);
 	return true;
 }
 
-// The option char is right or not
+// The single-option char is right or not
 //@ optChar : option characters,To determine whether in _optStr
-OPtState OPt::isOpt(char optChar)
+OPtState OPt::isSingleOpt(char optChar)
 {
 	int i = 0;
 	int optstrl = _optStr.size();
@@ -83,6 +93,29 @@ OPtState OPt::isOpt(char optChar)
 		}
 		else
 			i++;
+	}
+	return InA;
+}
+//The Multi-option string is right or not
+//@optstr: option string,To determine whether in _moptStr
+//@pos   : the postion at _moptStr
+OPtState OPt::isMultiOpt(string optstr,int& pos)
+{
+	if(optstr.substr(0,2) != "--")
+		return InA;
+	optstr = optstr.substr(2);
+	string options = optstr + "_";
+	pos = _moptStr.find(options);
+	if(pos != _moptStr.npos)
+	{
+		size_t oppos = pos + options.size();
+		if( oppos != _moptStr.npos)
+		{
+			if(_moptStr[oppos+1] == ':' || _moptStr[oppos+2] == ':')
+				return MnA;
+			else;
+				return NnA;
+		}
 	}
 	return InA;
 }
@@ -101,7 +134,7 @@ bool OPt::dealMixopt(char* argv,vstr& argvs)
 	while (i < argvl)
 	{
 		tmp = "-";
-		State = isOpt(argv[i]);
+		State = isSingleOpt(argv[i]);
 		if(State != InA)
 		{
 			tmp += argv[i];
@@ -118,16 +151,16 @@ bool OPt::dealMixopt(char* argv,vstr& argvs)
 	}
 	return true;
 }
-// Get the option's arguments
+// Get the single option's arguments
 //@ opt : option string <= -a
 //@ i   : option's position
-bool OPt::getArgv(const char* opt, int &i)
+bool OPt::getSingleArgv(const char* opt, int &i)
 {
 	if(!opt)
 		return false;
 	vector < string > argvlist;
 	OPtState State = NOO;
-	State = isOpt(opt[1]);
+	State = isSingleOpt(opt[1]);//skip ECc -
 	argvlist.push_back(opt);
 	while (State != InA && i + 1 < _argc && !SCMP(_argv[i + 1]))
 	{
@@ -147,19 +180,19 @@ bool OPt::getArgv(const char* opt, int &i)
 		case MnA:
 			if (argvlist.size() > 1)
 			{
-				OptArray.push_back(argvlist);
-				printf("\t%s Have argumets : ",opt);
+				_singleoptArray.push_back(argvlist);
+				printf("\t[%s] Have argumets : ",opt);
 				for (int j = 1; j < argvlist.size();j++)
 					printf("%s ", argvlist[j].c_str());
 				printf("\n");
 			}
 			else
 			{
-				printf("\t[%s] You need argument, but Not gived...\n",opt);
+				printf("\tSingle-Option [%s] need argument, but Not gived...\n",opt);
 			}
 			break;
 		case NnA:
-			OptArray.push_back(argvlist);
+			_singleoptArray.push_back(argvlist);
 			break;
 		case InA:
 			printf("\t[%s] Invalid option, will be ignored...\n", opt);
@@ -171,9 +204,83 @@ bool OPt::getArgv(const char* opt, int &i)
 }
 
 //Get the multi option array
-OPt::vvstr OPt::getOptArray()
+bool OPt::getMultiArgv(const char* opt, int &i)
 {
-	return OptArray;
+	if(!opt)
+	{
+		return false;
+	}
+	OPtState State = NOO;
+	int pos = -1;
+	State = isMultiOpt(opt,pos);
+	if(State == InA)
+	{
+		printf("\tInvalid Multi-option, will be ignored\n");
+		return false;
+	}
+	MultiOption mopt;
+	mopt.longOpt = opt;
+	pos = _moptStr.find_first_of("|",pos);
+	char alias_char = '\0';
+	switch(State)
+	{
+		case MnA:
+			if(pos != _moptStr.npos)
+			{
+				alias_char = _moptStr[pos-2];//MnA ,-2 get alais Char
+			}
+			else
+			{
+				printf("MnA only one Muilt option\n");
+				alias_char = _moptStr[_moptStr.size()-2];//MnA ,-2 get alais Char
+			}
+			//get arguments
+			i++;
+			printf("\t[%s] Have argumets : ",opt);
+			while (isMultiOpt(_argv[i],pos) > NnA && i+1  < _argc )
+			{
+				printf("%s ",_argv[i]);
+				mopt.margv.push_back(_argv[i]);
+				i++;
+			}
+			printf("\n");
+			if(mopt.margv.size() < 1)
+			{
+				printf("\tMulti-Option [%s] need argument, but Not gived...\n",opt);
+			}
+			i--;
+			break;
+		case NnA:
+			if(pos != _moptStr.npos)
+			{
+				alias_char = _moptStr[pos-1];//NnA ,-1 get alais Char
+			}
+			else
+			{
+				printf("NnA only one Muilt option\n");
+				alias_char = _moptStr[_moptStr.size()-1];//NnA ,-1 get alais Char
+			}
+			break;
+		default:
+			break;
+	}
+	if( alias_char != '_')
+	{
+		if(isSingleOpt(alias_char) > NnA)
+			mopt.aliasChar = alias_char;
+		else
+		{
+			mopt.aliasChar = '\0';
+			printf("\t[%s]:[%c] Multi-option alias is Fair,Because the char is use at single Option!\n",opt,alias_char);
+		}
+	}
+	else
+	{
+		mopt.aliasChar = '\0';
+		printf("\t[%s]:[ ] Multi-option alias is Fair,Because You not set for this Long option!\n",opt);
+	}
+	_multioptArray.push_back(mopt);
+	return true;
 }
 
 // Get the all Option and it's arguments
@@ -199,8 +306,11 @@ bool OPt::getOpt()
 			{
 				if (_argv[i][1] == '-')	// --
 				{
-					if (_multioptStr.empty())
-						printf("You are not set Multi-optionn String!\n");
+					printf("\t[%s] is Multi-option\n",_argv[i]);
+					if (_moptStr.empty())
+						printf("You are not set Multi-option String!\n");
+					else
+						getMultiArgv(_argv[i],i);
 				}
 				else if (argvl > 2)	// -ab
 				{
@@ -211,7 +321,7 @@ bool OPt::getOpt()
 					{
 						for (; j < mixOpt.size(); j++)
 						{
-							getArgv(mixOpt[j].c_str(),i);
+							getSingleArgv(mixOpt[j].c_str(),i);
 						}
 					}
 					else
@@ -219,7 +329,7 @@ bool OPt::getOpt()
 				}
 				else			// -a
 				{
-					getArgv(_argv[i], i);
+					getSingleArgv(_argv[i], i);
 				}
 			}
 			else
@@ -257,10 +367,22 @@ std::string OPt::OPtState2Str(OPtState State)
 void OPt::showOptArray()
 {
 	int i, j;
-	for (i = 0; i < OptArray.size(); i++)
+	for (i = 0; i < _singleoptArray.size(); i++)
 	{
-		for (j = 0; j < OptArray[i].size(); j++)
-			printf("%s\t", OptArray[i][j].c_str());
+		printf("[%s] Single-option\n", _singleoptArray[i][0].c_str());
+		for (j = 0; j < _singleoptArray[i].size(); j++)
+			printf("\t%s\t", _singleoptArray[i][j].c_str());
+		printf("\n");
+	}
+	for (i = 0; i < _multioptArray.size(); i++)
+	{
+		printf("[%s] Multi-option\n\tMulti-option's aliasChar: %c\n", _multioptArray[i].longOpt.c_str(),_multioptArray[i].aliasChar);
+		if(!_multioptArray[i].margv.empty())
+		{
+			printf("\t[%s] Multi-option's argumet: ",_multioptArray[i].longOpt.c_str());
+			for (j = 0; j < _multioptArray[i].margv.size(); j++)
+				printf("%s\t", _multioptArray[i].margv[j].c_str());
+		}
 		printf("\n");
 	}
 }
@@ -271,10 +393,9 @@ int main(int argc, char **argv)
 		printf("have val have member\n");
 	OPt Opts(argc, argv);
 	Opts.setoptStr("ab:cd:e");
+	Opts.setMultioptStr("help_h|add_a:|");
 	Opts.getOpt();
 	printf("\n====================\n");
 	Opts.showOptArray();
-	OPt::vvstr tmp = Opts.getOptArray();
-
 	return 0;
 }
