@@ -34,17 +34,18 @@ public:
 	}
 public:
 	bool getOpt();
-	bool getMultiArgv(const char* opt, int &i);
 	void showOptArray();
 	bool setoptStr(const char *optstr);
 	bool setMultioptStr(const char *Multioptstr);
 	string OPtState2Str(OPtState State);
 
-	OPtState isMultiOpt(string optstr,int& pos);
 private:
 	OPtState isSingleOpt(char optChar);
+	OPtState isMultiOpt(string optstr,int& pos);
 	bool getSingleArgv(const char* opt, int &i);
+	bool getMultiArgv(const char* opt, int &i);
 	bool dealMixopt(char* argv,vstr& argvs);
+	int isExist(string optstr);//test a optstr is exist or not,return the position,if not exist return -1
 
 private:
 	int _argc;
@@ -119,6 +120,31 @@ OPtState OPt::isMultiOpt(string optstr,int& pos)
 	}
 	return InA;
 }
+int OPt::isExist(string optstr)//test a optstr is exist or not
+{
+	int i = 0;
+	if(optstr[1] == '-') //long option
+	{
+		for (; i < _multioptArray.size(); i++)
+		{
+			if(optstr == _multioptArray[i].longOpt)
+			{
+				return i;
+			}
+		}
+	}
+	else
+	{
+		for (; i < _singleoptArray.size(); i++)
+		{
+			if( optstr == _singleoptArray[i][0])
+			{
+				return i;
+			}
+		}
+	}
+	return -1;
+}
 //analyze the mix options to simple option <= -ab > -a -b
 //@argv  : mix options string
 //@argvs : after deal with option
@@ -162,6 +188,7 @@ bool OPt::getSingleArgv(const char* opt, int &i)
 	OPtState State = NOO;
 	State = isSingleOpt(opt[1]);//skip ECc -
 	argvlist.push_back(opt);
+	int Epos = -1;
 	while (State != InA && i + 1 < _argc && !SCMP(_argv[i + 1]))
 	{
 		if(State == MnA)
@@ -180,19 +207,39 @@ bool OPt::getSingleArgv(const char* opt, int &i)
 		case MnA:
 			if (argvlist.size() > 1)
 			{
-				_singleoptArray.push_back(argvlist);
-				printf("\t[%s] Have argumets : ",opt);
-				for (int j = 1; j < argvlist.size();j++)
-					printf("%s ", argvlist[j].c_str());
-				printf("\n");
+				Epos = isExist(argvlist[0]);
+				if( Epos != -1)//this option is exist ,will be over
+				{
+					_singleoptArray[Epos] = argvlist;
+					printf("\t[%s] Have argumets : ",opt);
+					for (int j = 1; j < argvlist.size();j++)
+						printf("%s ", argvlist[j].c_str());
+					printf("\n");
+				}
+				else
+				{
+					_singleoptArray.push_back(argvlist);
+					printf("\t[%s] Have argumets : ",opt);
+					for (int j = 1; j < argvlist.size();j++)
+						printf("%s ", argvlist[j].c_str());
+					printf("\n");
+				}
 			}
 			else
 			{
-				printf("\tSingle-Option [%s] need argument, but Not gived...\n",opt);
+				printf("\tSingle-Option [%s] need argument, but Not gived...This option will be ignored\n",opt);
 			}
 			break;
 		case NnA:
-			_singleoptArray.push_back(argvlist);
+			Epos = isExist(argvlist[0]);
+			if(Epos != -1)//this option is exist ,will be over
+			{
+				_singleoptArray[Epos] = argvlist;
+			}
+			else
+			{
+				_singleoptArray.push_back(argvlist);
+			}
 			break;
 		case InA:
 			printf("\t[%s] Invalid option, will be ignored...\n", opt);
@@ -222,6 +269,7 @@ bool OPt::getMultiArgv(const char* opt, int &i)
 	mopt.longOpt = opt;
 	pos = _moptStr.find_first_of("|",pos);
 	char alias_char = '\0';
+	bool save = true;
 	switch(State)
 	{
 		case MnA:
@@ -234,19 +282,18 @@ bool OPt::getMultiArgv(const char* opt, int &i)
 				printf("MnA only one Muilt option\n");
 				alias_char = _moptStr[_moptStr.size()-2];//MnA ,-2 get alais Char
 			}
-			//get arguments
-			i++;
+			//get multi-option arguments
 			printf("\t[%s] Have argumets : ",opt);
-			while (isMultiOpt(_argv[i],pos) > NnA && i+1  < _argc )
+			while ( _argv[++i][0] != '-' && i+1  < _argc )
 			{
 				printf("%s ",_argv[i]);
 				mopt.margv.push_back(_argv[i]);
-				i++;
 			}
 			printf("\n");
 			if(mopt.margv.size() < 1)
 			{
-				printf("\tMulti-Option [%s] need argument, but Not gived...\n",opt);
+				save = false;
+				printf("\tMulti-Option [%s] need argument, but Not gived...,This option will be ignored\n",opt);
 			}
 			i--;
 			break;
@@ -279,7 +326,18 @@ bool OPt::getMultiArgv(const char* opt, int &i)
 		mopt.aliasChar = '\0';
 		printf("\t[%s]:[ ] Multi-option alias is Fair,Because You not set for this Long option!\n",opt);
 	}
-	_multioptArray.push_back(mopt);
+	if(save)
+	{
+		int Epos = isExist(mopt.longOpt);
+		if(Epos != -1)//this option is exist ,will be over
+		{
+			_multioptArray[Epos] = mopt;
+		}
+		else
+		{
+			_multioptArray.push_back(mopt);
+		}
+	}
 	return true;
 }
 
