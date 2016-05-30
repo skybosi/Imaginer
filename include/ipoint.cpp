@@ -440,7 +440,7 @@ bool PIXELS::operator ==(const PIXELS& pixel)
 bool PIXELS::operator !=(const PIXELS& pixel)
 {
 	if(this == &pixel)
-		return true;
+		return false;
 	if(this->pix_Y != pixel.pix_Y ||
 			this->pix_X != pixel.pix_X)
 	{

@@ -16,13 +16,25 @@ typedef pPIXELS* ppPIXELS;
 
 typedef deque<PIXELS> dPIXELS;
 typedef vector<dPIXELS> vdPIXELS;
-typedef struct pointxy
+struct limitXXY
 {
+	limitXXY():sttx(0),endx(0),ally(0){}
+	bool change(){return (sttx != endx); }
+	bool add(PIXELS begin,PIXELS end,vector<limitXXY>& skipTable)
+	{
+		if(begin.getY() != end.getY())
+			return false;
+		sttx = begin.getX();
+		endx = end.getX();
+		ally = begin.getY();
+		skipTable.push_back(*this);
+		return true;
+	}
 	int sttx; //start point x
 	int endx; //end point x
 	int ally; //communal y
-}xx_y;
-typedef vector<xx_y> vTracktable;
+};
+typedef vector<limitXXY> vTracktable;
 using namespace std;
 //class Rbmp: public Image
 class Rbmp
@@ -52,11 +64,13 @@ class Rbmp
 		RGBQUAD backGround;
 		vdPIXELS boundarys;
 		U32 granularity;//图像碎片边缘最少像素
-		// pixelTrend: background -> non background : false
-		//             non background -> background : true
-		bool pixelTrend;
+		bool granOpeartor;//contrl the granularity opeartor method
+		//granOpeartor: boundarys will save only largger than granularity value's boundaryline :true
+		//              boundarys will save only smaller than granularity value's boundaryline :false
 		vTracktable skipTable;//用于抠出轨迹内的部分
 		//record the trackdown's result,just for cutout the image
+		float baseSmlrty;//base Similarity,use to judge is boundary point or not
+		U8    testRange;//for use to set the test Range,that can sure a Edge Point is not trackdown again
 	public:
 		~Rbmp();
 		Rbmp(const char* bmpname);
@@ -76,7 +90,7 @@ class Rbmp
 		//get the 8 point info. around a point
 		PIXPOT get_pot(PIXELS pixel);
 		//set image granularity
-		U32 setGranularity(U32 gran);
+		U32 setGranularity(U32 gran,bool opeartor=false);
 	public:
 		//show the image all pixel all infomation
 		//about (x,y), RGB value, isEdge 
@@ -175,7 +189,9 @@ class Rbmp
 		//deburr: delete The Burr on the track
 		bool deburrTrack(dPIXELS& boundaryline);
 		//test two border upon point similarity
-		float getSimilarity(Position direction,int x,int y);
+		float getSimilarity(Position direction,int x,int y,int step = 1);
+		//Test whether around the start point has been visited
+		bool testStartP(PIXELS pixel,int range = 2);
 	public://The function deal with the bmp image (Macroscopic)
 		//Function: generate the image's bar diagram 
 		bool     genBardiagram(colorType color = Pricolor);
