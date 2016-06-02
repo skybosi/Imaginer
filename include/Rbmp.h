@@ -35,6 +35,50 @@ struct limitXXY
 	int ally; //communal y
 };
 typedef vector<limitXXY> vTracktable;
+//typedef int FramePoint[4];
+struct FramePoint
+{
+	FramePoint(int H,int W)
+	{
+		framePoint[0] = H;
+		framePoint[1] = 0;
+		framePoint[2] = W;
+		framePoint[3] = 0;
+	}
+	bool setframePoint(Position index,const PIXELS& xORy)
+	{
+		if(index < Up || index > Right)
+			return false;
+		switch(index)
+		{
+			case Up:
+				framePoint[Up] = std::min(framePoint[Up],xORy.getY());
+				break;
+			case Down:
+				framePoint[Down] = std::max(framePoint[Down],xORy.getY());
+				break;
+			case Left:
+				framePoint[Left] = std::min(framePoint[Left],xORy.getX());
+				break;
+			case Right:
+				framePoint[Right] = std::max(framePoint[Right],xORy.getX());
+				break;
+			default:
+				break;
+		}
+		return true;
+	}
+	int operator[](int index)const
+	{
+		if(index < 0 || index > Right)
+			return -1;
+		else
+			return framePoint[index];
+	}
+	private:
+	int framePoint[4];
+};
+typedef vector<FramePoint> Frames;
 using namespace std;
 //class Rbmp: public Image
 class Rbmp
@@ -62,7 +106,8 @@ class Rbmp
 		BITMAPFILEHEADER head;
 		BITMAPINFOHEADER infohead;
 		RGBQUAD backGround;
-		vdPIXELS boundarys;
+		vdPIXELS boundarys; //record all boundary line
+		Frames   frames;    //record all boundaryline's frame Point
 		U32 granularity;//图像碎片边缘最少像素
 		bool granOpeartor;//contrl the granularity opeartor method
 		//granOpeartor: boundarys will save only largger than granularity value's boundaryline :true

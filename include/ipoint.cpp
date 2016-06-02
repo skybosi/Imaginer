@@ -346,31 +346,31 @@ PIXELS PIXELS::resetXY(int x,int y)
 	pix_Y += y;
 	return *this;
 }
-int PIXELS::getX()
+int PIXELS::getX()const
 {
 	return pix_X;
 }
-int PIXELS::getY()
+int PIXELS::getY()const
 {
 	return pix_Y;
 }
-int PIXELS::getEdge()
+int PIXELS::getEdge()const
 {
 	return bEdge;
 }
-RGBQUAD PIXELS::getRGB()
+RGBQUAD PIXELS::getRGB()const
 {
 	return prgb;
 }
-U8 PIXELS::getRed()
+U8 PIXELS::getRed()const
 {
 	return prgb.rgbRed;
 }
-U8 PIXELS::getGreen()
+U8 PIXELS::getGreen()const
 {
 	return prgb.rgbGreen;
 }
-U8 PIXELS::getBlue()
+U8 PIXELS::getBlue()const
 {
 	return prgb.rgbBlue;
 }

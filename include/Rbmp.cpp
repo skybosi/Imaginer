@@ -434,7 +434,6 @@ void Rbmp::show_allData()
 void Rbmp::getBoundaryLine()
 {
 #define debug1
-	vector<limitXXY>::const_iterator it;
 	limitXXY footprint;
 	int beforeX;
 	int StartPointX = 0;
@@ -449,7 +448,7 @@ void Rbmp::getBoundaryLine()
 				{
 					//start track down by following clues(顺藤摸瓜)
 					beforeX = x;
-					int bsize = boundarys.size();
+					size_t bsize = boundarys.size();
 					x = trackDown(allData[y][x]);
 					if( boundarys.size() != bsize || x != beforeX)
 					{
@@ -498,9 +497,17 @@ here:	printf("OOOOOOKKKKK!\n");
 		show_line(boundarys[i]);
 	}*/
 	printf("skip Table size:%ld\n",skipTable.size());
+	vector<limitXXY>::const_iterator it;
 	for(it = skipTable.begin(); it != skipTable.end();++it)
 	{
 		printf("start x:%d end x:%d communal y:%d\n", it->sttx,it->endx,it->ally);
+	}
+	printf("Frames point:%ld\n",frames.size());
+	vector<FramePoint>::const_iterator itPoint;
+	for(itPoint = frames.begin(); itPoint != frames.end();++itPoint)
+	{
+		printf("UPy:%d Downy:%d Leftx:%d Rightx:%d\n",
+					(*itPoint)[0],(*itPoint)[1],(*itPoint)[2],(*itPoint)[3]);
 	}
 }
 void Rbmp::show_line(dPIXELS boundaryline)
@@ -562,6 +569,10 @@ int Rbmp::trackDown(PIXELS& startPoint)
 	}
 	boundaryline.push_back(allData[y][x]);
 	Position prevDiret = Right;
+	FramePoint framePoint(bmpHeight,bmpWidth);
+#define SETPREV(_v,_prev) (ISV(_v) ? _prev.setEdge(-1): _prev.setEdge(-2))
+#define RESETCURR(_curr)  ((_curr.getEdge() == -1) ? _curr.setEdge(-3) : _curr.setEdge(-1))
+#define SETCURR(_v,_curr) (ISV(_v) ? RESETCURR(_curr) : _curr.setEdge(-2))
 	while (x != sx || y != sy)
 	{
 		//if(getRpoint(direction,x,y)&& !isEdge(x,y))
@@ -572,10 +583,15 @@ int Rbmp::trackDown(PIXELS& startPoint)
 		{
 			if(prevDiret + direction == 3)
 				prevDiret = direction;
+			SETPREV(prevDiret,prevPoint);
+			/*
 			if(ISV(prevDiret))
 				prevPoint.setEdge(-1);
 			if(ISH(prevDiret))
 				prevPoint.setEdge(-2);
+			*/
+			SETCURR(direction,allData[y][x]);
+			/*
 			if(ISV(direction))
 			{
 				if(allData[y][x].getEdge() == -1)
@@ -585,8 +601,10 @@ int Rbmp::trackDown(PIXELS& startPoint)
 			}
 			if(ISH(direction))
 				allData[y][x].setEdge(-2);
+				*/
 			if(prevDiret + direction == 5)
 				prevPoint.setEdge(-1);
+			framePoint.setframePoint(direction,allData[y][x]);
 			boundaryline.push_back(allData[y][x]);
 			/* printf("push a: ");
 				 get_pix(x,y).show_PIXELS();
@@ -615,16 +633,23 @@ int Rbmp::trackDown(PIXELS& startPoint)
 						(prevDiret + direction == 2 ||
 						 prevDiret + direction == 4))
 					prevDiret = direction;
+				SETPREV(prevDiret,prevPoint);
+				/*
 				if(ISV(prevDiret))
 					prevPoint.setEdge(-1);
 				if(ISH(prevDiret))
 					prevPoint.setEdge(-2);
+					*/
+				SETCURR(direction,allData[y][x]);
+				/*
 				if(ISV(direction))
 					allData[y][x].setEdge(-1);
 				if(ISH(direction))
 					allData[y][x].setEdge(-2);
+					*/
 				if(prevDiret + direction == 5)
 					prevPoint.setEdge(-1);
+				framePoint.setframePoint(direction,allData[y][x]);
 				boundaryline.push_front(allData[y][x]);
 				/* printf("push a: ");
 					 get_pix(x,y).show_PIXELS();
@@ -647,6 +672,9 @@ int Rbmp::trackDown(PIXELS& startPoint)
 		//show_line(boundaryline);
 		//deburrTrack(boundaryline);
 		boundarys.push_back(boundaryline);
+		frames.push_back(framePoint);
+		//printf("UPy:%d Downy:%d Leftx:%d Rightx:%d\n",
+		//			framePoint[0],framePoint[1],framePoint[2],framePoint[3]);
 	}
 	else
 	{

@@ -35,13 +35,13 @@ class PIXELS
 		U8 set_threshold(PIXELS ppot);
 		RGBQUAD get_diff8RGB(PIXELS ppot);
 	public:
-		int getX();
-		int getY();
-		U8  getRed();
-		U8  getGreen();
-		U8  getBlue();
-		int getEdge();
-		RGBQUAD getRGB();
+		int getX()const;
+		int getY()const;
+		U8  getRed()const;
+		U8  getGreen()const;
+		U8  getBlue()const;
+		int getEdge()const;
+		RGBQUAD getRGB()const;
 		//binaryzation image
 		void toBin();
 		PIXELS toBin(PIXELS& ppot);
