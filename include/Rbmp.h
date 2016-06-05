@@ -38,7 +38,7 @@ typedef vector<limitXXY> vTracktable;
 //typedef int FramePoint[4];
 struct FramePoint
 {
-	FramePoint(int H,int W)
+	FramePoint(int H,int W):bindNum(-1)
 	{
 		framePoint[0] = H;
 		framePoint[1] = 0;
@@ -70,13 +70,16 @@ struct FramePoint
 	}
 	int operator[](int index)const
 	{
-		if(index < 0 || index > Right)
+		if(index < Up || index > Right)
 			return -1;
 		else
 			return framePoint[index];
 	}
+	void setBindNum(int num){bindNum = num;}
+	int getBindNum()const{ return bindNum;}
 	private:
 	int framePoint[4];
+	int bindNum;
 };
 typedef vector<FramePoint> Frames;
 using namespace std;
@@ -112,7 +115,7 @@ class Rbmp
 		bool granOpeartor;//contrl the granularity opeartor method
 		//granOpeartor: boundarys will save only largger than granularity value's boundaryline :true
 		//              boundarys will save only smaller than granularity value's boundaryline :false
-		vTracktable skipTable;//用于抠出轨迹内的部分
+		vTracktable skipTable;//用于抠出轨迹内的部分,cut point
 		//record the trackdown's result,just for cutout the image
 		float baseSmlrty;//base Similarity,use to judge is boundary point or not
 		U8    testRange;//for use to set the test Range,that can sure a Edge Point is not trackdown again
@@ -237,6 +240,8 @@ class Rbmp
 		float getSimilarity(Position direction,int x,int y,int step = 1);
 		//Test whether around the start point has been visited
 		bool testStartP(PIXELS pixel,int range = 2);
+		//Gets the border(boundary) line
+		void getBoundaryLine(int& x,int& y);
 	public://The function deal with the bmp image (Macroscopic)
 		//Function: generate the image's bar diagram 
 		bool     genBardiagram(colorType color = Pricolor);
@@ -277,8 +282,8 @@ class Rbmp
 		//  [0] : up [1] : down [2] : left [3] : right [4] : front [5] : back  
 		ppPIXELS imageSpatialize(string outpath);
 	public://The function deal with the bmp image (Microcosmic)
-		//Gets the border(boundary) line
-		void getBoundaryLine();
+		//Gets all of the border(boundary) line
+		void getBoundarys();
 		int trackDown(PIXELS& startPoint);
 		//Boundary  highlight
 		bool boundarysHL();

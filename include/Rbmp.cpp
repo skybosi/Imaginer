@@ -1,5 +1,6 @@
 #include <unistd.h>
 #include <math.h>
+#include <stack>
 #include "Rbmp.h"
 #define PI 3.14159
 #define R2D(R) R*180/PI
@@ -237,9 +238,14 @@ bool Rbmp::boundarysHL()
 }
 bool Rbmp::imageCutOut()
 {
+#define BETWEEN(P1,P2) (((P1.sttx > P2->sttx) && (P1.endx < P2->endx)))
 	setBackground(255,255,255);
 	if(skipTable.empty())
 		return false;
+	int currAlly;
+	stack<limitXXY> currTable;
+	stack<limitXXY> mainTable;
+	limitXXY topPoint;
 	vector<limitXXY>::const_iterator it = skipTable.begin();
 	for (int y = 0; y < bmpHeight; y++)
 	{
@@ -252,19 +258,47 @@ bool Rbmp::imageCutOut()
 		}
 		else
 		{
+			currAlly = y;
+			while(it->ally == currAlly)
+			{
+				if(!currTable.empty())
+				{
+					topPoint = currTable.top();
+					while(BETWEEN(topPoint,it)) //test the top is between current point
+					{
+						currTable.pop();
+						if(currTable.empty())
+							break;
+						topPoint = currTable.top();
+					}
+					currTable.push(*it);
+				}
+				else
+					currTable.push(*it);
+				it++;
+			}
+			while(!currTable.empty())
+			{
+				mainTable.push(currTable.top());
+				currTable.pop();
+			}
+			topPoint = mainTable.top();
+			mainTable.pop();
 			for (int x = 0; x < bmpWidth; x++)
 			{
 				//set other part to backGround
-				if(x < it->sttx || x > it->endx)
+				if(x < topPoint.sttx || x > topPoint.endx)
 					allData[y][x].setRGB(backGround);
 				//set the cutOut part to you color that you want
 				//if(x >= it->sttx && x <= it->endx)
 				//	allData[y][x].setRGB(0,0,255);
 				//use and contrl the skipTable
-				if(x == it->endx && (it + 1)->ally == y)
-					++it;
+				if(!mainTable.empty() && x == topPoint.endx )
+				{
+					topPoint = mainTable.top();
+					mainTable.pop();
+				}
 			}
-			++it;
 		}
 	}
 	return true;
@@ -431,55 +465,57 @@ void Rbmp::show_allData()
 		}
 	}
 }
-void Rbmp::getBoundaryLine()
+//get the boundary line when find a boundary point
+void Rbmp::getBoundaryLine(int& x,int& y)
+{
+	limitXXY footprint;
+	int beforeX;
+	beforeX = x;
+	size_t bsize = boundarys.size();
+	//start track down by following clues(顺藤摸瓜)
+	x = trackDown(allData[y][x]);
+	if( boundarys.size() != bsize || x != beforeX)
+	{
+		footprint.add(allData[y][beforeX],allData[y][x],skipTable);
+	}
+	//printf("next footprint'x value:%d\n",x+1);
+	//printf("trackDown.... insert\n");
+}
+void Rbmp::getBoundarys()
 {
 #define debug1
 	limitXXY footprint;
 	int beforeX;
-	int StartPointX = 0;
+	stack<int> inX;
 	for (int y = 0;y < bmpHeight; y++)
 	{
 		for (int x = 0; x < bmpWidth; x++)
 		{
-			//if(isBoundaryPoint(allData[y][x]))
-			if(isBoundaryPoint(x,y))
+			if(isBoundaryPoint(x,y))//get color change point(boundray point)
 			{
 				if(allData[y][x].getEdge() >= 0)
 				{
-					//start track down by following clues(顺藤摸瓜)
-					beforeX = x;
-					size_t bsize = boundarys.size();
-					x = trackDown(allData[y][x]);
-					if( boundarys.size() != bsize || x != beforeX)
+					if(allData[y][x-1].getEdge() >= 0)
 					{
-						footprint.add(allData[y][beforeX],allData[y][x],skipTable);
+						getBoundaryLine(x,y);//get a Boundary Line
 					}
-					//printf("next footprint'x value:%d\n",x+1);
-					//printf("trackDown.... insert\n");
+					else //out point
+					{
+						if(!inX.empty())
+						{
+							beforeX = inX.top();
+							footprint.add(allData[y][beforeX],allData[y][x-1],skipTable);
+							inX.pop();
+						}
+					}
 #ifdef debug
 					goto here;
 #endif
 				}
 				else
 				{
-					beforeX = x++;
-					while(isBoundaryPoint(allData[y][x]))
-					{
-						if(allData[y][x].getEdge() != -1 &&
-								allData[y][x].getEdge() != -3)
-							x++;
-						else
-						{
-							StartPointX  = x - 2;
-							break;
-						}
-					}
-					footprint.add(allData[y][beforeX],allData[y][x],skipTable);
-					if(StartPointX)
-					{
-						x = StartPointX;
-						StartPointX = 0;
-					}
+					//get all cut point
+					inX.push(x);
 					//printf("skip table.... insert\n");
 				}
 			}
@@ -552,6 +588,8 @@ int Rbmp::trackDown(PIXELS& startPoint)
 			return sx;
 		}
 	}
+	else
+		return sx;
 	startPoint.setEdge(-1);//cannnot modify the x,y and rgb value
 	boundaryline.push_back(startPoint);
 	/*
@@ -672,42 +710,35 @@ int Rbmp::trackDown(PIXELS& startPoint)
 		//show_line(boundaryline);
 		//deburrTrack(boundaryline);
 		boundarys.push_back(boundaryline);
+		framePoint.setBindNum(boundarys.size());
 		frames.push_back(framePoint);
-		//printf("UPy:%d Downy:%d Leftx:%d Rightx:%d\n",
-		//			framePoint[0],framePoint[1],framePoint[2],framePoint[3]);
+		//printf("UPy:%d\tDowny:%d\tLeftx:%d\tRightx:%d\tBindNum:%d\n",
+		//		framePoint[0],framePoint[1],framePoint[2],framePoint[3],framePoint.getBindNum());
 	}
 	else
 	{
 		nextx = 0;
+		//int xx = 0,yy = 0;
 		while(!boundaryline.empty())
 		{
+			//xx = boundaryline.front().getX();
+			//yy = boundaryline.front().getY();
+			//allData[yy][xx].setEdge(0);
 			boundaryline.front().setEdge(0);
 			boundaryline.pop_front();
 		}
 	}
 	//printf("$[%d]> close or open status: %s Track down by following clues(顺藤摸瓜) OK... len:%ld(%u)\n",
-			//globalI,CLOSEOPEN(isCloseOpen(boundaryline)),boundaryline.size(),granularity);
+	//		globalI,CLOSEOPEN(isCloseOpen(boundaryline)),boundaryline.size(),granularity);
 	//get next point's x value
 	int NextX = sx;
-	if(prevDiret == Left)
+	while(--nextx >= 0 && boundaryline[nextx].getY() == sy
+			&& boundaryline[nextx].getX() >= NextX)
 	{
-		while(--nextx >= 0 && boundaryline[nextx].getY() == sy
-				&& boundaryline[nextx].getX() >= NextX)
-		{
-			NextX = boundaryline[nextx].getX();
-			//printf("%d mx %d\n",nextx,maxX);
-		}
+		NextX = boundaryline[nextx].getX();
+		//printf("%d mx %d\n",nextx,maxX);
 	}
-	if(prevDiret == Right)
-	{
-		while(--nextx >= 0 && boundaryline[nextx].getY() == sy
-				&& boundaryline[nextx].getX() <= NextX)
-		{
-			NextX = boundaryline[nextx].getX();
-			//printf("%d mx %d\n",nextx,maxX);
-		}
-	}
-	//printf("The max x %d will be nextpoint\n",maxX);
+	//printf("The max x %d will be nextpoint\n",NextX);
 	return NextX;
 }
 bool Rbmp::deburrTrack(dPIXELS& boundaryline)
@@ -816,14 +847,14 @@ bool Rbmp::isBoundaryPoint(int& x,int& y)
 {
 	int i = 0;
 	float similarity = 1;
-	float checkSmlrty = 0;
+	//float checkSmlrty = 0;
 	float avgSimi = 0;
 	float diffSim = 0;
 	for (i = 0; x < bmpWidth-1; ++i,++x)
 	{
 		diffSim  = similarity - avgSimi;
 		similarity = getSimilarity(Right,x,y);
-		//printf("%3d: num:%lf\tavg:%lf\tdiff:%lf\n", i + 1, similarity, avgSimi, fabs(diffSim));
+		//printf("x:%d\ty:%d\t%3d: num:%lf\tavg:%lf\tdiff:%lf\n",x,y, i + 1, similarity, avgSimi, fabs(diffSim));
 		avgSimi += diffSim / (i + 1);
 		if (fabs(similarity - avgSimi) > 0.1)
 		{
@@ -832,6 +863,7 @@ bool Rbmp::isBoundaryPoint(int& x,int& y)
 			//printf("finded :%lf\n", similarity);
 			//make sure the edge point is not a shade
 			//work is not stable, need TODO
+			/*
 			if(allData[y][x].getEdge() >= 0)
 			{
 				checkSmlrty = getSimilarity(Right,x,y);
@@ -839,7 +871,7 @@ bool Rbmp::isBoundaryPoint(int& x,int& y)
 				{
 					++x;
 				}
-			}
+			}*/
 			break;
 		}
 	}

@@ -23,7 +23,7 @@ int main(int argc,char* argv[])
 	//PIXELS** line = bmp.readIline(atoi(argv[2]),atoi(argv[3]));
 	//bmp.delReadIline(line,atoi(argv[3]));
 	//输出图像的信息
-	bmp.getBoundaryLine();
+	bmp.getBoundarys();
 	bmp.write_image(argv[4],"h");
 	//bmp.imageSpatialize(argv[4]);
 	//bmp.genHistogram(Red);
