@@ -152,6 +152,13 @@ PIXELS::PIXELS():pix_X(0),pix_Y(0),rgb_threshold(128),bEdge(0),bEmpty(true)
 	memset(&prgb,0,sizeof(RGBQUAD));
 	//rgb_threshold  = 0;
 }
+PIXELS::PIXELS(const RGBQUAD& rgb):pix_X(0),pix_Y(0),rgb_threshold(128),bEdge(0),bEmpty(true)
+{
+	prgb.rgbBlue = rgb.rgbBlue;
+	prgb.rgbGreen = rgb.rgbGreen;
+	prgb.rgbRed = rgb.rgbRed;
+	prgb.rgbReserved = rgb.rgbReserved;
+}
 
 //mix two color
 PIXELS PIXELS::mix(PIXELS& ppot1,PIXELS& ppot2,U8 weight)
@@ -240,6 +247,14 @@ RGBQUAD PIXELS::get_diff8RGB(PIXELS pixel)
 	return diffRgb;
 }
 
+bool PIXELS::setData(BYTE8& b,BYTE8& g,BYTE8& r)
+{
+	b = prgb.rgbBlue;
+	g = prgb.rgbGreen;
+	r = prgb.rgbRed;
+	return true;
+}
+
 //set rgb with r g b
 PIXELS PIXELS::setRGB(U8 b,U8 g,U8 r)
 //PIXELS PIXELS::setRGB(U8 r,U8 g,U8 b)
@@ -248,13 +263,6 @@ PIXELS PIXELS::setRGB(U8 b,U8 g,U8 r)
 	prgb.rgbGreen = g;
 	prgb.rgbBlue = b;
 	return *this;
-}
-bool PIXELS::setData(BYTE8& b,BYTE8& g,BYTE8& r)
-{
-	b = prgb.rgbBlue;
-	g = prgb.rgbGreen;
-	r = prgb.rgbRed;
-	return true;
 }
 //set rgb with RGBQUAD
 PIXELS PIXELS::setRGB(RGBQUAD rgb)

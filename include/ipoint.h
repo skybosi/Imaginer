@@ -17,6 +17,7 @@ class PIXELS
 		bool bEmpty;      //the pixel is NULL ,is false
 	public:
 		PIXELS();
+		PIXELS(const RGBQUAD& rgb);
 		bool empty();
 		bool isEdge(PIXELS& pixel, int W,int H);
 		bool isEdge(int W,int H);

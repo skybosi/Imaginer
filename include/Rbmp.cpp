@@ -149,8 +149,17 @@ int Rbmp::alikeBackground(PIXELS pixel)
 {
 	if(pixel.empty())
 		return -1;
-	RGBQUAD rgb = pixel.getRGB();
-	if(EQUALBackGround(rgb))
+	//    RGBQUAD rgb = pixel.getRGB();
+	//    if(EQUALBackGround(rgb))
+	//    {
+	//            return 1;
+	//    }
+	//    else
+	//    {
+	//            return 0;
+	//    }
+	PIXELS backGroundpixel(backGround);
+	if(getSimilarity(backGroundpixel,pixel) > baseSmlrty)
 	{
 		return 1;
 	}
@@ -164,8 +173,17 @@ int Rbmp::alikeBackground(int x,int y)
 	PIXELS tmp = get_pix(x,y);
 	if(tmp.empty())
 		return -1;
-	RGBQUAD rgb = tmp.getRGB();
-	if(EQUALBackGround(rgb))
+	//    RGBQUAD rgb = tmp.getRGB();
+	//    if(EQUALBackGround(rgb))
+	//    {
+	//            return 1;
+	//    }
+	//    else
+	//    {
+	//            return 0;
+	//    }
+	PIXELS backGroundpixel(backGround);
+	if(getSimilarity(backGroundpixel,tmp) > baseSmlrty)
 	{
 		return 1;
 	}
@@ -504,7 +522,7 @@ void Rbmp::getBoundarys()
 						if(!inX.empty())
 						{
 							beforeX = inX.top();
-							footprint.add(allData[y][beforeX],allData[y][x-1],skipTable);
+							footprint.add(allData[y][beforeX],allData[y][--x],skipTable);
 							inX.pop();
 						}
 					}
@@ -512,10 +530,15 @@ void Rbmp::getBoundarys()
 					goto here;
 #endif
 				}
-				else
+				else //get all cut point
 				{
-					//get all cut point
-					inX.push(x);
+					//test the "in point" is a only point or not
+					if(alikeBackground(x+1,y))
+						inX.push(x);
+					else
+					{
+						footprint.add(allData[y][x],allData[y][x],skipTable);
+					}
 					//printf("skip table.... insert\n");
 				}
 			}
@@ -588,8 +611,8 @@ int Rbmp::trackDown(PIXELS& startPoint)
 			return sx;
 		}
 	}
-	else
-		return sx;
+	else//when at first line,maybe out-of-range
+		return sx++;
 	startPoint.setEdge(-1);//cannnot modify the x,y and rgb value
 	boundaryline.push_back(startPoint);
 	/*
@@ -609,8 +632,8 @@ int Rbmp::trackDown(PIXELS& startPoint)
 	Position prevDiret = Right;
 	FramePoint framePoint(bmpHeight,bmpWidth);
 #define SETPREV(_v,_prev) (ISV(_v) ? _prev.setEdge(-1): _prev.setEdge(-2))
-#define RESETCURR(_curr)  ((_curr.getEdge() == -1) ? _curr.setEdge(-3) : _curr.setEdge(-1))
-#define SETCURR(_v,_curr) (ISV(_v) ? RESETCURR(_curr) : _curr.setEdge(-2))
+//#define RESETCURR(_curr)  ((_curr.getEdge() == -1) ? _curr.setEdge(-3) : _curr.setEdge(-1))
+#define SETCURR(_v,_curr) (ISV(_v) ? _curr.setEdge(-1) : _curr.setEdge(-2))
 	while (x != sx || y != sy)
 	{
 		//if(getRpoint(direction,x,y)&& !isEdge(x,y))
@@ -883,6 +906,15 @@ bool Rbmp::isBoundaryPoint(int& x,int& y)
 	}
 	else
 		return false;
+}
+float Rbmp::getSimilarity(PIXELS backPoint, PIXELS currPoint)
+{
+	float Similarity = 0;
+	PIXELS diff = backPoint - currPoint;
+	diff = ~diff;
+	Similarity = (diff.getRed() + diff.getGreen() + diff.getBlue())/765.0;
+	//printf("curr x: %2d y: %2d Similarity: %.3f\n",currPoint.getX(),currPoint.getY(),Similarity);
+	return Similarity;
 }
 float Rbmp::getSimilarity(Position direction,int x,int y,int step)
 {

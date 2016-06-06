@@ -238,6 +238,8 @@ class Rbmp
 		bool deburrTrack(dPIXELS& boundaryline);
 		//test two border upon point similarity
 		float getSimilarity(Position direction,int x,int y,int step = 1);
+		//test curr point with background point's similarity
+		float getSimilarity(PIXELS backPoint, PIXELS currPoint);
 		//Test whether around the start point has been visited
 		bool testStartP(PIXELS pixel,int range = 2);
 		//Gets the border(boundary) line
