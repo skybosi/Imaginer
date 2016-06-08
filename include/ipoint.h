@@ -8,6 +8,8 @@ using namespace std;
 // pixel position
 class PIXELS
 {
+	public:
+		typedef std::pair<Position,int> pix_p;
 	private:
 		int pix_X;
 		int pix_Y;
@@ -15,6 +17,7 @@ class PIXELS
 		U8 rgb_threshold;
 		int bEdge;				// edge point
 		bool bEmpty;      //the pixel is NULL ,is false
+		pix_p pix_P;
 	public:
 		PIXELS();
 		PIXELS(const RGBQUAD& rgb);
@@ -33,6 +36,11 @@ class PIXELS
 		PIXELS resetXY(int x,int y);
 		void   setempty(bool state = false);
 		void   setEdge(int bedge = 0);
+		//set pix_P
+		//@pos    : the point position(default None)
+		//@rtimes : reference times   (default 0)
+		void   initpPos();
+		void   setpPos(Position pos = None);
 		U8 set_threshold(PIXELS ppot);
 		RGBQUAD get_diff8RGB(PIXELS ppot);
 	public:
@@ -43,6 +51,7 @@ class PIXELS
 		U8  getBlue()const;
 		int getEdge()const;
 		RGBQUAD getRGB()const;
+		pix_p getpPos();
 		//binaryzation image
 		void toBin();
 		PIXELS toBin(PIXELS& ppot);

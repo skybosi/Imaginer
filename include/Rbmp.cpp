@@ -24,6 +24,8 @@
 #define DIRECTION_Left     {direction = Left;  x--;}
 #define ISV(_var) (_var <= Down)   //vertically
 #define ISH(_var) (_var >= Left)//  horizontally
+#define SETPREV(_v,_prev) (ISV(_v) ? _prev.setEdge(-1): _prev.setEdge(-2))
+#define SETCURR(_v,_curr) (_curr.setpPos(_v),(ISV(_v) ? _curr.setEdge(-1) : _curr.setEdge(-2)))
 static int globalI = 0;
 Rbmp::Rbmp(const char *bmpname):fp(NULL), fpo(NULL), bmppath(bmpname), allData(NULL), pColorTable(NULL),granularity(10),granOpeartor(true),baseSmlrty(1.0),testRange(1)
 {
@@ -120,6 +122,7 @@ bool Rbmp::init_image()
 					allData[y][x].setXY(x, y);
 					allData[y][x].isEdge(bmpWidth, bmpHeight);
 					allData[y][x].setempty(true);
+					allData[y][x].initpPos();
 					k += 2;
 					break;
 				case 8:
@@ -130,6 +133,7 @@ bool Rbmp::init_image()
 					allData[y][x].setXY(x, y);
 					allData[y][x].isEdge(bmpWidth, bmpHeight);
 					allData[y][x].setempty(true);
+					allData[y][x].initpPos();
 					break;
 				default:
 					break;
@@ -613,13 +617,15 @@ int Rbmp::trackDown(PIXELS& startPoint)
 	}
 	else//when at first line,maybe out-of-range
 		return sx++;
-	startPoint.setEdge(-1);//cannnot modify the x,y and rgb value
+	SETCURR(Down,startPoint);
 	boundaryline.push_back(startPoint);
 	/*
 		 printf("push s: ");
 		 startPoint.show_PIXELS();
 		 printf("\n");
 		 */
+	SETCURR(direction,allData[y][x]);
+	/*
 	if(y != sy)
 	{
 		allData[y][x].setEdge(-1);
@@ -627,13 +633,10 @@ int Rbmp::trackDown(PIXELS& startPoint)
 	else
 	{
 		allData[y][x].setEdge(-2);
-	}
+	}*/
 	boundaryline.push_back(allData[y][x]);
-	Position prevDiret = Right;
+	Position prevDiret = direction;
 	FramePoint framePoint(bmpHeight,bmpWidth);
-#define SETPREV(_v,_prev) (ISV(_v) ? _prev.setEdge(-1): _prev.setEdge(-2))
-//#define RESETCURR(_curr)  ((_curr.getEdge() == -1) ? _curr.setEdge(-3) : _curr.setEdge(-1))
-#define SETCURR(_v,_curr) (ISV(_v) ? _curr.setEdge(-1) : _curr.setEdge(-2))
 	while (x != sx || y != sy)
 	{
 		//if(getRpoint(direction,x,y)&& !isEdge(x,y))
@@ -882,7 +885,7 @@ bool Rbmp::isBoundaryPoint(int& x,int& y)
 		if (fabs(similarity - avgSimi) > 0.1)
 		{
 			++x;
-			setBackground(allData[y][x].getRGB());
+			setBackground(allData[y][x]);
 			//printf("finded :%lf\n", similarity);
 			//make sure the edge point is not a shade
 			//work is not stable, need TODO
@@ -890,15 +893,18 @@ bool Rbmp::isBoundaryPoint(int& x,int& y)
 			if(allData[y][x].getEdge() >= 0)
 			{
 				checkSmlrty = getSimilarity(Right,x,y);
-				if(checkSmlrty != 1 && checkSmlrty < similarity)
+				if(checkSmlrty != 1 && checkSmlrty != similarity)
 				{
 					++x;
+					setBackground(allData[y][x]);
+					similarity = checkSmlrty;
 				}
 			}*/
+			baseSmlrty = similarity;
+			printf("baseSmlrty:%lf\n",baseSmlrty);
 			break;
 		}
 	}
-	baseSmlrty = similarity;
 	//printf("baseSmlrty:%lf\n",baseSmlrty);
 	if(x < bmpWidth-1)
 	{
@@ -2113,54 +2119,6 @@ void Rbmp::show_6path(map<Position,string> pathl)
 			<< ")" << "\tvalue: " << it->second << endl;
 	}
 }
-string Rbmp::Pos2str(Position pos)
-{
-	switch(pos)
-	{
-		case Up:
-			return "Up   ";
-			break;
-		case Down:
-			return "Down ";
-			break;
-		case Left:
-			return "Left ";
-			break;
-		case Right:
-			return "Right";
-			break;
-		case Front:
-			return "Front";
-			break;
-		case Back:
-			return "Back ";
-			break;
-		default:
-			return "None ";
-			break;
-	}
-}
-string Rbmp::color2str(colorType color)
-{
-	switch(color)
-	{
-		case Pricolor:
-			return "All";
-			break;
-		case Red:
-			return "Red";
-			break;
-		case Green:
-			return "Green";
-			break;
-		case Blue:
-			return "Blue";
-			break;
-		default:
-			return "all";
-			break;
-	}
-}
 bool Rbmp::setBackground(RGBQUAD rgb)
 {
 	if(OUTRANGE(rgb.rgbRed) || OUTRANGE(rgb.rgbGreen) || OUTRANGE(rgb.rgbBlue))
@@ -2176,6 +2134,11 @@ bool Rbmp::setBackground(U8 r,U8 g,U8 b)
 	backGround.rgbGreen = g;
 	backGround.rgbBlue = b;
 	return true;
+}
+bool Rbmp::setBackground(const PIXELS& pixel)
+{
+	RGBQUAD rgb = pixel.getRGB();
+	return setBackground(rgb);
 }
 U32 Rbmp::setGranularity(U32 gran,bool opeartor)
 {

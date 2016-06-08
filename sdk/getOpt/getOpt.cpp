@@ -57,8 +57,8 @@ OPtState OPt::isMultiOpt(string optstr, int& pos)
 		{
 			if (_moptStr[oppos + 1] == ':' || _moptStr[oppos + 2] == ':')
 				return MnA;
-			else;
-			return NnA;
+			else
+				return NnA;
 		}
 	}
 	return InA;

@@ -5,6 +5,7 @@
  */
 #ifndef _IBMP_H_
 #define _IBMP_H_
+#include <string>
 
 #if defined (_WIN32) || defined(_WIN64)  || defined(_WINDOWS) || defined(_CONSOLE)
 #define WINDOWS_HERE
@@ -92,4 +93,55 @@ enum Position
 	Back,
 	None
 };
+//Get Position's string
+inline std::string Pos2str(Position pos)
+{
+	switch(pos)
+	{
+		case Up:
+			return "Up   ";
+			break;
+		case Down:
+			return "Down ";
+			break;
+		case Left:
+			return "Left ";
+			break;
+		case Right:
+			return "Right";
+			break;
+		case Front:
+			return "Front";
+			break;
+		case Back:
+			return "Back ";
+			break;
+		default:
+			return "None ";
+			break;
+	}
+}
+//Get colorType's string
+inline std::string color2str(colorType color)
+{
+	switch(color)
+	{
+		case Pricolor:
+			return "All";
+			break;
+		case Red:
+			return "Red";
+			break;
+		case Green:
+			return "Green";
+			break;
+		case Blue:
+			return "Blue";
+			break;
+		default:
+			return "all";
+			break;
+	}
+}
+
 #endif // ibmp.h :[]

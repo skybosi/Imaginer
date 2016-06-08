@@ -147,12 +147,12 @@ bool PIXPOT::pixelSimilar()
 		return false;
 }
 
-PIXELS::PIXELS():pix_X(0),pix_Y(0),rgb_threshold(128),bEdge(0),bEmpty(true)
+PIXELS::PIXELS():pix_X(0),pix_Y(0),rgb_threshold(128),bEdge(0),bEmpty(true),pix_P(None,0)
 {
 	memset(&prgb,0,sizeof(RGBQUAD));
 	//rgb_threshold  = 0;
 }
-PIXELS::PIXELS(const RGBQUAD& rgb):pix_X(0),pix_Y(0),rgb_threshold(128),bEdge(0),bEmpty(true)
+PIXELS::PIXELS(const RGBQUAD& rgb):pix_X(0),pix_Y(0),rgb_threshold(128),bEdge(0),bEmpty(true),pix_P(None,0)
 {
 	prgb.rgbBlue = rgb.rgbBlue;
 	prgb.rgbGreen = rgb.rgbGreen;
@@ -290,6 +290,16 @@ void PIXELS::setEdge(int bedge)
 {
 	bEdge = bedge;
 }
+void PIXELS::initpPos()
+{
+	pix_P.first = None;
+	pix_P.second = 0;
+}
+void PIXELS::setpPos(Position pos)
+{
+	pix_P.first = pos;
+	pix_P.second += 1;
+}
 bool PIXELS::empty()
 {
 	return !bEmpty;
@@ -332,6 +342,8 @@ void PIXELS::show_PIXELS()
 		prgb.rgbRed,
 		prgb.rgbGreen,
 		prgb.rgbBlue);
+	printf("[Position,rtime]:(%s(%03d),%03d)\t",
+		Pos2str(pix_P.first).c_str(),pix_P.first,pix_P.second);
 }
 //set (x,y) PIXELS
 PIXELS PIXELS::setXY(PIXELS pixel)
@@ -369,6 +381,10 @@ int PIXELS::getEdge()const
 RGBQUAD PIXELS::getRGB()const
 {
 	return prgb;
+}
+PIXELS::pix_p PIXELS::getpPos()
+{
+	return pix_P;
 }
 U8 PIXELS::getRed()const
 {

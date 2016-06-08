@@ -163,6 +163,8 @@ class Rbmp
 		bool setBackground(RGBQUAD rgb);
 		//set BackGround with R,G,B
 		bool setBackground(U8 r = 255,U8 g = 255,U8 b = 255);
+		//set BackGround with PIXELS
+		bool setBackground(const PIXELS& pixel);
 	private:
 		//alike background or not,Mean and the same color as 
 		//the background color 
@@ -201,10 +203,6 @@ class Rbmp
 		void show_6path(map<Position,string> pathl);
 		//show bmp path list
 		void show_line(dPIXELS boundaryline);
-		//Get Position's string
-		string Pos2str(Position pos);
-		//Get colorType's string
-		string color2str(colorType color);
 		//delete/free the memory image Data after deal with
 		bool delImageData(ppPIXELS& imageData,int H);
 		//delete/free the memory image same to ~Rbmp()
