@@ -741,12 +741,12 @@ int Rbmp::trackDown(PIXELS& startPoint)
 	else
 	{
 		nextx = 0;
-		//int xx = 0,yy = 0;
+		int xx = 0,yy = 0;
 		while(!boundaryline.empty())
 		{
-			//xx = boundaryline.front().getX();
-			//yy = boundaryline.front().getY();
-			//allData[yy][xx].setEdge(0);
+			xx = boundaryline.front().getX();
+			yy = boundaryline.front().getY();
+			allData[yy][xx].setEdge(0);
 			boundaryline.front().setEdge(0);
 			boundaryline.pop_front();
 		}
