@@ -300,6 +300,13 @@ void PIXELS::setpPos(Position pos)
 	pix_P.first = pos;
 	pix_P.second += 1;
 }
+void PIXELS::setpPosStatus(bool status)
+{
+	if(status)
+		pix_P.second |= 0x80;
+	else
+		pix_P.second &= 0x7F;
+}
 bool PIXELS::empty()
 {
 	return !bEmpty;
@@ -385,6 +392,14 @@ RGBQUAD PIXELS::getRGB()const
 PIXELS::pix_p PIXELS::getpPos()
 {
 	return pix_P;
+}
+bool PIXELS::getpPosStatus()
+{
+	return pix_P.second & 0x80;
+}
+int PIXELS::getpPosValues()
+{
+	return pix_P.second & 0x7F;
 }
 U8 PIXELS::getRed()const
 {

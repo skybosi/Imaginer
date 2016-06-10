@@ -617,7 +617,9 @@ int Rbmp::trackDown(PIXELS& startPoint)
 	}
 	else//when at first line,maybe out-of-range
 		return sx++;
+	//startPoint.setEdge(-1);//cannnot modify the x,y and rgb value
 	SETCURR(Down,startPoint);
+	startPoint.setpPosStatus();
 	boundaryline.push_back(startPoint);
 	/*
 		 printf("push s: ");
@@ -645,6 +647,8 @@ int Rbmp::trackDown(PIXELS& startPoint)
 		//printf("direction:%s x:%d y:%d\n",Pos2str(direction).c_str(),x,y);
 		if(getRpoint(direction,x,y))
 		{
+			if(prevDiret != direction)
+				prevPoint.setpPosStatus();
 			if(prevDiret + direction == 3)
 				prevDiret = direction;
 			SETPREV(prevDiret,prevPoint);
@@ -693,6 +697,8 @@ int Rbmp::trackDown(PIXELS& startPoint)
 			//printf("direction:%s x:%d y:%d\n",Pos2str(direction).c_str(),x,y);
 			if(getLpoint(direction,x,y))
 			{
+				if(prevDiret != direction)
+					prevPoint.setpPosStatus();
 				if((prevDiret != direction) &&
 						(prevDiret + direction == 2 ||
 						 prevDiret + direction == 4))
@@ -750,7 +756,7 @@ int Rbmp::trackDown(PIXELS& startPoint)
 			xx = boundaryline.front().getX();
 			yy = boundaryline.front().getY();
 			allData[yy][xx].setEdge(0);
-			boundaryline.front().setEdge(0);
+			allData[yy][xx].initpPos();
 			boundaryline.pop_front();
 		}
 	}

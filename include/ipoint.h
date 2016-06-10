@@ -9,7 +9,7 @@ using namespace std;
 class PIXELS
 {
 	public:
-		typedef std::pair<Position,int> pix_p;
+		typedef std::pair<Position,U8> pix_p;
 	private:
 		int pix_X;
 		int pix_Y;
@@ -41,6 +41,7 @@ class PIXELS
 		//@rtimes : reference times   (default 0)
 		void   initpPos();
 		void   setpPos(Position pos = None);
+		void   setpPosStatus(bool status = true);
 		U8 set_threshold(PIXELS ppot);
 		RGBQUAD get_diff8RGB(PIXELS ppot);
 	public:
@@ -52,6 +53,9 @@ class PIXELS
 		int getEdge()const;
 		RGBQUAD getRGB()const;
 		pix_p getpPos();
+		//change direction or not
+		bool  getpPosStatus();
+		int   getpPosValues();
 		//binaryzation image
 		void toBin();
 		PIXELS toBin(PIXELS& ppot);

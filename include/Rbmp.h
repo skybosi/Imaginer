@@ -287,6 +287,7 @@ class Rbmp
 		int trackDown(PIXELS& startPoint);
 		//Boundary  highlight
 		bool boundarysHL();
+		//cut out part of Boundary with cut point(skip table)
 		bool imageCutOut();
 
 };
