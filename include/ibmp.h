@@ -93,6 +93,7 @@ enum Position
 	Back,
 	None
 };
+//Get Position's string
 inline std::string Pos2str(Position pos)
 {
 	switch(pos)
@@ -120,6 +121,7 @@ inline std::string Pos2str(Position pos)
 			break;
 	}
 }
+//Get colorType's string
 inline std::string color2str(colorType color)
 {
 	switch(color)

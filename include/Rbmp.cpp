@@ -652,7 +652,7 @@ int Rbmp::trackDown(PIXELS& startPoint)
 			return sx;
 		}
 	}
-	else //make sure cannot out-of-range
+	else //when at first line,maybe out-of-range
 		return sx++;
 	//startPoint.setEdge(-1);//cannnot modify the x,y and rgb value
 	SETCURR(Down,startPoint);
