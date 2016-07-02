@@ -35,7 +35,7 @@ struct limitXXY
 	int ally; //communal y
 };
 typedef vector<limitXXY> vTracktable;
-//typedef int FramePoint[4];
+//typedef PIXELS FramePoint[4];
 struct FramePoint
 {
 	FramePoint(int H,int W):bindNum(-1)
@@ -115,7 +115,7 @@ class Rbmp
 		bool granOpeartor;//contrl the granularity opeartor method
 		//granOpeartor: boundarys will save only largger than granularity value's boundaryline :true
 		//              boundarys will save only smaller than granularity value's boundaryline :false
-		vTracktable skipTable;//用于抠出轨迹内的部分,cut point
+		vTracktable skipTable;//用于抠出轨迹内的部分
 		//record the trackdown's result,just for cutout the image
 		float baseSmlrty;//base Similarity,use to judge is boundary point or not
 		U8    testRange;//for use to set the test Range,that can sure a Edge Point is not trackdown again
@@ -163,6 +163,8 @@ class Rbmp
 		bool setBackground(RGBQUAD rgb);
 		//set BackGround with R,G,B
 		bool setBackground(U8 r = 255,U8 g = 255,U8 b = 255);
+		//set BackGround with PIXELS
+		bool setBackground(const PIXELS& pixel);
 	private:
 		//alike background or not,Mean and the same color as 
 		//the background color 
@@ -201,10 +203,6 @@ class Rbmp
 		void show_6path(map<Position,string> pathl);
 		//show bmp path list
 		void show_line(dPIXELS boundaryline);
-		//Get Position's string
-		string Pos2str(Position pos);
-		//Get colorType's string
-		string color2str(colorType color);
 		//delete/free the memory image Data after deal with
 		bool delImageData(ppPIXELS& imageData,int H);
 		//delete/free the memory image same to ~Rbmp()
@@ -238,10 +236,18 @@ class Rbmp
 		bool deburrTrack(dPIXELS& boundaryline);
 		//test two border upon point similarity
 		float getSimilarity(Position direction,int x,int y,int step = 1);
+		//test curr point with background point's similarity
+		float getSimilarity(PIXELS backPoint, PIXELS currPoint);
 		//Test whether around the start point has been visited
 		bool testStartP(PIXELS pixel,int range = 2);
 		//Gets the border(boundary) line
-		void getBoundaryLine(int& x,int& y);
+		bool getBoundaryLine(int& x, int& y);
+		//link each Boundary Line
+		void linker(const Frames& frame);
+		//Gets pixel point form  boundary line with index
+		//boundaryline : boundary line want get pixel
+		//index        : index of want to get,support the negative index values,but cannot more than size()
+		PIXELS* getBLpixel(dPIXELS& boundaryline,int index = 0);
 	public://The function deal with the bmp image (Macroscopic)
 		//Function: generate the image's bar diagram 
 		bool     genBardiagram(colorType color = Pricolor);
@@ -287,8 +293,8 @@ class Rbmp
 		int trackDown(PIXELS& startPoint);
 		//Boundary  highlight
 		bool boundarysHL();
+        //cut out part of Boundary with cut point(skip table)
 		bool imageCutOut();
-
 };
 
 #endif

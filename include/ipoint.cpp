@@ -147,10 +147,17 @@ bool PIXPOT::pixelSimilar()
 		return false;
 }
 
-PIXELS::PIXELS():pix_X(0),pix_Y(0),rgb_threshold(128),bEdge(0),bEmpty(true)
+PIXELS::PIXELS():pix_X(0),pix_Y(0),rgb_threshold(128),bEdge(0),bEmpty(false),pix_P(None,0)
 {
 	memset(&prgb,0,sizeof(RGBQUAD));
 	//rgb_threshold  = 0;
+}
+PIXELS::PIXELS(const RGBQUAD& rgb):pix_X(0),pix_Y(0),rgb_threshold(128),bEdge(0),bEmpty(false),pix_P(None,0)
+{
+	prgb.rgbBlue = rgb.rgbBlue;
+	prgb.rgbGreen = rgb.rgbGreen;
+	prgb.rgbRed = rgb.rgbRed;
+	prgb.rgbReserved = rgb.rgbReserved;
 }
 
 //mix two color
@@ -240,6 +247,14 @@ RGBQUAD PIXELS::get_diff8RGB(PIXELS pixel)
 	return diffRgb;
 }
 
+bool PIXELS::setData(BYTE8& b,BYTE8& g,BYTE8& r)
+{
+	b = prgb.rgbBlue;
+	g = prgb.rgbGreen;
+	r = prgb.rgbRed;
+	return true;
+}
+
 //set rgb with r g b
 PIXELS PIXELS::setRGB(U8 b,U8 g,U8 r)
 //PIXELS PIXELS::setRGB(U8 r,U8 g,U8 b)
@@ -248,13 +263,6 @@ PIXELS PIXELS::setRGB(U8 b,U8 g,U8 r)
 	prgb.rgbGreen = g;
 	prgb.rgbBlue = b;
 	return *this;
-}
-bool PIXELS::setData(BYTE8& b,BYTE8& g,BYTE8& r)
-{
-	b = prgb.rgbBlue;
-	g = prgb.rgbGreen;
-	r = prgb.rgbRed;
-	return true;
 }
 //set rgb with RGBQUAD
 PIXELS PIXELS::setRGB(RGBQUAD rgb)
@@ -282,9 +290,26 @@ void PIXELS::setEdge(int bedge)
 {
 	bEdge = bedge;
 }
+void PIXELS::initpPos()
+{
+	pix_P.first = None;
+	pix_P.second = 0;
+}
+void PIXELS::setpPos(Position pos)
+{
+	pix_P.first = pos;
+	pix_P.second += 1;
+}
+void PIXELS::setpPosStatus(bool status)
+{
+	if(status)
+		pix_P.second |= 0x80;
+	else
+		pix_P.second &= 0x7F;
+}
 bool PIXELS::empty()
 {
-	return !bEmpty;
+	return bEmpty;
 }
 bool PIXELS::isEdge(PIXELS& pixel, int W,int H)
 {
@@ -324,6 +349,8 @@ void PIXELS::show_PIXELS()
 		prgb.rgbRed,
 		prgb.rgbGreen,
 		prgb.rgbBlue);
+    printf("[Position,rtime]:(%s(%d),%d)\t",
+        Pos2str(pix_P.first).c_str(),pix_P.first,pix_P.second & 0x7F);
 }
 //set (x,y) PIXELS
 PIXELS PIXELS::setXY(PIXELS pixel)
@@ -361,6 +388,18 @@ int PIXELS::getEdge()const
 RGBQUAD PIXELS::getRGB()const
 {
 	return prgb;
+}
+PIXELS::pix_p PIXELS::getpPos()
+{
+	return pix_P;
+}
+bool PIXELS::getpPosStatus()
+{
+	return pix_P.second & 0x80;
+}
+int PIXELS::getpPosValues()
+{
+	return pix_P.second & 0x7F;
 }
 U8 PIXELS::getRed()const
 {
