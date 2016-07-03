@@ -287,6 +287,9 @@ class Rbmp
 		//Function: spatialize the image
 		//  [0] : up [1] : down [2] : left [3] : right [4] : front [5] : back  
 		ppPIXELS imageSpatialize(string outpath);
+		//Function: Change a image each pixel's Idensity
+		//@ scala     : Thick  or thin scale
+		ppPIXELS imageDensity(float scale);
 	public://The function deal with the bmp image (Microcosmic)
 		//Gets all of the border(boundary) line
 		void getBoundarys();

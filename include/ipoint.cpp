@@ -465,6 +465,22 @@ const PIXELS operator-(const PIXELS& pixel1,const PIXELS& pixel2)
 	diff.prgb.rgbReserved = abs(pixel1.prgb.rgbReserved - pixel2.prgb.rgbReserved);
 	return diff;
 }
+
+PIXELS PIXELS::operator*(const float& scale)
+{
+	prgb.rgbGreen *= scale;
+	prgb.rgbRed *= scale;
+	prgb.rgbBlue *= scale;
+	return *this;
+}
+
+const PIXELS operator*(const float& scale,PIXELS& pixel)
+{
+	pixel.prgb.rgbRed *= scale;
+	pixel.prgb.rgbGreen *= scale;
+	pixel.prgb.rgbBlue *= scale;
+	return pixel;
+}
 bool PIXELS::operator ==(const PIXELS& pixel)
 {
 	if(this == &pixel)

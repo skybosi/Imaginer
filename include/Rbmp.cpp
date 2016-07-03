@@ -1339,7 +1339,10 @@ bool Rbmp::deal_image(const char* dealType)
 				cout << "  -c     imageCutOut      : cutout the effective part of the image\n";
 				imageCutOut();
 				break;
-
+			case 'd':
+				cout << "  -d     imageDensity     :  Change a image each pixel's Idensity\n";
+				imageDensity(2);
+				break;
 			default:
 				printf("Not deal with!\n");
 				break;
@@ -2125,7 +2128,24 @@ ppPIXELS Rbmp::imageSpatialize(string outpath)
 	}
 	return NULL;
 }
-
+ppPIXELS Rbmp::imageDensity(float scale)
+{
+	ppPIXELS tmpimageData;
+	tmpimageData = imageDatadup2(allData, tmpimageData);
+	if(scale <= 0)
+	{
+		return NULL;
+	}
+	for (int y = 0; y < bmpHeight; y++)
+	{
+		for (int x = 0; x < bmpWidth; x++)
+		{
+			allData[y][x] = tmpimageData[y][x]*scale;
+		}
+	}
+	delImageData(tmpimageData, bmpHeight);
+	return allData;
+}
 ppPIXELS Rbmp::newImageData(ppPIXELS &imageData, int W, int H)
 {
 	// malloc some memroy
