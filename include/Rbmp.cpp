@@ -538,6 +538,35 @@ void Rbmp::getBoundarys()
 		{
 			if(isBoundaryPoint(x,y))
 			{
+				PState pstate = getPointState(x,y);
+				switch (pstate)
+				{
+					case NORMAL:
+						if(!getBoundaryLine(x,y) && !inX.empty())
+						{
+							beforeX = inX.top();
+							footprint.add(allData[y][beforeX],allData[y][--x],skipTable);
+							inX.pop();
+						}
+						break;
+					case INPOT:
+						inX.push(x);
+						break;
+					case OUTPOT:
+						if(!inX.empty())
+						{
+							beforeX = inX.top();
+							footprint.add(allData[y][beforeX],allData[y][--x],skipTable);
+							inX.pop();
+						}
+						break;
+					case ONLYPOT:
+						footprint.add(allData[y][x],allData[y][x],skipTable);
+						break;
+					default:
+						break;
+						}
+				/*
 				if(allData[y][x].getEdge() >= 0)
 				{
 					if(allData[y][x-1].getEdge() >= 0)
@@ -547,6 +576,10 @@ void Rbmp::getBoundarys()
 							beforeX = inX.top();
 							footprint.add(allData[y][beforeX],allData[y][--x],skipTable);
 							inX.pop();
+						}
+						else
+						{
+							inX.push(x);
 						}
 					}
 					else
@@ -564,6 +597,7 @@ void Rbmp::getBoundarys()
 				}
 				else
 				{
+					//PState pstate = getPointState(x,y);
 					//get all cut point(not only point)
 					if(alikeBackground(x+1,y))
 						inX.push(x);
@@ -579,6 +613,7 @@ void Rbmp::getBoundarys()
 					}
 					//printf("skip table.... insert\n");
 				}
+				*/
 			}
 		}
 	}
@@ -2674,4 +2709,41 @@ PIXELS* Rbmp::getBLpixel(dPIXELS& boundaryline,int index)
 	if(index < 0)
 		index = bsize + index;
 	return &boundaryline[index];
+}
+
+PState Rbmp::getPointState(const PIXELS& pixel)
+{
+	int x = pixel.getX();
+	int y = pixel.getY();
+	if(allData[y][x].getEdge() != -1)
+	{
+		if(allData[y][x-1].getEdge() == -1)
+			return OUTPOT;
+		else
+			return NORMAL;
+	}
+	else
+	{
+		if(getSimilarity(Right,x,y) > baseSmlrty)
+			return INPOT;
+		else
+			return ONLYPOT;
+	}
+}
+PState Rbmp::getPointState(int x,int y)
+{
+	if(allData[y][x].getEdge() != -1)
+	{
+		if(allData[y][x-1].getEdge() == -1)
+			return OUTPOT;
+		else
+			return NORMAL;
+	}
+	else
+	{
+		if(getSimilarity(Right,x,y) > baseSmlrty)
+			return INPOT;
+		else
+			return ONLYPOT;
+	}
 }

@@ -13,7 +13,13 @@
 #include "ipoint.h"
 typedef PIXELS* pPIXELS;
 typedef pPIXELS* ppPIXELS;
-
+typedef enum PointState
+{
+	NORMAL = 0,
+	INPOT,
+	OUTPOT,
+	ONLYPOT
+}PState;
 typedef deque<PIXELS> dPIXELS;
 typedef vector<dPIXELS> vdPIXELS;
 struct limitXXY
@@ -248,6 +254,13 @@ class Rbmp
 		//boundaryline : boundary line want get pixel
 		//index        : index of want to get,support the negative index values,but cannot more than size()
 		PIXELS* getBLpixel(dPIXELS& boundaryline,int index = 0);
+		//check a Point state for get skipTable
+		//pixel : test pixel point
+		PState getPointState(const PIXELS& pixel);
+		//check a Point state for get skipTable
+		//x : test pixel point's x
+		//y : test pixel point's y
+		PState getPointState(int x,int y);
 	public://The function deal with the bmp image (Macroscopic)
 		//Function: generate the image's bar diagram 
 		bool     genBardiagram(colorType color = Pricolor);
