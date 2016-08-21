@@ -8,6 +8,7 @@
 #include <vector>
 #include <deque>
 #include <map>
+#include <stack>
 #include "ibmp.h"
 #include "image.h"
 #include "ipoint.h"
@@ -125,6 +126,7 @@ class Rbmp
 		//record the trackdown's result,just for cutout the image
 		float baseSmlrty;//base Similarity,use to judge is boundary point or not
 		U8    testRange;//for use to set the test Range,that can sure a Edge Point is not trackdown again
+        stack<int> skipLine;
 	public:
 		~Rbmp();
 		Rbmp(const char* bmpname);
@@ -245,7 +247,8 @@ class Rbmp
 		//test curr point with background point's similarity
 		float getSimilarity(PIXELS backPoint, PIXELS currPoint);
 		//Test whether around the start point has been visited
-		bool testStartP(PIXELS pixel,int range = 2);
+        //bool testStartP(PIXELS pixel,int range = 2);
+        bool testStartP(PIXELS& pixel);
 		//Gets the border(boundary) line
 		bool getBoundaryLine(int& x, int& y);
 		//link each Boundary Line
@@ -261,6 +264,7 @@ class Rbmp
 		//x : test pixel point's x
 		//y : test pixel point's y
 		PState getPointState(int x,int y);
+        void  genSkipTable(PIXELS& pixel);
 	public://The function deal with the bmp image (Macroscopic)
 		//Function: generate the image's bar diagram 
 		bool     genBardiagram(colorType color = Pricolor);

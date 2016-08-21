@@ -231,7 +231,12 @@ bool Rbmp::initSpatialize(const char** imagePath)
 
 bool Rbmp::boundarysHL()
 {
-#define ONE
+#define AVG
+
+#ifdef EDGE
+    ImageHL();
+#else
+
 	if(boundarys.empty())
 		return false;
 	int x = 0,y = 0;
@@ -248,8 +253,23 @@ bool Rbmp::boundarysHL()
 #ifdef  ONE
 			//if(allData[y][x].getEdge() == -2)
 			//allData[y][x].setRGB(255,0,0);
-			if(allData[y][x].getEdge() == -1)
-				allData[y][x].setRGB(0,255,0);
+            if(allData[y][x].getEdge() == -1)
+            {
+                PIXELS::pix_p tmp = allData[y][x].getpPos();
+                U8 tmpnum = allData[y][x].getpPosStatus();
+                if(tmp.first == Down)//入点
+                    allData[y][x].setRGB(0,255,0);
+                else if(tmp.first == Up)//出点
+                    allData[y][x].setRGB(255,0,0);
+                else
+                    allData[y][x].setRGB(0,0,255);
+            }
+#endif
+#ifdef  TRI
+            if(allData[y][x].getEdge() == -3)
+            {
+                allData[y][x].setRGB(0,0,255);
+            }
 #endif
 			/*
 			int color = 128;
@@ -260,16 +280,14 @@ bool Rbmp::boundarysHL()
 				allData[y][x].setRGB(0,255,0);
 			*/
 #ifdef  AVG
-			allData[y][x].setRGB(0,0,i*avg);
+            allData[y][x].setRGB(0,255,i*avg);
 #endif
 		}
 #ifdef  START
-		/*
-		get first point
+        //get first point
 		y = boundarys[i][0].getY();
 		x = boundarys[i][0].getX();
 		allData[y][x].setRGB(255,255,255);
-		*/
 #endif
 	}
 #ifdef SKIP
@@ -279,6 +297,7 @@ bool Rbmp::boundarysHL()
 		allData[it->ally][it->sttx].setRGB(0,255,0);
 		allData[it->ally][it->endx].setRGB(0,255,0);
 	}
+#endif
 #endif
 	return true;
 }
@@ -529,44 +548,57 @@ bool Rbmp::getBoundaryLine(int& x, int& y)
 void Rbmp::getBoundarys()
 {
 #define debug1
-	limitXXY footprint;
-	int beforeX;
-	stack<int> inX;
+    PIXELS tmp;
 	for (int y = 0;y < bmpHeight; y++)
 	{
 		for (int x = 0; x < bmpWidth; x++)
 		{
 			if(isBoundaryPoint(x,y))
-			{
-				PState pstate = getPointState(x,y);
-				switch (pstate)
-				{
-					case NORMAL:
-						if(!getBoundaryLine(x,y) && !inX.empty())
-						{
-							beforeX = inX.top();
-							footprint.add(allData[y][beforeX],allData[y][--x],skipTable);
-							inX.pop();
-						}
-						break;
-					case INPOT:
-						inX.push(x);
-						break;
-					case OUTPOT:
-						if(!inX.empty())
-						{
-							beforeX = inX.top();
-							footprint.add(allData[y][beforeX],allData[y][--x],skipTable);
-							inX.pop();
-						}
-						break;
-					case ONLYPOT:
-						footprint.add(allData[y][x],allData[y][x],skipTable);
-						break;
-					default:
-						break;
-						}
-				/*
+            {
+                tmp = allData[y][x];
+                if(tmp.getEdge() >= 0)
+                {
+                    if(!getBoundaryLine(x,y))
+                    {
+                        //printf("getBoundaryLine flase\n");
+                    }
+                }
+                else
+                {
+
+                    genSkipTable(allData[y][x]);
+                }
+                /*
+
+//                PState pstate = getPointState(x,y);
+//                switch (pstate)
+//                {
+//                case NORMAL:
+//                    if(!getBoundaryLine(x,y) && !inX.empty())
+//                    {
+//                        beforeX = inX.top();
+//                        footprint.add(allData[y][beforeX],allData[y][--x],skipTable);
+//                        inX.pop();
+//                    }
+//                    break;
+//                case INPOT:
+//                    inX.push(x);
+//                    break;
+//                case OUTPOT:
+//                    if(!inX.empty())
+//                    {
+//                        beforeX = inX.top();
+//                        footprint.add(allData[y][beforeX],allData[y][--x],skipTable);
+//                        inX.pop();
+//                    }
+//                    break;
+//                case ONLYPOT:
+//                    footprint.add(allData[y][x],allData[y][x],skipTable);
+//                    break;
+//                default:
+//                    break;
+//                }
+
 				if(allData[y][x].getEdge() >= 0)
 				{
 					if(allData[y][x-1].getEdge() >= 0)
@@ -681,9 +713,9 @@ int Rbmp::trackDown(PIXELS& startPoint)
 	if(getRpoint(direction,x,y))
 	{
 		//make sure not only one point
-		if (x < sx || y < sy)
+        if (x < sx || y < sy)
 		{
-			sx++;
+            sx--;
 			return sx;
 		}
 	}
@@ -839,7 +871,11 @@ int Rbmp::trackDown(PIXELS& startPoint)
 			boundaryline.pop_front();
 		}
 	}
-	startPoint.setEdge(-1);//cannnot modify the x,y and rgb value
+    else  //deal with startPoint
+    {
+        startPoint.setEdge(-1);//cannnot modify the x,y and rgb value
+        startPoint.setpPos(Down);
+    }
 #define GRANOPERATION(size) (granOpeartor)?(size > granularity):(size <= granularity)
 	if(GRANOPERATION(boundaryline.size()))
 	{
@@ -993,6 +1029,10 @@ bool Rbmp::isBoundaryPoint(int& x,int& y)
 	{
 		diffSim  = similarity - avgSimi;
 		similarity = getSimilarity(Right,x,y);
+        if(allData[y][x].getEdge() == -1)
+        {
+            genSkipTable(allData[y][x]);
+        }
 		//printf("%3d: num:%lf\tavg:%lf\tdiff:%lf\n", i + 1, similarity, avgSimi, fabs(diffSim));
 		avgSimi += diffSim / (i + 1);
 		if (fabs(similarity - avgSimi) > 0.12)
@@ -2311,7 +2351,6 @@ bool Rbmp::isEdge(int x,int y)
 bool Rbmp::getRpoint(Position& direction,int& x,int& y)
 {
 	int flagxy = 0;
-	PIXELS pot;
 	//printf("direction:%s x:%d y:%d\t",Pos2str(direction).c_str(),x,y);
 	switch (direction)
 	{
@@ -2660,34 +2699,96 @@ bool Rbmp::backGround_ize()
 	return true;
 }
 //return: true trackDown again
-bool Rbmp::testStartP(PIXELS pixel,int range)
+/*
+bool Rbmp::testStartP(PIXELS& pixel,int range)
 {
-#define MAXRANGE(_v1,_v2) ((_v1 <= _v2)?(_v2):(_v1))
-	range = testRange;
-	int x = pixel.getX();
-	int y = pixel.getY();
-	if(x < range || x > bmpWidth - 1 - range)
-		return true;
-	int i = 1;
-	while(i <= range)
-	{
-		if(allData[y][x-i].getEdge() < 0 || allData[y][x+i].getEdge() < 0)
-		{
-			testRange = MAXRANGE(i,testRange);
-			//printf("testRange:%d\n",testRange);
-			return true;
-		}
-		i++;
-	}
-	return false;
-	/*
-	if(allData[y][x-3].getEdge() < 0 || allData[y][x-2].getEdge() < 0 ||
-			allData[y][x-1].getEdge() < 0 || allData[y][x].getEdge() < 0 ||
-			allData[y][x+1].getEdge() < 0 || allData[y][x-1].getEdge() < 0)
-		return true;
-	else
-		return false;
-	*/
+    range = testRange;
+    int x = pixel.getX();
+    int y = pixel.getY();
+    if(x < range || x > bmpWidth - 1 - range)
+        return true;
+    int i = 1;
+    while(i <= range)
+    {
+        if(allData[y][x-i].getEdge() < 0 || allData[y][x+i].getEdge() < 0)
+        {
+            testRange = std::max(i,(int)testRange);
+            //printf("testRange:%d\n",testRange);
+            return true;
+        }
+        i++;
+    }
+    return false;
+}
+*/
+void getNext(Position& pos, int &x,int& y,int& nexts,int& step)
+{
+    nexts++;
+    switch(pos)
+    {
+    case Left:
+        x--;
+        if(nexts==step)
+        {
+            pos = Down;
+            nexts = 0;
+        }
+        break;
+    case Down:
+        y++;
+        if(nexts==step)
+        {
+            step++;
+            pos = Right;
+            nexts = 0;
+        }
+        break;
+    case Right:
+        x++;
+        if(nexts==step)
+        {
+            pos = Up;
+            nexts = 0;
+        }
+        break;
+    case Up:
+        y--;
+        if(nexts==step)
+        {
+            step++;
+            pos = Left;
+            nexts = 0;
+        }
+        break;
+    default:
+        break;
+    }
+}
+
+bool Rbmp::testStartP(PIXELS& pixel)
+{
+    int step = 1;
+    int x = pixel.getX();
+    int y = pixel.getY();
+    Position nextPos = Left;
+    int numPoint = 1;
+    int nexts = 0;
+//    pixel.show_PIXELS();
+//    printf("\n");
+    getNext(nextPos,x,y,nexts,step);
+//    allData[y][x].show_PIXELS();
+//    printf("\n");
+    while( !isEdge(x,y) && numPoint < 25 && allData[y][x].getEdge() >= 0)
+    {
+        getNext(nextPos,x,y,nexts,step);
+//        allData[y][x].show_PIXELS();
+//        printf("\n");
+        numPoint++;
+    }
+    //printf("%d\t",numPoint);
+    if(numPoint >=25)
+        return false;
+    return true;
 }
 //#define FramesRelation()
 void Rbmp::linker(const Frames& frame)
@@ -2713,37 +2814,50 @@ PIXELS* Rbmp::getBLpixel(dPIXELS& boundaryline,int index)
 
 PState Rbmp::getPointState(const PIXELS& pixel)
 {
-	int x = pixel.getX();
-	int y = pixel.getY();
-	if(allData[y][x].getEdge() != -1)
-	{
-		if(allData[y][x-1].getEdge() == -1)
-			return OUTPOT;
-		else
-			return NORMAL;
-	}
-	else
-	{
-		if(getSimilarity(Right,x,y) > baseSmlrty)
-			return INPOT;
-		else
-			return ONLYPOT;
-	}
+    int x = pixel.getX();
+    int y = pixel.getY();
+    float right = getSimilarity(Right,x,y);
+    float left = getSimilarity(Left,x,y);
+    if(right > left)
+        return INPOT;
+    else if (right < left)
+        return OUTPOT;
+    else
+        return ONLYPOT;
+
 }
 PState Rbmp::getPointState(int x,int y)
 {
-	if(allData[y][x].getEdge() != -1)
-	{
-		if(allData[y][x-1].getEdge() == -1)
-			return OUTPOT;
-		else
-			return NORMAL;
-	}
-	else
-	{
-		if(getSimilarity(Right,x,y) > baseSmlrty)
-			return INPOT;
-		else
-			return ONLYPOT;
-	}
+    if(allData[y][x].getpPos().first == Down)
+        return INPOT;
+    if(allData[y][x].getpPos().first == Up)
+        return OUTPOT;
+}
+
+void  Rbmp::genSkipTable(PIXELS& pixel)
+{
+    limitXXY footprint;
+    int beforeX = 0;
+    int x = pixel.getX();
+    int y = pixel.getY();
+    PState pstate = getPointState(x,y);
+    switch (pstate)
+    {
+    case INPOT:
+        skipLine.push(x);
+        break;
+    case OUTPOT:
+        if(!skipLine.empty())
+        {
+            beforeX = skipLine.top();
+            footprint.add(allData[y][beforeX],allData[y][x],skipTable);
+            skipLine.pop();
+        }
+        break;
+    case ONLYPOT:
+        footprint.add(allData[y][x],allData[y][x],skipTable);
+        break;
+    default:
+        break;
+    }
 }
