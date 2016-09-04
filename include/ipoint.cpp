@@ -147,6 +147,18 @@ bool PIXPOT::pixelSimilar()
 		return false;
 }
 
+int  PIXPOT::getEdges()
+{
+    int i = 0;
+    int Edges = 0;
+    while(i<4)
+    {
+        Edges += pot4s[i].getEdge() + pot4a[i].getEdge();
+        i++;
+    }
+    return Edges;
+}
+
 PIXELS::PIXELS():pix_X(0),pix_Y(0),rgb_threshold(128),bEdge(0),bEmpty(false),pix_P(None,0)
 {
 	memset(&prgb,0,sizeof(RGBQUAD));
@@ -401,6 +413,10 @@ int PIXELS::getpPosValues()
 {
 	return pix_P.second & 0x7F;
 }
+Position PIXELS::getpPosPostion()
+{
+    return pix_P.first;
+}
 U8 PIXELS::getRed()const
 {
 	return prgb.rgbRed;
@@ -481,6 +497,8 @@ const PIXELS operator*(const float& scale,PIXELS& pixel)
 	pixel.prgb.rgbBlue *= scale;
 	return pixel;
 }
+
+
 bool PIXELS::operator ==(const PIXELS& pixel)
 {
 	if(this == &pixel)

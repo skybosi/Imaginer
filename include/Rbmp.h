@@ -12,8 +12,15 @@
 #include "ibmp.h"
 #include "image.h"
 #include "ipoint.h"
+#include "base.h"
 typedef PIXELS* pPIXELS;
 typedef pPIXELS* ppPIXELS;
+typedef struct recImage
+{
+    ppPIXELS imageDatas;
+    int width;
+    int height;
+}RecImage;
 typedef enum PointState
 {
 	NORMAL = 0,
@@ -23,72 +30,10 @@ typedef enum PointState
 }PState;
 typedef deque<PIXELS> dPIXELS;
 typedef vector<dPIXELS> vdPIXELS;
-struct limitXXY
-{
-	limitXXY():sttx(0),endx(0),ally(0){}
-	bool change(){return (sttx != endx); }
-	bool add(PIXELS begin,PIXELS end,vector<limitXXY>& skipTable)
-	{
-		if(begin.getY() != end.getY())
-			return false;
-		sttx = begin.getX();
-		endx = end.getX();
-		ally = begin.getY();
-		skipTable.push_back(*this);
-		return true;
-	}
-	int sttx; //start point x
-	int endx; //end point x
-	int ally; //communal y
-};
-typedef vector<limitXXY> vTracktable;
-//typedef PIXELS FramePoint[4];
-struct FramePoint
-{
-	FramePoint(int H,int W):bindNum(-1)
-	{
-		framePoint[0] = H;
-		framePoint[1] = 0;
-		framePoint[2] = W;
-		framePoint[3] = 0;
-	}
-	bool setframePoint(Position index,const PIXELS& xORy)
-	{
-		if(index < Up || index > Right)
-			return false;
-		switch(index)
-		{
-			case Up:
-				framePoint[Up] = std::min(framePoint[Up],xORy.getY());
-				break;
-			case Down:
-				framePoint[Down] = std::max(framePoint[Down],xORy.getY());
-				break;
-			case Left:
-				framePoint[Left] = std::min(framePoint[Left],xORy.getX());
-				break;
-			case Right:
-				framePoint[Right] = std::max(framePoint[Right],xORy.getX());
-				break;
-			default:
-				break;
-		}
-		return true;
-	}
-	int operator[](int index)const
-	{
-		if(index < Up || index > Right)
-			return -1;
-		else
-			return framePoint[index];
-	}
-	void setBindNum(int num){bindNum = num;}
-	int getBindNum()const{ return bindNum;}
-	private:
-	int framePoint[4];
-	int bindNum;
-};
-typedef vector<FramePoint> Frames;
+typedef deque<PIXELS>     dSkipLine;
+typedef vector<dSkipLine> SkipTable;
+typedef vector<SkipTable> vSkipTable;
+
 using namespace std;
 //class Rbmp: public Image
 class Rbmp
@@ -117,24 +62,25 @@ class Rbmp
 		BITMAPINFOHEADER infohead;
 		RGBQUAD backGround;
 		vdPIXELS boundarys; //record all boundary line
+		vSkipTable skipTables;
+		vTrackTable trackTables;//用于抠出轨迹内的部分
+		//record the trackdown's result,just for cutout the image
 		Frames   frames;    //record all boundaryline's frame Point
 		U32 granularity;//图像碎片边缘最少像素
 		bool granOpeartor;//contrl the granularity opeartor method
 		//granOpeartor: boundarys will save only largger than granularity value's boundaryline :true
 		//              boundarys will save only smaller than granularity value's boundaryline :false
-		vTracktable skipTable;//用于抠出轨迹内的部分
-		//record the trackdown's result,just for cutout the image
 		float baseSmlrty;//base Similarity,use to judge is boundary point or not
-		U8    testRange;//for use to set the test Range,that can sure a Edge Point is not trackdown again
-        stack<int> skipLine;
+		U8     testRange;//for use to set the test Range,that can sure a Edge Point is not trackdown again
+		//stack<int> skipLine;
 	public:
 		~Rbmp();
 		Rbmp(const char* bmpname);
 		Rbmp(const char** bmpnamel);
 		//get image bmpWidth
-		int getW();
+		inline int getW();
 		//get image bmpHeight
-		int getH();
+		inline int getH();
 		//get a .bmp image header information
 		void get_image_msg();
 		//get a point RGB value from the (x,y)
@@ -156,17 +102,25 @@ class Rbmp
 		//Test a line's Boundary
 		bool isBoundaryPoint(int& x,int& y);
 		//deal with image with a series of function
+		//@ allData : will dealwith data source
 		//@ dealType: deal with the image's type way
-		bool deal_image(const char* dealType = NULL);
+		bool deal_image(ppPIXELS allData,const char* dealType = NULL);
 		//Write or Create the new image message into a file
 		//Get a new image
 		//@ outpath : detail output path
+		//@ imageData : will dealwith data source,default null
 		//@ dealType: deal with the image's type way
-		bool write_image(const char* outpath,const char* dealType = NULL);
+		bool write_image(const char* outpath, RecImage imageData = RecImage(),const char* dealType = NULL);
 		//Read serval rows from a line
 		//@ beginY : Begin line number
 		//@ rows   : Read 'rows' lines
 		ppPIXELS readNline(int beginY=0,int rows=0);
+		//Read a rectangle data
+		//@ beginX : Rectangle data Start point x 
+		//@ beginY : Rectangle data Start point y
+		//@ width  : Rectangle data's width
+		//@ height : Rectangle data's height 
+		RecImage readRect(int beginX = 0,int beginY = 0,int  = 0,int height  = 0);
 		//set BackGround with RGBQUAD
 		bool setBackground(RGBQUAD rgb);
 		//set BackGround with R,G,B
@@ -202,7 +156,7 @@ class Rbmp
 		//Set a image allhead message
 		bool setHead(BMPALLHEAD& allhead,int W,int H);
 		//Write the iamge Data to a file
-		bool writeAllData(ppPIXELS& imageData);
+		bool writeAllData(ppPIXELS& imageData,int width = 0,int height = 0);
 		//show bmp image head
 		void show_bmp_head(BITMAPFILEHEADER &head);
 		//show bmp image info
@@ -247,8 +201,8 @@ class Rbmp
 		//test curr point with background point's similarity
 		float getSimilarity(PIXELS backPoint, PIXELS currPoint);
 		//Test whether around the start point has been visited
-        //bool testStartP(PIXELS pixel,int range = 2);
-        bool testStartP(PIXELS& pixel);
+		//bool testStartP(PIXELS& pixel,int range = 2);
+		bool testStartP(PIXELS& pixel);
 		//Gets the border(boundary) line
 		bool getBoundaryLine(int& x, int& y);
 		//link each Boundary Line
@@ -257,62 +211,76 @@ class Rbmp
 		//boundaryline : boundary line want get pixel
 		//index        : index of want to get,support the negative index values,but cannot more than size()
 		PIXELS* getBLpixel(dPIXELS& boundaryline,int index = 0);
-		//check a Point state for get skipTable
-		//pixel : test pixel point
-		PState getPointState(const PIXELS& pixel);
-		//check a Point state for get skipTable
-		//x : test pixel point's x
-		//y : test pixel point's y
-		PState getPointState(int x,int y);
-        void  genSkipTable(PIXELS& pixel);
+		void   getNext(Position& pos, int &x,int& y,int& nexts,int& step);
+		int    Bsearch(dSkipLine& line,int indexX);
+		void   genSkipTable(int x,int y,SkipTable& skipTable2);
+		void   genSkipTable(const PIXELS& pixel,SkipTable& skipTable2);
+		void   genTrackTable(SkipTable& skipTable2,TrackTable& tracktable);
 	public://The function deal with the bmp image (Macroscopic)
 		//Function: generate the image's bar diagram 
-		bool     genBardiagram(colorType color = Pricolor);
+		//@ imageData: will dealwith data source
+		//@ color    : chose a color,default Pricolor
+		bool     genBardiagram(ppPIXELS& allData,colorType color = Pricolor);
 		//Function: generate the image's Histogram
-		bool     genHistogram(colorType color = Pricolor);
+		//@ allData  : will dealwith data source
+		//@ color    : chose a color,default Pricolor
+		bool     genHistogram(ppPIXELS& allData,colorType color = Pricolor);
 		//Function: Move the image 
+		//@ allData   : will dealwith data source
 		//@ mx        : The distance at x direction move 
 		//@ my        : The distance at y direction move
-		ppPIXELS imageMove(int mx = 0,int my = 0);
+		ppPIXELS imageMove(ppPIXELS& allData,int mx = 0,int my = 0);
 		//Function: Mirror the image
+		//@ allData   : will dealwith data source
 		//@ method    : Mirror method (see enum Method)
-		ppPIXELS imageMirror(Method method = NONE);
+		ppPIXELS imageMirror(ppPIXELS& allData,Method method = NONE);
 		//Function: get 3 Color(RGB) 
+		//@ allData   : will dealwith data source
 		//@ color     : The color (see enum colorType) 
-		ppPIXELS getImage3Color(colorType color = Pricolor);
+		ppPIXELS getImage3Color(ppPIXELS& allData,colorType color = Pricolor);
 		//Function: Zoom the image
+		//@ allData   : will dealwith data source
 		//@ scalex    : The zoom rate at x direction move
 		//@ scaley    : The zoom rate at y direction move
-		ppPIXELS imageZoom(float scalex = 1.0,float scaley = 1.0);
+		ppPIXELS imageZoom(ppPIXELS& allData,float scalex = 1.0,float scaley = 1.0);
 		//Function: Spherize the image
 		//@ radius    : Spherize's radius
+		//@ allData   : will dealwith data source
 		//NOTE: if radius = 0,will Adhered with bmpHeight and bmpWidth (oval)
 		//else will Adhered with a circle of radius
-		ppPIXELS imageSpherize(float radius = 0.0);
+		ppPIXELS imageSpherize(ppPIXELS& allData,float radius = 0.0);
 		//Function: Transpose the image
+		//@ allData   : will dealwith data source
 		//@ AR        : Antegrade(TRUE) and retrograde(FALSE)
-		ppPIXELS imageTranspose(bool AR = true);
+		ppPIXELS imageTranspose(ppPIXELS& allData,bool AR = true);
 		//Function: Revolution the image
+		//@ allData   : will dealwith data source
 		//@ px        : The Revolution point set x
 		//@ py        : The Revolution point set y
 		//@ angle     : The Revolution angle(+ Antegrade, - retrograde) 
-		ppPIXELS imageRevolution(int px = 0,int py = 0,float angle = 90.0);
+		ppPIXELS imageRevolution(ppPIXELS& allData,int px = 0,int py = 0,float angle = 90.0);
 		//Function: Shear the image
+		//@ allData   : will dealwith data source
 		//@ XorY      : Shear the at x or y direction(TRUE :x FALSE: y)
 		//@ angle     : The Shear angle(+ Up/Right, - Down/left)
-		ppPIXELS imageShear(bool XorY = true,float angle = 45.0);
+		ppPIXELS imageShear(ppPIXELS& allData,bool XorY = true,float angle = 45.0);
 		//Function: spatialize the image
 		//  [0] : up [1] : down [2] : left [3] : right [4] : front [5] : back  
 		ppPIXELS imageSpatialize(string outpath);
 		//Function: Change a image each pixel's Idensity
+		//@ allData   : will dealwith data source
 		//@ scala     : Thick  or thin scale
-		ppPIXELS imageDensity(float scale);
+		ppPIXELS imageDensity(ppPIXELS& allData,float scale);
 	public://The function deal with the bmp image (Microcosmic)
 		//Gets all of the border(boundary) line
 		void getBoundarys();
 		int trackDown(PIXELS& startPoint);
 		//Boundary  highlight
 		bool boundarysHL();
+		bool boundarysHL(vTrackTable& Tables);
+		bool boundarylineHL(TrackTable& table);
+
+		bool ImageHL();
 		//cut out part of Boundary with cut point(skip table)
 		bool imageCutOut();
 };

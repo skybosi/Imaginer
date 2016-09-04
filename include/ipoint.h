@@ -53,6 +53,7 @@ class PIXELS
 		int getEdge()const;
 		RGBQUAD getRGB()const;
 		pix_p getpPos();
+        Position getpPosPostion();
 		//change direction or not
 		bool  getpPosStatus();
 		int   getpPosValues();
@@ -68,8 +69,8 @@ class PIXELS
 		PIXELS& operator=(const PIXELS& pixel);
 		PIXELS  operator-(const PIXELS& pixel);
 		friend const PIXELS operator-(const PIXELS& pixel1,const PIXELS& pixel2);
-		PIXELS  operator*(const float& scale);
-		friend const PIXELS operator*(const float& scale,PIXELS& pixel);
+        PIXELS  operator*(const float& scale);
+        friend const PIXELS operator*(const float& scale,PIXELS& pixel);
 		bool operator==(const PIXELS& pixel);
 		bool operator!=(const PIXELS& pixel);
 		//mix two color
@@ -103,5 +104,6 @@ class PIXPOT
 		RGBQUAD get_diff4a(int indexa);
 		//pixel similarity
 		bool pixelSimilar();
+        int  getEdges();
 };
 #endif // ipoint.h :[]
