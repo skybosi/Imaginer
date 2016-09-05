@@ -334,10 +334,19 @@ ppPIXELS Rbmp::readNline(int beginY, int rows)
 RecImage Rbmp::readRect(int beginX,int beginY,int width,int height)
 {
 	RecImage recimage;
-#define DEAL(ROWS,Y) ((ROWS)>0?(++Y):(--Y))
+#define RESET(_T,_FLAG) (((_T) < 0) ? 0 : (((_T) > (_FLAG)) ? (_FLAG) : (_T)))
+#define WHY(_B,_E,_b,_e,_WH) (                              \
+                               (                            \
+                                ((_B) < (_E)) ?             \
+                                ((_b) = (_B),(_e) = (_E)) : \
+                                ((_b) = (_E),(_e) = (_B))   \
+                               ) ,(_WH) = (_e) -(_b)        \
+                             )
 	try
 	{
 		if ((beginY < 0) | (beginY >= bmpHeight))
+			throw 0;
+		if ((beginX < 0) | (beginX >= bmpWidth))
 			throw 0;
 	}
 	catch(...)
@@ -354,26 +363,30 @@ RecImage Rbmp::readRect(int beginX,int beginY,int width,int height)
 	}
 	else
 	{
-		int height2 = ABS(height);
-		int width2 = width;
-		if(width >= bmpWidth)width = bmpWidth;
-		if(height >= bmpHeight)height = bmpHeight;
-		ppPIXELS lineppot = new pPIXELS[height2];
+		int endX = RESET(beginX + width, bmpWidth);
+		int endY = RESET(beginY + height, bmpHeight);
+		int bx = 0, ex = 0;
+		WHY(beginX,endX,bx,ex,width);
+		//(endX > beginX) ? (bx = beginX,ex = endX,width = ex - bx) : (bx = endX, ex = beginX,width = ex - bx);
+		int by = 0, ey = 0;
+		WHY(beginY,endY,by,ey,height);
+		//(endY > beginY) ? (by = beginY,ey = endY,height = ey - by) : (by = endY, ey = beginY,height = ey - by);
+
+		ppPIXELS lineppot = new pPIXELS[height];
 		int line = 0;
-		for (int y = beginY; height2--; DEAL(height, y))	// y is row number
+		for (int y = by; y < ey; ++y)	// y is row number
 		{
-			line = y - beginY;
-			lineppot[line] = new PIXELS[width2];
-			width = width2;
-			for (int x = beginX; width--; ++x)
+			line = y - by;
+			lineppot[line] = new PIXELS[width];
+			for (int x = bx; x < ex; ++x)
 			{
-				lineppot[line][x-beginX] = allData[y][x];
+				lineppot[line][x-bx] = allData[y][x];
 				//lineppot[y][x].show_PIXELS();
 				//printf("\n");
 			}
 		}
 		recimage.imageDatas = lineppot;
-		recimage.width = width2;
+		recimage.width = width;
 		recimage.height = height;
 		return recimage;
 	}
@@ -405,7 +418,7 @@ bool Rbmp::write_image(const char *outpath,RecImage imageData,const char* dealTy
 	fseek(fpo, 54, 0);		// 跳过allhead
 	//ppPIXELS imageData = NULL;
 	//imageData = newImageData(imageData, bmpWidth, bmpHeight);
-	if (deal_image(dealType))
+	if (deal_image(data,dealType))
 	{
 		writeAllData(data,W,H);
 	}
@@ -542,7 +555,7 @@ bool Rbmp::writeAllData(ppPIXELS& imageData,int width,int height)
 
 }
 
-bool Rbmp::deal_image(const char* dealType)
+bool Rbmp::deal_image(ppPIXELS allData,const char* dealType)
 {
 	if(!dealType)
 	{
