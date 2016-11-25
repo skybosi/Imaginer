@@ -10,29 +10,17 @@
 
 ## some example show here
 
-<center>
-<img src="./doc/old1.bmp" width="250" />
-TO->
-<img src="./doc/result.bmp" width="250" />
-</center>
-<center>
-<img src="./doc/old3.bmp" width="250" />
-TO->
-<img src="./doc/result3.bmp" width="250" />
-</center>
-<center>
-<img src="./doc/old2.bmp" width="250" />
-TO->
-<img src="./doc/result2.bmp" width="250" />
-</center>
+<img src="./doc/old1.bmp" width="250"/>TO<img src="./doc/result.bmp" width="250"/>
+
+<img src="./doc/old3.bmp" width="250"/>TO<img src="./doc/result3.bmp" width="250"/>
+
+<img src="./doc/old2.bmp" width="250"/>TO<img src="./doc/result2.bmp" width="250"/>
 
 ## This is first Code refactoring for Imaginer
 
 ### Here
 
-<center>
 <img src="./doc/Imaginer recode.bmp" width="500" />
-</center>
 
 NOTE:
 
