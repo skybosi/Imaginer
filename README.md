@@ -14,7 +14,10 @@
 
 <img src="./doc/old3.bmp" width="250"/>TO<img src="./doc/result3.bmp" width="250"/>
 
+<img src="./doc/old4.bmp" width="250"/>TO<img src="./doc/result4.bmp" width="250"/>
+
 <img src="./doc/old2.bmp" width="250"/>TO<img src="./doc/result2.bmp" width="250"/>
+
 
 ## This is first Code refactoring for Imaginer
 
