@@ -18,6 +18,10 @@
 
 <img src="./doc/old2.bmp" width="250"/>TO<img src="./doc/result2.bmp" width="250"/>
 
+### This a  gif for show a image that after several iterative processing
+
+<img src="./doc/old3.bmp" width="250"/>TO<img src="./doc/change.gif" width="250"/>
+
 
 ## This is first Code refactoring for Imaginer
 
