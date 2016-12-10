@@ -24,7 +24,7 @@ int main(int argc,char* argv[])
 	//bmp.delReadIline(line,atoi(argv[3]));
 	//输出图像的信息
 	bmp.getBoundarys();
-	bmp.write_image(argv[4],"h");
+	//bmp.write_image(argv[4],"h");
 	//bmp.imageSpatialize(argv[4]);
 	//bmp.genHistogram(Red);
 	//bmp.genHistogram(Green);
