@@ -29,3 +29,8 @@
 
 <img src="./doc/Imaginer recode.bmp" width="500" />
 
+## Android
+
+ Yon Can like this to get a shared libraries; and use in Android JNI
+ - cd jni
+ - ndk-build
