@@ -29,6 +29,3 @@
 
 <img src="./doc/Imaginer recode.bmp" width="500" />
 
-NOTE:
-
->The next push code will be the first version that is substantially complete in functionality

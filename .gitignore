@@ -3,6 +3,8 @@
 *.lo
 *.o
 *.obj
+*.pro
+*.pro.user
 
 # Precompiled Headers
 *.gch
@@ -27,3 +29,9 @@
 *.app
 # resource
 resource/*
+
+#vscode
+.vscode
+
+#qt project files
+*.pro.user*
