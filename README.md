@@ -31,6 +31,6 @@
 
 ## Android
 
- Yon Can like this to get a shared libraries; and use in Android JNI
+ Yon Can like this to get a shared libraries; and use in Android JNI, You must install NDK before
  - cd jni
  - ndk-build
