@@ -1,7 +1,7 @@
 /*
  * This is a utils class for coordinate transformation,provide
  * some base Matrix operation
- *
+ * Vector is simple Matrix,but scalar is not
  */
 #ifndef IMATRIX_H
 #define IMATRIX_H
@@ -43,7 +43,7 @@ public:
     {
         std::string type = typeid(T).name();
         //std::cout << typeid(T).name() << std::endl;
-        if(type.size() > 1)//Must base type
+        if(type.find('_') != -1)//Must base type
             throw MatrixException("Type Not Match,Not Base Type");
         _Mvs = new pMeT[rows];
         //_Mvs = (ppMeT)calloc(rows, sizeof(pMeT));
