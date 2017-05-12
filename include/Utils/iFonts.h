@@ -88,15 +88,17 @@ public:
 #endif
 public:
     cfont();
-    cfont(int ch, int size);
+    cfont(int ch, int size, int nums);
+    cfont(const cfont& cf);
     ~cfont();
 public:
     void  encode(int ch, const vdPIXELS& fonts);
     void  decode(int& ch, vdPIXELS& fonts, int ox = 0, int oy = 0);
     friend std::ostream & operator<<(std::ostream &out, const cfont &c)
-    {
-        out << "cfont data size: " << c._size << " ";
-        for(int i = 0; i < c._size; ++i)
+    { 
+        int size = c._size + 1 - 2 * c._bnums;
+        out << "cfont data size: " << size << " ";
+        for(int i = 0; i < size; ++i)
         {
             out << hex << "0x" << (unsigned int)(unsigned char)(c._chdata[i]) << " ";
         }
@@ -104,6 +106,7 @@ public:
     }
 private:
     int    _curpos;	  // current add position's number
+    int    _bnums;    // boundary's number
     void  init(char ox = 0, char oy = 0);  //first postion save (x, y), default init to (0, 0)
     void  add(char chdata, int cindex = 0); // add next point to the _chdata;
 public:

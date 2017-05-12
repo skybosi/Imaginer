@@ -1,3 +1,4 @@
+#include <string.h>  //memcpy
 #include "iFonts.h"
 using namespace std;
 namespace Imaginer
@@ -5,16 +6,26 @@ namespace Imaginer
 namespace iUtils
 {
 
-cfont::cfont():_size(0),_chdata(NULL){}
+cfont::cfont():_curpos(0),_bnums(0),_size(0),_chdata(NULL){}
 
-cfont::cfont(int ch, int size):_curpos(0),_ch(ch),_size(size)
+cfont::cfont(int ch, int size, int nums):_curpos(0),_bnums(nums),_ch(ch),_size(size)
 {
     _chdata = (char*)malloc(size * sizeof(char));
 }
 
+cfont::cfont(const cfont& cf)
+{
+    _curpos= cf._curpos;
+    _bnums = cf._bnums;
+    _ch    = cf._ch;
+    _size  = cf._size;
+    _chdata = (char*)malloc(_size * sizeof(char));
+    memcpy(_chdata, cf._chdata, _size);
+}
+
 cfont::~cfont()
 {
-    if(!_chdata){
+    if(_chdata){
         free(_chdata);
         _chdata = NULL;
     }
@@ -50,6 +61,7 @@ void  cfont::add(char chdata, int cindex) // add next point to the _chdata
 void  cfont::encode(int ch, const vdPIXELS& fonts)
 {
     _ch = ch;
+    _bnums = fonts.size();
     size_t bsize = fonts.size();
     size_t size = 0;
     /*
@@ -94,11 +106,10 @@ void  cfont::encode(int ch, const vdPIXELS& fonts)
             px = cx, py = cy;
         }
         // add boundary separator character
-        if(i < bsize - 1)    // a bug
-            add(0, 3);  // note: 0 is no use,just for call function add
+        add(0, 3);  // note: 0 is no use,just for call function add
     }
     //delete last add(0, 3)
-    //_curpos--;
+    _curpos--;
 }
 
 void  cfont::decode(int& ch, vdPIXELS& fonts, int ox, int oy)
@@ -117,7 +128,7 @@ void  cfont::decode(int& ch, vdPIXELS& fonts, int ox, int oy)
     unsigned char data = 0;
     PIXELS  cur(0, 0);
     dPIXELS aboundary;
-    while(_curpos <= _size)
+    while(_curpos < _size)
     {
         //set each boundary's start point relation (ox, oy) position
         sx = _chdata[_curpos++], sy = _chdata[_curpos++];
@@ -125,7 +136,7 @@ void  cfont::decode(int& ch, vdPIXELS& fonts, int ox, int oy)
         aboundary.push_back(cur);
         cx = sx + ox;
         cy = sy + oy;
-        while((data = _chdata[_curpos++]) != 0xff)
+        while((_curpos < _size) && (data = _chdata[_curpos++]) != 0xff)
         {
             switch(0xc0 & data)
             {
@@ -147,6 +158,7 @@ void  cfont::decode(int& ch, vdPIXELS& fonts, int ox, int oy)
             aboundary.push_back(cur);
         }
         fonts.push_back(aboundary);
+        _bnums++;
         aboundary.clear();
     }
 }
@@ -158,12 +170,12 @@ void  cfont::init(char ox, char oy)  //first postion save (x, y), default init t
 }
 
 
-iFonts::iFonts(){}
+iFonts::iFonts():_ffont(NULL){}
 
 iFonts::iFonts(const char* fpath)
 {
     if(NULL != fpath){
-        if(!(_ffont = fopen(fpath, "rw"))){
+        if(!(_ffont = fopen(fpath, "wb"))){
             printf("open file: %s is failed!", fpath);
         }
     }else{
@@ -173,7 +185,7 @@ iFonts::iFonts(const char* fpath)
 
 iFonts::~iFonts()
 {
-    if(!_ffont)
+    if(_ffont)
     {
         fclose(_ffont);
         _ffont = NULL;
@@ -185,21 +197,26 @@ bool  iFonts::loader(const char* fpath)
     if(NULL == fpath)
         return false;
     if(NULL == _ffont){
-        if(!(_ffont = fopen(fpath, "wb"))){
+        if(!(_ffont = fopen(fpath, "rb"))){
             printf("open file: %s is failed!", fpath);
         }
-    }else{  //load font's file
+        //load font's file
         cfont cur;
         int ch = 0, size = 0;
         char* chdata = NULL;
-        while(!feof(_ffont)){
+        while(1){
             fread(&ch, sizeof(int), 1, _ffont);
             cur._ch = ch;
             fread(&size, sizeof(int), 1, _ffont);
             cur._size = size;
+            chdata = (char*)malloc(size* sizeof(char));
             fread(chdata, size, 1, _ffont);
             cur._chdata = chdata;
             _fdata.push_back(cur);
+            if(!feof(_ffont))
+            {
+                break;
+            }
         }
     }
     return true;
@@ -222,7 +239,7 @@ void  iFonts::encoder(int ch, const vdPIXELS& fonts)
         vsize += (fonts[i].size() + 1);
     }
     int  size = vsize + fonts.size() - 1;
-    cfont inc(ch,  size);
+    cfont inc(ch,  size, fonts.size());
     inc.encode(ch, fonts);
     fwrite(&ch, sizeof(int), 1, _ffont);
     fwrite(&inc._size, sizeof(int), 1, _ffont);
@@ -235,12 +252,11 @@ cfont iFonts::decoder(int ch)
     for(size_t i = 0; i < size; ++i)
     {
         if( _fdata[i]._ch == ch){
-            return  _fdata[i];
+            return _fdata[i];
         }
     }
     return cfont();
 }
-
 
 }
 }//namespce Imaginer::iUtils
