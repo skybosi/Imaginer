@@ -46,11 +46,25 @@ namespace Imaginer
 {
 namespace iUtils
 {
-class iFonts
-{
-public:
-    class cfont
+
+#ifndef dPIXELS
+    struct PIXELS
     {
+        PIXELS(int x = 0,int y = 0):_x(x),_y(y){}
+    private:
+        int _x;
+        int _y;
+    public:
+        inline int getX()const{return _x;}
+        inline int getY()const{return _y;}
+        void setXY(int x,int y){ _x = x; _y = y;}
+    };
+    typedef vector<PIXELS> dPIXELS;
+    typedef vector<dPIXELS> vdPIXELS;
+#endif
+
+class cfont
+{
 #define DEBUG
 #ifndef  DEBUG
 #define XR(_X)  (0x00 | (_X))
@@ -60,82 +74,80 @@ public:
 #define YU(_Y)  (0xc0 | (_Y))
 #define YFMT(_v) ((_v > 0) ? (YD(_v)) : (YU(_v)))
 #else
-    public:
-        inline char XFMT(char x)
-        {
-            char rt = (x > 0) ? (0x00 | (x)) : (0x40 | (x));
-            return rt;
-        }
-        inline char YFMT(char y)
-        {
-            char rt = (y > 0) ? (0x80 | (y)) : (0xc0 | (y));
-            return rt;
-        }
+public:
+    inline char XFMT(char x)
+    {
+        char rt = (x > 0) ? (0x00 | (x)) : (0x40 | (x));
+        return rt;
+    }
+    inline char YFMT(char y)
+    {
+        char rt = (y > 0) ? (0x80 | (y)) : (0xc0 | (y));
+        return rt;
+    }
 #endif
-    public:
-        cfont();
-        cfont(int ch, int size);
-        ~cfont();
-    public:
+public:
+    cfont();
+    cfont(int ch, int size);
+    ~cfont();
+public:
+    void  encode(int ch, const vdPIXELS& fonts);
+    void  decode(int& ch, vdPIXELS& fonts, int ox = 0, int oy = 0);
+    friend std::ostream & operator<<(std::ostream &out, const cfont &c)
+    {
+        out << "cfont data size: " << c._size << " ";
+        for(int i = 0; i < c._size; ++i)
+        {
+            out << hex << "0x" << (unsigned int)(unsigned char)(c._chdata[i]) << " ";
+        }
+        return out;
+    }
+private:
+    int    _curpos;	  // current add position's number
+    void  init(char ox = 0, char oy = 0);  //first postion save (x, y), default init to (0, 0)
+    void  add(char chdata, int cindex = 0); // add next point to the _chdata;
+public:
+    int    _ch;       // save character
+    int    _size;     // the size of ch boundary data (NOTE: include separate character -128)
+    char*  _chdata;   // multi-boundary 's relative position data, each boundary is separate with -128
+};
 
-#ifndef dPIXLES
-        struct PIXELS
-        {
-            PIXELS(int x = 0,int y = 0):_x(x),_y(y){}
-        private:
-            int _x;
-            int _y;
-        public:
-            inline int getX()const{return _x;}
-            inline int getY()const{return _y;}
-            void setXY(int x,int y){ _x = x; _y = y;}
-        };
-        typedef vector<PIXELS> dPIXLES;
-        typedef vector<dPIXLES> vdPIXLES;
-#endif
-        void  encode(int ch, const vdPIXLES& fonts);
-        void  decode(int& ch, vdPIXLES& fonts, int ox = 0, int oy = 0);
-        friend std::ostream & operator<<(std::ostream &out, const cfont &c)
-        {
-			out << "cfont data size: " << c._size " ";
-			for(int i = 0; i < c._size; ++i)
-			{
-				out << hex << "0x" << (unsigned int)(unsigned char)(c._chdata[i]) << " ";
-			}
-            return out;
-        }
-    private:
-        int    _curpos;	  // current add position's number
-        void  init(char ox = 0, char oy = 0);  //first postion save (x, y), default init to (0, 0)
-        void  add(char chdata, int cindex = 0, int sx = 0, int sy = 0); // add next point to the _chdata;
-    public:
-        int    _ch;       // save character
-        int    _size;     // the size of ch boundary data (NOTE: include separate character -128)
-        char*  _chdata;   // multi-boundary 's relative position data, each boundary is separate with -128
-    };
-    typedef vector<cfont> vfont;
+typedef vector<cfont> vfont;
+class iFonts
+{
 public:
     iFonts();
     iFonts(const char* fpath);
     ~iFonts();
 public:
     /**
-     * @brief loadFonts : read data from fonts's file and encode the fonts data to cfont structure data into memory
+     * @brief loader : read data from fonts's file and decode the fonts data to cfont structure data into memory
      * @param fpath
      * @return
      */
-    bool  loadFonts(const char* fpath);
+    bool  loader(const char* fpath);
     /**
-     * @brief writeFont : write cfont structure data into a font's file
+     * @brief encoder : write cfont structure data into a font's file
      * @param ch
      * @param fonts
      */
-    void  writeFont(int ch, const cfont& fonts);
-    //void  writeFont(int ch, const DPIXLES& fonts);
-    cfont readFont(int ch);
+    void  encoder(int ch, const cfont& fonts);
+    /**
+     * @brief encoder
+     * @param ch
+     * @param fonts
+     */
+    void  encoder(int ch, const vdPIXELS& fonts);
+    /**
+     * @brief decoder : read _fdata and get a character's boundary's data
+     * @param ch
+     * @return        : a character's boundary's data
+     */
+    cfont decoder(int ch);
+
 private:
     FILE*  _ffont;       // fonts's file
-    vfont  _fdata;       // save all character
+    vfont  _fdata;       // save all characters
 };
 
 }
