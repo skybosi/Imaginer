@@ -3,7 +3,7 @@
 using namespace std;
 namespace Imaginer
 {
-namespace iUtils
+namespace Utils
 {
 
 cfont::cfont():_curpos(0),_bnums(0),_size(0),_chdata(NULL){}
@@ -67,8 +67,8 @@ void  cfont::encode(int ch, const vdPIXELS& fonts)
     /*
      * ox: first boundary's first point's x
      * oy: first boundary's first point's y
-     * sx: each boundary's forst's point's x
-     * sy: each boundary's forst's point's y
+     * sx: each boundary's start point's x
+     * sy: each boundary's start point's y
      * px: previous point's x
      * py: previous point's y
      * cx: current point's x
@@ -117,10 +117,10 @@ void  cfont::decode(int& ch, vdPIXELS& fonts, int ox, int oy)
     ch = _ch;
     _curpos = 0;
     /*
-     * sx: each boundary's forst's point's x
-     * sy: each boundary's forst's point's y
+     * sx: each boundary's start point's x
+     * sy: each boundary's start point's y
      * cx: current point's x
-     * cy: current point's x
+     * cy: current point's y
      *
      */
     int sx = 0, sy =0;
@@ -259,4 +259,4 @@ cfont iFonts::decoder(int ch)
 }
 
 }
-}//namespce Imaginer::iUtils
+}//namesapce Imaginer::Utils

@@ -44,7 +44,7 @@ using namespace std;
 
 namespace Imaginer
 {
-namespace iUtils
+namespace Utils
 {
 
 #ifndef dPIXELS
@@ -89,10 +89,24 @@ public:
 public:
     cfont();
     cfont(int ch, int size, int nums);
-    cfont(const cfont& cf);
+    cfont(const cfont& cf); //deep copy, it's very important
     ~cfont();
 public:
+    /**
+     * @brief encode : encode the boundarys's to the cfont, first boundary start point will be set (0, 0), and the other point will be change to relative to it.
+     * @param ch     : character  (unicode)
+     * @param fonts  : boundarys data
+     * @return
+     */
     void  encode(int ch, const vdPIXELS& fonts);
+    /**
+     * @brief decode : decode the cfont's data to the vdPIXELS data
+     * @param ch     : character  (unicode)
+     * @param fonts  : return boundarys data
+     * @param ox     : as the new postion's start point's x, other point all relative to it.
+     * @param oy     : as the new postion's start point's y, other point all relative to it.
+     * @return
+     */
     void  decode(int& ch, vdPIXELS& fonts, int ox = 0, int oy = 0);
     friend std::ostream & operator<<(std::ostream &out, const cfont &c)
     { 
@@ -110,7 +124,7 @@ private:
     void  init(char ox = 0, char oy = 0);  //first postion save (x, y), default init to (0, 0)
     void  add(char chdata, int cindex = 0); // add next point to the _chdata;
 public:
-    int    _ch;       // save character
+    int    _ch;       // save character (unicode)
     int    _size;     // the size of ch boundary data (NOTE: include separate character -128)
     char*  _chdata;   // multi-boundary 's relative position data, each boundary is separate with -128
 };
@@ -150,8 +164,8 @@ public:
 
 private:
     FILE*  _ffont;       // fonts's file
-    vfont  _fdata;       // save all characters
+    vfont  _fdata;       // save all characters (unicode)
 };
 
 }
-}//namespce Imaginer::iUtils
+}//namespce Imaginer::Utils
