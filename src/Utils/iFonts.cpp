@@ -33,6 +33,10 @@ cfont::~cfont()
 
 void  cfont::add(char chdata, int cindex) // add next point to the _chdata
 {
+    // fixup stack overflow, because last add(0,3) maybe use _chdata[_size] position,
+    // use this test can be fix this case
+    if(_curpos == _size)
+        return;
     if(chdata >= 64){
         printf("out of range !");
         return;
@@ -109,7 +113,7 @@ void  cfont::encode(int ch, const vdPIXELS& fonts)
         add(0, 3);  // note: 0 is no use,just for call function add
     }
     //delete last add(0, 3)
-    _curpos--;
+    //_curpos--;  //see add function first test
 }
 
 void  cfont::decode(int& ch, vdPIXELS& fonts, int ox, int oy)
