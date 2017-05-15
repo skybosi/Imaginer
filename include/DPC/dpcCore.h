@@ -392,7 +392,7 @@ public:
      * @param dealType  ctrlon deal way
      * @return
      */
-    virtual bool dealManager(const char* dealType);
+    virtual bool dealManager(const char* dealType, const char** argv = NULL);
     /**
      * @brief MultiProces
      *        Multiple processing use one or more processing way
@@ -540,6 +540,26 @@ private://core function
      * @return in: true out :false
      */
     bool   inTrackLine(vTrackLine line,int x);
+	/**
+	 *
+     * @brief recBoundarys
+     *        record the boundarys's datas to a file, Especially record the meaningful symbol,
+	 *        example Languages, the first test is to do this.
+     * @param ch    character
+     * @param mode  open file mode "r/w b" default "wb+"
+	 *
+	 */
+	void   recBoundarys(const char* fpo, int ch, char* mode = "wb+");
+	/**
+	 *
+     * @brief encodeBoundarys
+     *        encode the file record the boundarys's datas, and save to the Structure Boundary,
+	 *        And draw on the picture
+     * @param ch    character
+     * @param mode  open file mode "r/w b", default "rb"
+	 *
+	 */
+	void   decBoundarys(const char* fpi, int ch, char* mode = "rb");
 private://core function get message
     /**
      * @brief setBackground

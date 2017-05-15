@@ -10,7 +10,7 @@ using namespace Imaginer::DPC;
 
 void testComm(int argc,char* argv[])
 {
-    std::cout << "Test dpcCons... " << std::endl;
+    std::cout << "Test dpcComm... " << std::endl;
     BmpPer* bmpComm = new BmpPer(argv[0]);
     if(bmpComm->read())
     {
@@ -26,13 +26,14 @@ void testComm(int argc,char* argv[])
 
 void testCore(int argc,char* argv[])
 {
-    std::cout << "Test dpcCons... " << std::endl;
+    std::cout << "Test dpcCore... " << std::endl;
     BmpPer* bmpCore = new BmpPer(argv[0]);
     if(bmpCore->read())
     {
         //dataPcer dpcer(bmp);
         dpcCore dpcer(bmpCore->getData(),bmpCore->getWidth(),bmpCore->getHeight());
-        dpcer.dealManager("c");
+		const char* argvs[] = {"/home/dejian_mint/gitter/Imaginer/26big.if","A"};
+        dpcer.dealManager("r", argvs);
         //bmp->write(argv[2],dpcer.retnData(),dpcer.retnWidth(),dpcer.retnHeight());
         //等价于 bmp->write(argv[2],false);
     }

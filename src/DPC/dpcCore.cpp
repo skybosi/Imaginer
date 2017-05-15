@@ -2,6 +2,9 @@
 #include <math.h>
 #include <float.h>
 #include "iVector.h"
+#include "iFonts.h"
+
+using namespace Imaginer::Utils;
 
 namespace Imaginer
 {
@@ -2659,8 +2662,37 @@ bool     dpcCore::zoomBoundary(dPIXELS& boundary,int step,Method method/* = UR*/
     }
     return true;
 }
+void   dpcCore::recBoundarys(const char* fpo, int ch, char* mode)
+{
+	if(NULL == fpo)
+	{
+		printf("file path is invalid!");
+		return;
+	}
+	if(boundarys.empty())
+		getBoundarys();
+	iFonts  ifont(fpo, mode);
+	ifont.encoder(ch, boundarys);
+}
 
-bool     dpcCore::dealManager(const char* dealType)
+void   dpcCore::decBoundarys(const char* fpi, int ch, char* mode)
+{
+	if(NULL == fpi)
+	{
+		printf("file path is invalid!");
+		return;
+	}
+	iFonts ifont;
+	ifont.loader(fpi, mode);
+	cfont c = ifont.decoder(ch);
+	vdPIXELS vna;
+	int ot = 0;
+	c.decode(ot, vna, 0, 0);
+	std::cout << c << std::endl;
+	std::cout << "decode cfont ..." << std::endl;
+}
+
+bool     dpcCore::dealManager(const char* dealType, const char** argv)
 {
     if(!_Data)
     {
@@ -2711,6 +2743,14 @@ bool     dpcCore::dealManager(const char* dealType)
             //boundary2p(boundarys);
             //setLGranlarty(3);
             boundary2p(boundaryFrame(boundarys));
+            break;
+        case 'r':
+            cout << "  -r     recBoundarys     : record boundarys's data to a file\n";
+			recBoundarys(argv[0], argv[1][0]);
+            break;
+        case 'e':
+            cout << "  -e     decBoundarys   : encode file and get boundarys's data\n";
+			decBoundarys(argv[0], argv[1][0]);
             break;
         default:
             printf("Not deal with!\n");

@@ -40,17 +40,21 @@
 #include <stdlib.h>
 #include <iostream>
 #include <vector>
+#include "iPixels.h"
+
 using namespace std;
+using namespace Imaginer::MetaData;
 
 namespace Imaginer
 {
 namespace Utils
 {
 
-#ifndef dPIXELS
+#ifndef _IPIXELS_H_
     struct PIXELS
     {
         PIXELS(int x = 0,int y = 0):_x(x),_y(y){}
+        ~PIXELS(){}
     private:
         int _x;
         int _y;
@@ -134,7 +138,7 @@ class iFonts
 {
 public:
     iFonts();
-    iFonts(const char* fpath);
+    iFonts(const char* fpath, char* mode = "wb+");
     ~iFonts();
 public:
     /**
@@ -142,7 +146,7 @@ public:
      * @param fpath
      * @return
      */
-    bool  loader(const char* fpath);
+    bool  loader(const char* fpath, char* mode = "rb");
     /**
      * @brief encoder : write cfont structure data into a font's file
      * @param ch

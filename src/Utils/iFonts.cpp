@@ -176,10 +176,10 @@ void  cfont::init(char ox, char oy)  //first postion save (x, y), default init t
 
 iFonts::iFonts():_ffont(NULL){}
 
-iFonts::iFonts(const char* fpath)
+iFonts::iFonts(const char* fpath, char* mode)
 {
     if(NULL != fpath){
-        if(!(_ffont = fopen(fpath, "wb"))){
+        if(!(_ffont = fopen(fpath, mode))){
             printf("open file: %s is failed!", fpath);
         }
     }else{
@@ -196,12 +196,12 @@ iFonts::~iFonts()
     }
 }
 
-bool  iFonts::loader(const char* fpath)
+bool  iFonts::loader(const char* fpath, char* mode)
 {
     if(NULL == fpath)
         return false;
     if(NULL == _ffont){
-        if(!(_ffont = fopen(fpath, "rb"))){
+        if(!(_ffont = fopen(fpath, mode))){
             printf("open file: %s is failed!", fpath);
         }
         //load font's file
