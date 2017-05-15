@@ -27,9 +27,10 @@ class OPt
 		};
 		typedef vector < MultiOption > mvstr;//record Mulit option's arguments
 		typedef vector < vstr > vvstr; //record single option's arguments
+typedef void (*FUNCTION) (vvstr sopt, mvstr mopt);
 	public:
-		OPt(int argc, char **argv) :_argc(argc), _argv(argv) { }
-		OPt(int argc, char **argv, string optstr) :_argc(argc), _argv(argv), _optStr(optstr) { }
+		OPt(int argc, char **argv, char* mans = NULL) :_argc(argc), _argv(argv),_man(mans) { }
+		OPt(int argc, char **argv, string optstr, char* mans = NULL) :_argc(argc), _argv(argv), _optStr(optstr), _man(mans) { }
 		virtual ~OPt() {}
 	public:
 		bool getOpt();
@@ -38,8 +39,9 @@ class OPt
 		bool setMultioptStr(const char *Multioptstr);
 		vvstr getOptSarry() { return _singleoptArray; }
 		mvstr getOptMarry() { return _multioptArray; }
-		virtual void setFunction() = 0;
-		virtual void manual() = 0;
+		void handle(FUNCTION handler);
+		void manual(char* mans) { _man = mans;}
+		char* manual() { return _man;};
 
 	private:
 		OPtState isSingleOpt(char optChar);
@@ -51,12 +53,13 @@ class OPt
 		string OPtState2Str(OPtState State);
 
 	private:
-		int _argc;
-		char **_argv;
+		int    _argc;
+		char** _argv;
 		string _optStr;
 		string _moptStr;
-		vvstr _singleoptArray; //single option's arguments
-		mvstr _multioptArray;//Mulit option's arguments
+		vvstr  _singleoptArray; //single option's arguments
+		mvstr  _multioptArray;//Mulit option's arguments
+		char*  _man;
 };
 
 #endif 

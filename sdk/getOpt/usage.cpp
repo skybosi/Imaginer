@@ -1,42 +1,26 @@
 #include <iostream>
+#include <string>
 #include "getOpt.h"
 using namespace std;
-class Test : public OPt
+
+char* usage()
 {
-	public:
-		Test(int argc, char** argv) :OPt(argc, argv) 
-	{
-		setoptStr("B:cC:hH:m:M:R:s:S:T:Z:");
-	}
-		void manual();
-		void setFunction();
-	private:
-		vvstr singleoptArray;
-		mvstr multioptArray;
-};
-void Test::manual()
-{
-	cout << "  -T\timageTranspose  <- bool AR)          \n\t- Transpose a iamge\n";
-	cout << "  -R\timageRevolution <- int px,int py,float angle) \n\t- Revolution a image\n";
-	cout << "  -s\timageSpherize   <- float radius)     \n\t- Spherize a image\n";
-	cout << "  -Z\timageZoom       <- float sclaex,float scaley) \n\t- zoom a image\n";
-	cout << "  -M\timageMirror     <- Method method)    \n\t- Mirror a image\n";
-	cout << "  -S\timageShear      <- bool XorY,float angle) \n\t- Shear a image\n";
-	cout << "  -m\timageMove       <- int x,int y)      \n\t- move a image\n";
-	cout << "  -C\tgetImage3Color  <- colorType color)  \n\t- get a image's 3(R,G,B) color image\n";
-	cout << "  -H\tgenHistogram    <- colorType color)  \n\t- get a image's 3(R,G,B) color Histogram\n";
-	cout << "  -B\tgenBardiagram   <- colorType color)  \n\t- get a image's 3(R,G,B) color Bar diagram\n";
-	cout << "  -h\tboundarysHL     <- NONE) \n\t- change boundarys line to HightLight\n";
-	cout << "  -c\timageCutOut     <- NONE) \n\t- cutout the effective part of the image\n";
+	std::string usage = std::string("-T\timageTranspose  <- bool AR) \n\t- Transpose a iamge\n")      + 
+	"-R\timageRevolution <- int px,int py,float angle) \n\t- Revolution a image\n"               +
+	"-s\timageSpherize   <- float radius) \n\t- Spherize a image\n"                          +
+	"-Z\timageZoom       <- float sclaex,float scaley) \n\t- zoom a image\n"                     +
+	"-M\timageMirror     <- Method method) \n\t- Mirror a image\n"                            +
+	"-S\timageShear      <- bool XorY,float angle) \n\t- Shear a image\n"                        +
+	"-m\timageMove       <- int x,int y) \n\t- move a image\n"                              +
+	"-C\tgetImage3Color  <- colorType color) \n\t- get a image's 3(R,G,B) color image\n"        +
+	"-H\tgenHistogram    <- colorType color) \n\t- get a image's 3(R,G,B) color Histogram\n"    +
+	"-B\tgenBardiagram   <- colorType color) \n\t- get a image's 3(R,G,B) color Bar diagram\n"  +
+	"-h\tboundarysHL     <- NONE) \n\t- change boundarys line to HightLight\n"                   +
+	"-c\timageCutOut     <- NONE) \n\t- cutout the effective part of the image\n";
+	return (char*)usage.c_str();
 }
-void Test::setFunction()
+void function(OPt::vvstr singleoptArray, OPt::mvstr multioptArray)
 {
-	singleoptArray = getOptSarry(); //single option's arguments
-	multioptArray = getOptMarry();//Mulit option's arguments
-	if (singleoptArray.empty())
-	{
-		printf("Not single Option deal with!\n");
-	}
 	char dealType = 0;
 	size_t i = 0;
 	while (i < singleoptArray.size())
@@ -95,12 +79,13 @@ void Test::setFunction()
 
 int main(int argc, char **argv)
 {
-	Test Opts(argc, argv);
+	OPt Opts(argc, argv,"B:cC:hH:m:M:R:s:S:T:Z:", usage());
 	if (argc < 2)
-		Opts.manual();
+	{
+		printf("%s", Opts.manual());
+	}
 	//Opts.setMultioptStr("help_h|add_a:|");
-	Opts.getOpt();
-	Opts.setFunction();
+	Opts.handle(function);
 	printf("\n====================\n");
 	Opts.showOptArray();
 	return 0;

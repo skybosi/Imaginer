@@ -389,6 +389,15 @@ void OPt::showOptArray()
 		printf("\n");
 	}
 }
+
+void OPt::handle(FUNCTION handler)
+{
+	if(! getOpt())
+	{
+		printf("deal with the option error!");
+	}
+	handler(_singleoptArray,_multioptArray);
+}
 /*
 	 int main(int argc, char **argv)
 	 {
