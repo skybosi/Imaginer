@@ -16,11 +16,13 @@ void testComm(int argc,char* argv[])
     {
         //dataPcer dpcer(bmp);
         dpcComm dpcer(bmpComm->getData(),bmpComm->getWidth(),bmpComm->getHeight());
-        dpcer.dealManager("M");
-        //bmp->write(argv[2],dpcer.retnData(),dpcer.retnWidth(),dpcer.retnHeight());
-        //等价于 bmp->write(argv[2],false);
-    }
-    bmpComm->write(argv[1],true);
+        if(dpcer.dealManager(argc-2,argv+2))
+        {
+            //bmp->write(argv[2],dpcer.retnData(),dpcer.retnWidth(),dpcer.retnHeight());
+            //等价于 bmp->write(argv[2],false);
+            bmpComm->write(argv[1],true);
+        }
+	}
     delete bmpComm;
 }
 
@@ -32,13 +34,13 @@ void testCore(int argc,char* argv[])
     {
         //dataPcer dpcer(bmp);
         dpcCore dpcer(bmpCore->getData(),bmpCore->getWidth(),bmpCore->getHeight());
-        //const char* argvs[] = {"/home/dejian_mint/gitter/Imaginer/26big.if","A"};
-        //dpcer.dealManager("r", argvs);
-        dpcer.dealManager("h");
-        //bmp->write(argv[2],dpcer.retnData(),dpcer.retnWidth(),dpcer.retnHeight());
-        //等价于 bmp->write(argv[2],false);
+        if(dpcer.dealManager(argc-2,argv+2))
+        {
+            //bmp->write(argv[2],dpcer.retnData(),dpcer.retnWidth(),dpcer.retnHeight());
+            //等价于 bmp->write(argv[2],false);
+            bmpCore->write(argv[1],true);
+        }
     }
-    bmpCore->write(argv[1],true);
     delete bmpCore;
 }
 
@@ -59,8 +61,10 @@ void testCons(int argc,char* argv[])
     */
         BmpPer bm(500,500);
         dpcCons dpcons(bm.getData(),bm.getWidth(),bm.getHeight(),funlist,-10+t,10+t,400);
-        dpcons.dealManager("l");
-        bm.write(argv[1]);
+        if(dpcons.dealManager(argc-2,argv+2))
+        {
+            bm.write(argv[1]);
+        }
     /*
       std::cout << "sleep ..." << std::endl;
       sleep(1);
@@ -72,7 +76,7 @@ int main(int argc,char* argv[])
 {
     if(argc < 3)
     {
-        printf("%s Usage: case(0,1,2) inbmp outbmp\n",argv[0]);
+        printf("%s Usage: case(0,1,2) inbmp outbmp option\n",argv[0]);
         printf("case 0 : %s 用来处理普通的图像操作(平移，镜像...)\n","COMM");
         printf("case 1 : %s 用来处理core的图像操作(边界获取)\n","CORE");
         printf("case 2 : %s 用来构造一些数学函数图像的操作(sin(x))\n","CONS");

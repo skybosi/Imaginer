@@ -20,7 +20,7 @@ public:
     dpcComm(ppPIXELS& data,int& width,int& height):dataPcer(data,width,height){}
     dpcComm(DperMum* dp):dataPcer(dp){}
     ~dpcComm(){}
-    virtual bool dealManager(const char* dealType);
+    virtual bool dealManager(int argc, char* argv[]);
     const char*  doc();
 private://common function
     //Function: generate the image's bar diagram

@@ -41,8 +41,14 @@ typedef void (*FUNCTION) (vvstr sopt, mvstr mopt);
 		mvstr getOptMarry() { return _multioptArray; }
 		void handle(FUNCTION handler);
 		void manual(char* mans) { _man = mans;}
-		char* manual() { return _man;};
-
+		char* manual() { return _man;}
+	public:
+		static char* tostr(string str) {return (char*)str.c_str();}
+		static int   toint(string str) {return atoi((char*)str.c_str());}
+		static long  tolong(string str) {return atol((char*)str.c_str());}
+		static float tofd(string str) {return atof((char*)str.c_str());}
+		static char  tochar(string str) {return str[0];}
+		static char  tobool(string str) {if(str=="0")return false;return true;}
 	private:
 		OPtState isSingleOpt(char optChar);
 		OPtState isMultiOpt(string optstr, int& pos);

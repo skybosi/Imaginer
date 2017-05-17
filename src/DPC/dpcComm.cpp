@@ -798,22 +798,32 @@ bool     dpcComm::genBardiagram(ppPIXELS& allData,colorType color,bool isOverWri
     return true;
 }
 
-bool     dpcComm::dealManager(const char* dealType)
+bool     dpcComm::dealManager(int argc, char* argv[])
 {
     if(!_Data)
     {
         printf("cannot deal with,there are not Data!\n");
         return false;
     }
-    if(!dealType)
+    if(argc < 1)
     {
-        printf("Not deal with!,will output itself\n");
-        return true;
+        printf("No option error!\n");
+        return false;
     }
     iTransfMatrix m(D2R(-45),iTransfMatrix::ROTATEz);
-    while(*dealType)
+    OPt opt(argc, argv, "bB:cC:d:gH:m:M:R:sS:TZ:", (char*)doc());
+    if(!opt.getOpt())
     {
-        switch(*dealType)
+        printf("deal with option error!\n");
+        return false;
+    }
+    char dealType = 0;
+    size_t i = 0;
+    OPt::vvstr sop = opt.getOptSarry();
+    while (i < sop.size())
+    {
+        dealType = sop[i][0][1];
+        switch (dealType)
         {
         case 'T':
             cout << "  -T     imageTranspose  : Transpose a iamge\n";
@@ -821,7 +831,7 @@ bool     dpcComm::dealManager(const char* dealType)
             break;
         case 'R':
             cout << "  -R     imageRevolution : Revolution a image\n";
-            revolution(_Data,_width/2,_height/2,-45);
+            revolution(_Data,OPt::toint(sop[i][1]), OPt::toint(sop[i][2]), OPt::tofd(sop[i][3]));
             break;
         case 's':
             cout << "  -s     imageSpherize   : Spherize a image\n";
@@ -829,7 +839,7 @@ bool     dpcComm::dealManager(const char* dealType)
             break;
         case 'Z':
             cout << "  -Z     imageZoom       : zoom a image\n";
-            zoom(_Data,0.5,0.5);
+            zoom(_Data, OPt::tofd(sop[i][1]), OPt::tofd(sop[i][2]));
             break;
         case 'M':
             cout << "  -M     imageMirror     : Mirror a image\n";
@@ -838,19 +848,19 @@ bool     dpcComm::dealManager(const char* dealType)
             break;
         case 'S':
             cout << "  -S     imageShear      : Shear a image\n";
-            shear(_Data,true,-45.0);
+            shear(_Data,OPt::tobool(sop[i][1]), OPt::tofd(sop[i][2]));
             break;
         case 'm':
             cout << "  -m     imageMove       : move a image\n";
-            move(_Data,100,100);
+            move(_Data,OPt::toint(sop[i][1]), OPt::tofd(sop[i][2]));
             break;
         case 'C':
             cout << "  -C     getImage3Color  : get a image's 3(R,G,B) color image\n";
-            getImage3Color(_Data,Green);
+            getImage3Color(_Data,(colorType)OPt::toint(sop[i][1]));
             break;
         case 'H':
             cout << "  -H     genHistogram    : get a image's 3(R,G,B) color Histogram\n";
-            genBardiagram(_Data,Red);
+            genBardiagram(_Data,(colorType)OPt::toint(sop[i][1]));
             //genBardiagram(_Data,Green);
             //genBardiagram(_Data,Blue);
             //genBardiagram(_Data);
@@ -858,7 +868,7 @@ bool     dpcComm::dealManager(const char* dealType)
         case 'B':
             cout << "  -B     genBardiagram   : get a image's 3(R,G,B) color Bar diagram\n";
             //genHistogram(_Data,Red);
-            genHistogram(_Data,Green);
+            genHistogram(_Data,(colorType)OPt::toint(sop[i][1]));
             //genHistogram(_Data,Blue);
             //genHistogram(_Data);
             break;
@@ -868,7 +878,7 @@ bool     dpcComm::dealManager(const char* dealType)
             break;
         case 'd':
             cout << "  -d     imageDensity     : Change a image each pixel's Idensity\n";
-            density(_Data,200);
+            density(_Data,OPt::tofd(sop[i][1]));
             break;
         case 'g':
             cout << "  -g     imageGray        : get a image's gray image\n";
@@ -882,7 +892,7 @@ bool     dpcComm::dealManager(const char* dealType)
             printf("Not deal with!\n");
             break;
         }
-        dealType++;
+        i++;
     }
     //set data
     if(_dp)
@@ -896,8 +906,7 @@ bool     dpcComm::dealManager(const char* dealType)
 
 const char*  dpcComm::doc()
 {
-
-    string doc = string("") +
+    string doc = string("Usage: \n") +
             "  -T  imageTranspose\tTranspose a iamge\n" +
             "  -R: (x, y, angle)\timageRevolution\t: Revolution a image\n" +
             "  -s  imageSpherize\tSpherize a image\n" +

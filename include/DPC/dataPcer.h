@@ -18,6 +18,7 @@
 #include <stdlib.h>
 #include "iPixels.h"
 #include "DperMum.h"
+#include "getOpt.h"
 
 #ifdef WIN32
     #include <Windows.h>
@@ -67,7 +68,7 @@ protected:
         initData(_dp->getData(),_dp->getWidth(),_dp->getHeight());
     }
     virtual ~dataPcer(){printf("out the dataPcer\n");}
-    virtual bool dealManager(const char* dealType){ return false;}
+    virtual bool dealManager(int argc, char* argv[]){ return false;}
 
 public://return all Data
     int      retnWidth();

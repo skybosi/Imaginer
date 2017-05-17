@@ -2703,21 +2703,31 @@ void   dpcCore::decBoundarys(const char* fpi, int ch, char* mode)
 	std::cout << "decode cfont ..." << std::endl;
 }
 
-bool     dpcCore::dealManager(const char* dealType, const char** argv)
+bool     dpcCore::dealManager(int argc, char* argv[])
 {
     if(!_Data)
     {
         printf("cannot deal with,there are not Data!\n");
         return false;
     }
-    if(!dealType)
+    if(argc < 1)
     {
-        printf("Not deal with!,will output itself\n");
-        return true;
+        printf("No option error!\n");
+        return false;
     }
-    while(*dealType)
+    OPt opt(argc, argv, "bhcLldpr:e:", (char*)doc());
+    if(!opt.getOpt())
     {
-        switch(*dealType)
+        printf("deal with option error!\n");
+        return false;
+    }
+    char dealType = 0;
+    size_t i = 0;
+    OPt::vvstr sop = opt.getOptSarry();
+    while (i < sop.size())
+    {
+        dealType = sop[i][0][1];
+        switch (dealType)
         {
         case 'b':
             cout << "  -b     backGround_ize   : get a image's part of backGround\n";
@@ -2757,17 +2767,17 @@ bool     dpcCore::dealManager(const char* dealType, const char** argv)
             break;
         case 'r':
             cout << "  -r     recBoundarys     : record boundarys's data to a file\n";
-			recBoundarys(argv[0], argv[1][0]);
+            recBoundarys(sop[i][1].c_str(), sop[i][2][0]);
             break;
         case 'e':
             cout << "  -e     decBoundarys   : encode file and get boundarys's data\n";
-			decBoundarys(argv[0], argv[1][0]);
+            decBoundarys(sop[i][1].c_str(), sop[i][2][0]);
             break;
         default:
             printf("Not deal with!\n");
             break;
         }
-        dealType++;
+        i++;
     }
     //set data
     if(_dp)
@@ -2781,8 +2791,7 @@ bool     dpcCore::dealManager(const char* dealType, const char** argv)
 
 const char*  dpcCore::doc()
 {
-
-    string doc =  string("") +
+    string doc =  string("Usage: \n") +
             "  -b  backGround_ize\t: get a image's part of backGround\n" +
             "  -h  boundarysHL\t: change boundarys line to HightLight\n" +
             "  -c  imageCutOut\t: cutout the effective part of the image\n" +
@@ -2795,14 +2804,14 @@ const char*  dpcCore::doc()
     return doc.c_str();
 }
 
-ppPIXELS dpcCore::MultiProces(const char* dealType,ppPIXELS data,int deep)
+ppPIXELS dpcCore::MultiProces(int argc, char* argv[],ppPIXELS data,int deep)
 {
     if(!data)
         return NULL;
     _Data = data;
     while(deep--)
     {
-        dealManager(dealType);
+        dealManager(argc, argv);
         frames.clear();
         boundarys.clear();
         skipTables.clear();
@@ -2811,9 +2820,9 @@ ppPIXELS dpcCore::MultiProces(const char* dealType,ppPIXELS data,int deep)
     return _Data;
 }
 
-ppPIXELS dpcCore::MultiProces(const char* dealType,int deep)
+ppPIXELS dpcCore::MultiProces(int argc, char* argv[],int deep)
 {
-    return MultiProces(dealType,_Data,deep);
+    return MultiProces(argc, argv, _Data, deep);
 }
 
 }//namespace DPC

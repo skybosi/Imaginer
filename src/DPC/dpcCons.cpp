@@ -227,21 +227,31 @@ inline iPoint dpcCons::fitter(float x,float y,const int& color)
 #undef RESET
 }
 
-bool   dpcCons::dealManager(const char* dealType)
+bool   dpcCons::dealManager(int argc, char* argv[])
 {
     if(!_Data)
     {
         printf("cannot deal with,there are not Data!\n");
         return false;
     }
-    if(!dealType)
+    if(argc < 1)
     {
-        printf("Not deal with!,will output itself\n");
-        return true;
+        printf("No option error!\n");
+        return false;
     }
-    while(*dealType)
+    OPt opt(argc, argv, "pl", (char*)doc());
+    if(!opt.getOpt())
     {
-        switch(*dealType)
+        printf("deal with option error!\n");
+        return false;
+    }
+    char dealType = 0;
+    size_t i = 0;
+    OPt::vvstr sop = opt.getOptSarry();
+    while (i < sop.size())
+    {
+        dealType = sop[i][0][1];
+        switch (dealType)
         {
         case 'p':
             cout << "  -p     consPoint   : get a math function point\n";
@@ -255,7 +265,7 @@ bool   dpcCons::dealManager(const char* dealType)
             printf("Not deal with!\n");
             break;
         }
-        dealType++;
+        i++;
     }
     //set data
     if(_dp)
@@ -270,7 +280,7 @@ bool   dpcCons::dealManager(const char* dealType)
 const char*  dpcCons::doc()
 {
 
-    string doc =  string("") +
+    string doc =  string("Usage: \n") +
             "  -p  consPoint\t: get a math function point\n" +
             "  -l  consLine\t: get a math function curve line\n";
     return doc.c_str();

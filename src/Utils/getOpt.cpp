@@ -171,6 +171,8 @@ bool OPt::getSingleArgv(const char* opt, int &i)
 			else
 			{
 				printf("\tSingle-Option [%s] need argument, but Not gived...This option will be ignored\n", opt);
+				printf("%s", manual());
+				return false;
 			}
 			break;
 		case NnA:
@@ -188,6 +190,8 @@ bool OPt::getSingleArgv(const char* opt, int &i)
 			break;
 		case InA:
 			printf("\t[%s] Invalid option, will be ignored...\n", opt);
+			printf("%s", manual());
+			return false;
 			break;
 		default:
 			break;
@@ -294,12 +298,14 @@ bool OPt::getOpt()
 		printf("please set base option string!\n");
 		return false;
 	}
-	if (_argc < 2)
-	{
-		printf("please chose option!\n");
-		return false;
-	}
-	int i = 1;
+	/*
+	   if (_argc < 2)
+	   {
+	   printf("please chose option!\n");
+	   return false;
+	   }
+	   int i = 1;*/
+	int i = 0;
 	for (; i < _argc; i++)
 	{
 		if (SCMP(_argv[i]))
@@ -319,25 +325,29 @@ bool OPt::getOpt()
 				{
 					vstr mixOpt;
 					size_t j = 0;
+					bool res = true;
 					printf("Mix options :%s\n", _argv[i]);
 					if (dealMixopt(_argv[i], mixOpt))
 					{
 						for (; j < mixOpt.size(); j++)
 						{
-							getSingleArgv(mixOpt[j].c_str(), i);
+							res = getSingleArgv(mixOpt[j].c_str(), i);
 						}
 					}
 					else
 						printf("mix option error!!\n");
+					return res;
 				}
 				else			// -a
 				{
-					getSingleArgv(_argv[i], i);
+					return getSingleArgv(_argv[i], i);
 				}
 			}
 			else
 			{
 				printf("[%s] dafault help option!\n", _argv[i]);
+				printf("%s", manual());
+				return false;
 			}
 		}
 		else
@@ -399,16 +409,16 @@ void OPt::handle(FUNCTION handler)
 	handler(_singleoptArray,_multioptArray);
 }
 /*
-	 int main(int argc, char **argv)
-	 {
-	 if (argc < 2)
-	 printf("have val have member\n");
-	 OPt Opts(argc, argv);
-	 Opts.setoptStr("ab:cd:e");
-	 Opts.setMultioptStr("help_h|add_a:|");
-	 Opts.getOpt();
-	 printf("\n====================\n");
-	 Opts.showOptArray();
-	 return 0;
-	 }
-	 */
+	int main(int argc, char **argv)
+	{
+		if (argc < 2)
+			printf("have val have member\n");
+		OPt Opts(argc, argv);
+		Opts.setoptStr("ab:cd:e");
+		Opts.setMultioptStr("help_h|add_a:|");
+		Opts.getOpt();
+		printf("\n====================\n");
+		Opts.showOptArray();
+		return 0;
+	}
+*/

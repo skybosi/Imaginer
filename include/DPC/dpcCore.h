@@ -392,7 +392,7 @@ public:
      * @param dealType  ctrlon deal way
      * @return
      */
-    virtual bool dealManager(const char* dealType, const char** argv = NULL);
+    virtual bool dealManager(int argc, char* argv[]);
     const char*  doc();
     /**
      * @brief MultiProces
@@ -402,8 +402,8 @@ public:
      * @param deep
      * @return
      */
-    ppPIXELS MultiProces(const char* dealType,ppPIXELS data,int deep = 2);
-    ppPIXELS MultiProces(const char* dealType,int deep = 2);
+    ppPIXELS MultiProces(int argc, char* argv[],ppPIXELS data,int deep = 2);
+    ppPIXELS MultiProces(int argc, char* argv[],int deep = 2);
     /**
      * @brief autoMove
      * @param x

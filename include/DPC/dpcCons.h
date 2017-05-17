@@ -103,7 +103,7 @@ public:
     dpcCons(ppPIXELS& data,int& width,int& height,std::vector<std::string> funlist,DaTp startX,DaTp endX,DaTp densityx = 100);
     dpcCons(DperMum* dp,std::string funname,DaTp startX,DaTp endX,DaTp densityx = 100);
     ~dpcCons(){}
-    virtual bool dealManager(const char* dealType);
+    virtual bool dealManager(int argc, char* argv[]);
     const char*  doc();
 private:
     bool       consPoint();
