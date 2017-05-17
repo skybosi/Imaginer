@@ -32,8 +32,9 @@ void testCore(int argc,char* argv[])
     {
         //dataPcer dpcer(bmp);
         dpcCore dpcer(bmpCore->getData(),bmpCore->getWidth(),bmpCore->getHeight());
-		const char* argvs[] = {"/home/dejian_mint/gitter/Imaginer/26big.if","A"};
-        dpcer.dealManager("r", argvs);
+        //const char* argvs[] = {"/home/dejian_mint/gitter/Imaginer/26big.if","A"};
+        //dpcer.dealManager("r", argvs);
+        dpcer.dealManager("h");
         //bmp->write(argv[2],dpcer.retnData(),dpcer.retnWidth(),dpcer.retnHeight());
         //等价于 bmp->write(argv[2],false);
     }

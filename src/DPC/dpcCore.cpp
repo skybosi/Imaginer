@@ -1333,7 +1333,14 @@ dPIXELS  dpcCore::deburrTrack(dPIXELS& boundaryline,int lgranlarty)
 bool     dpcCore::boundarysHL()
 {
         getBoundarys();
-#define AVG
+        iColor color[7] = { iColor::RED,
+                            iColor::ORANGE,
+                            iColor::YELLOW,
+                            iColor::GREEN,
+                            iColor::BLUE,
+                            iColor::INDIGO,
+                            iColor::VIOLET};
+#define RAND
 #ifdef EDGE
     ImageHL();
 #else
@@ -1406,6 +1413,9 @@ bool     dpcCore::boundarysHL()
 #ifdef  AVG
             _Data[y][x].setRGBA(0,avg*(i+2),0);
 #endif
+#ifdef RAND
+            _Data[y][x].setRGBA(color[i%7]);
+#endif
         }
 #ifdef  START
         //get first point
@@ -1422,6 +1432,7 @@ bool     dpcCore::boundarysHL()
         allData[it->ally][it->endx].setRGBA(iColor::GREEN);
     }
 #endif
+
 #endif
     return true;
 }
@@ -2766,6 +2777,22 @@ bool     dpcCore::dealManager(const char* dealType, const char** argv)
         _dp->setHeight(_height);
     }
     return true;
+}
+
+const char*  dpcCore::doc()
+{
+
+    string doc =  string("") +
+            "  -b  backGround_ize\t: get a image's part of backGround\n" +
+            "  -h  boundarysHL\t: change boundarys line to HightLight\n" +
+            "  -c  imageCutOut\t: cutout the effective part of the image\n" +
+            "  -l  locateFrame\t: HightLight the every frames\n" +
+            "  -L  locateMove\t: Move the part of image:like boundarysline or boundary\n" +
+            "  -d  boundaryer\t: just draw boundary with drawline\n" +
+            "  -p  boundary2p\t: just draw boundary point\n" +
+            "  -r: (outpath,character,mode=wb)\trecBoundarys\t: record boundarys's data to a file\n" +
+            "  -e  (inpath,character,mode=wb))\tdecBoundarys\t: encode file and get boundarys's data\n";
+    return doc.c_str();
 }
 
 ppPIXELS dpcCore::MultiProces(const char* dealType,ppPIXELS data,int deep)

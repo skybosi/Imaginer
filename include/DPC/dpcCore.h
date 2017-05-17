@@ -393,6 +393,7 @@ public:
      * @return
      */
     virtual bool dealManager(const char* dealType, const char** argv = NULL);
+    const char*  doc();
     /**
      * @brief MultiProces
      *        Multiple processing use one or more processing way

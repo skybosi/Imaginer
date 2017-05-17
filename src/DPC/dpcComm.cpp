@@ -894,5 +894,26 @@ bool     dpcComm::dealManager(const char* dealType)
     return true;
 }
 
+const char*  dpcComm::doc()
+{
+
+    string doc = string("") +
+            "  -T  imageTranspose\tTranspose a iamge\n" +
+            "  -R: (x, y, angle)\timageRevolution\t: Revolution a image\n" +
+            "  -s  imageSpherize\tSpherize a image\n" +
+            "  -Z: (scaleX, scaleY)\timageZoom\t: zoom a image\n" +
+            "  -M: [(method[UD/LR/UR])/matrix]\timageMirror\t: Mirror a image\n" +
+            "  -S: (direction(TRUE :x FALSE: y, angle)\timageShear\t: Shear a image\n" +
+            "  -m: (x, y)\timageMove\t: move a image\n" +
+            "  -C: (Red=0/Green/Blue/Pricolor)\tgetImage3Color\t: get a image's 3(R,G,B) color image\n" +
+            "  -H: (Red=0/Green/Blue/Pricolor)\tgenHistogram\t: get a image's 3(R,G,B) color Histogram\n" +
+            "  -B: (Red=0/Green/Blue/Pricolor)\tgenBardiagram\t: get a image's 3(R,G,B) color Bar diagram\n" +
+            "  -b  backGround_ize\t: get a image's part of backGround\n" +
+            "  -d: (scala)\timageDensity\t: Change a image each pixel's Idensity\n" +
+            "  -g  imageGray\t: get a image's gray image\n" +
+            "  -c  imageColorful\t: make a image to colorfull\n";
+    return doc.c_str();
+}
+
 }//namespace DPC
 }//namespace Imaginer

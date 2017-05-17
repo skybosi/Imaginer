@@ -267,6 +267,15 @@ bool   dpcCons::dealManager(const char* dealType)
     return true;
 }
 
+const char*  dpcCons::doc()
+{
+
+    string doc =  string("") +
+            "  -p  consPoint\t: get a math function point\n" +
+            "  -l  consLine\t: get a math function curve line\n";
+    return doc.c_str();
+}
+
 void     dpcCons::drawLine(int x1, int y1, int x2, int y2, int rgb,int size/* = 1*/) throw(IException)
 {
     if(size < 0)

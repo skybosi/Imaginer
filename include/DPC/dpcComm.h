@@ -21,6 +21,7 @@ public:
     dpcComm(DperMum* dp):dataPcer(dp){}
     ~dpcComm(){}
     virtual bool dealManager(const char* dealType);
+    const char*  doc();
 private://common function
     //Function: generate the image's bar diagram
     //@ imageData: will dealwith data source

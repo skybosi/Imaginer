@@ -104,6 +104,7 @@ public:
     dpcCons(DperMum* dp,std::string funname,DaTp startX,DaTp endX,DaTp densityx = 100);
     ~dpcCons(){}
     virtual bool dealManager(const char* dealType);
+    const char*  doc();
 private:
     bool       consPoint();
     bool       consLine ();
