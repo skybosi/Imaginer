@@ -31,13 +31,13 @@ cfont::~cfont()
     }
 }
 
-void  cfont::add(char chdata, int cindex) // add next point to the _chdata
+void  cfont::add(int chdata, int cindex) // add next point to the _chdata
 {
     // fixup stack overflow, because last add(0,3) maybe use _chdata[_size] position,
     // use this test can be fix this case
     if(_curpos == _size)
         return;
-    if(chdata >= 64){
+    if(abs(chdata) >= 64){
         printf("out of range !");
         return;
     }
@@ -97,12 +97,12 @@ void  cfont::encode(int ch, const vdPIXELS& fonts)
             if(py == cy)
             {
                 diff = cx - px;
-                add(char(diff), 0);
+                add(diff, 0);
             }
             else if(px == cx)
             {
                 diff = cy - py;
-                add(char(diff), 1);
+                add(diff, 1);
             }else{
                 printf("boundary data is error!");
                 return;

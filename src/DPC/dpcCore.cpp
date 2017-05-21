@@ -1314,7 +1314,7 @@ dPIXELS  dpcCore::deburrTrack(dPIXELS& boundaryline,int lgranlarty)
         curpos = boundaryline[i];
         if(curpos.isCorner())
         {
-            if(noempty && !near(curpos,rtBoundary.back(),lgranlarty))
+            if(noempty && !isnear(curpos,rtBoundary.back(),lgranlarty))
             {
                 rtBoundary.push_back(curpos);
                 ++j;
@@ -1789,7 +1789,7 @@ bool     dpcCore::drawRect(const FramePoint& FP,iColor rgb,int size/* = 1*/)
     return true;
 }
 
-inline   bool dpcCore::near(PIXELS& A,PIXELS& B,int lgranlarty)const
+inline   bool dpcCore::isnear(PIXELS& A,PIXELS& B,int lgranlarty)const
 {
     int iX = abs(A.getX() - B.getX());
     int iY = abs(A.getY() - B.getY());
@@ -2673,7 +2673,7 @@ bool     dpcCore::zoomBoundary(dPIXELS& boundary,int step,Method method/* = UR*/
     }
     return true;
 }
-void   dpcCore::recBoundarys(const char* fpo, int ch, char* mode)
+void   dpcCore::encBoundarys(const char* fpo, int ch, char* mode)
 {
 	if(NULL == fpo)
 	{
@@ -2682,6 +2682,14 @@ void   dpcCore::recBoundarys(const char* fpo, int ch, char* mode)
 	}
 	if(boundarys.empty())
 		getBoundarys();
+    std::cout << "character: " << ch << " boundary: " << std::endl;
+    for(size_t i = 0; i < boundarys.size(); ++i)
+    {
+        for(size_t j = 0; j < boundarys[i].size(); ++j)
+        {
+            printf("$%2d: x: %2d; y: %2d\n", j, boundarys[i][j].getX(), boundarys[i][j].getY());
+        }
+    }
 	iFonts  ifont(fpo, mode);
 	ifont.encoder(ch, boundarys);
 }
@@ -2698,9 +2706,16 @@ void   dpcCore::decBoundarys(const char* fpi, int ch, char* mode)
 	cfont c = ifont.decoder(ch);
 	vdPIXELS vna;
 	int ot = 0;
-	c.decode(ot, vna, 0, 0);
+    c.decode(ot, vna, 12, 4);
 	std::cout << c << std::endl;
 	std::cout << "decode cfont ..." << std::endl;
+    for(size_t i = 0; i < vna.size(); ++i)
+    {
+        for(size_t j = 0; j < vna[i].size(); ++j)
+        {
+            printf("$%2d: x: %2d; y: %2d\n", j, vna[i][j].getX(), vna[i][j].getY());
+        }
+    }
 }
 
 bool     dpcCore::dealManager(int argc, char* argv[])
@@ -2715,7 +2730,7 @@ bool     dpcCore::dealManager(int argc, char* argv[])
         printf("No option error!\n");
         return false;
     }
-    OPt opt(argc, argv, "bhcLldpr:e:", (char*)doc());
+    OPt opt(argc, argv, "bhcLldpE:D:", (char*)doc());
     if(!opt.getOpt())
     {
         printf("deal with option error!\n");
@@ -2765,12 +2780,12 @@ bool     dpcCore::dealManager(int argc, char* argv[])
             //setLGranlarty(3);
             boundary2p(boundaryFrame(boundarys));
             break;
-        case 'r':
-            cout << "  -r     recBoundarys     : record boundarys's data to a file\n";
-            recBoundarys(sop[i][1].c_str(), sop[i][2][0]);
+        case 'E':
+            cout << "  -E     encBoundarys     : record boundarys's data to a file\n";
+            encBoundarys(sop[i][1].c_str(), sop[i][2][0]);
             break;
-        case 'e':
-            cout << "  -e     decBoundarys   : encode file and get boundarys's data\n";
+        case 'D':
+            cout << "  -D     decBoundarys   : encode file and get boundarys's data\n";
             decBoundarys(sop[i][1].c_str(), sop[i][2][0]);
             break;
         default:
@@ -2799,8 +2814,8 @@ const char*  dpcCore::doc()
             "  -L  locateMove\t: Move the part of image:like boundarysline or boundary\n" +
             "  -d  boundaryer\t: just draw boundary with drawline\n" +
             "  -p  boundary2p\t: just draw boundary point\n" +
-            "  -r: (outpath,character,mode=wb)\trecBoundarys\t: record boundarys's data to a file\n" +
-            "  -e  (inpath,character,mode=wb))\tdecBoundarys\t: encode file and get boundarys's data\n";
+            "  -E: (outpath,character,mode=wb)\trecBoundarys\t: record boundarys's data to a file\n" +
+            "  -D: (inpath,character,mode=wb))\tdecBoundarys\t: encode file and get boundarys's data\n";
     return doc.c_str();
 }
 

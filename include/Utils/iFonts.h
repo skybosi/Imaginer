@@ -73,20 +73,20 @@ class cfont
 #ifndef  DEBUG
 #define XR(_X)  (0x00 | (_X))
 #define XL(_X)  (0x40 | (_X))
-#define XFMT(_v) ((_v > 0) ? (XR(_v)) : (XL(_v)))
+#define XFMT(_v) ((_v > 0) ? (XR(_v)) : (XL(-_v)))
 #define YD(_Y)  (0x80 | (_Y))
 #define YU(_Y)  (0xc0 | (_Y))
-#define YFMT(_v) ((_v > 0) ? (YD(_v)) : (YU(_v)))
+#define YFMT(_v) ((_v > 0) ? (YD(_v)) : (YU(-_v)))
 #else
 public:
-    inline char XFMT(char x)
+    inline char XFMT(int x)
     {
-        char rt = (x > 0) ? (0x00 | (x)) : (0x40 | (x));
+        char rt = (x > 0) ? (0x00 | (x)) : (0x40 | (-x));
         return rt;
     }
-    inline char YFMT(char y)
+    inline char YFMT(int y)
     {
-        char rt = (y > 0) ? (0x80 | (y)) : (0xc0 | (y));
+        char rt = (y > 0) ? (0x80 | (y)) : (0xc0 | (-y));
         return rt;
     }
 #endif
@@ -126,7 +126,7 @@ private:
     int    _curpos;	  // current add position's number
     int    _bnums;    // boundary's number
     void  init(char ox = 0, char oy = 0);  //first postion save (x, y), default init to (0, 0)
-    void  add(char chdata, int cindex = 0); // add next point to the _chdata;
+    void  add(int chdata, int cindex = 0); // add next point to the _chdata;
 public:
     int    _ch;       // save character (unicode)
     int    _size;     // the size of ch boundary data (NOTE: include separate character -128)

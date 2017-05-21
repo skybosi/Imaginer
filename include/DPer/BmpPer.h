@@ -22,9 +22,9 @@ private:
     FILE* fpo;
     int   bfOffBits;
     int   biBitCount;//图像类型，每像素位数
-    BMPALLHEAD allhead;
-    BITMAPFILEHEADER head;
-    BITMAPINFOHEADER infohead;
+    iBMPALLHEAD allhead;
+    iBITMAPFILEHEADER head;
+    iBITMAPINFOHEADER infohead;
     iColor* pColorTable;//颜色表指针
 public:
     BmpPer(int width,int height,bool grid = false);
@@ -133,7 +133,7 @@ private:
      * @param H
      * @return
      */
-    bool     setHead(BMPALLHEAD& newhead,int W,int H);
+    bool     setHead(iBMPALLHEAD& newhead,int W,int H);
     /**
      * @brief addColorTable
      *        Add or Create ColorTable if the bmp is 256 or smaller (NOT WORK)

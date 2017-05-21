@@ -332,7 +332,11 @@ struct FramePoint
     int framePoint[4];
     int bindNum;
 };
-
+#if defined(IN) | defined(OUT) | defined(NEAR)
+#undef IN
+#undef OUT
+#undef NEAR
+#endif
 //this position is first relation to second,but NOTE IN2
 enum PRs// position relation
 {
@@ -543,14 +547,14 @@ private://core function
     bool   inTrackLine(vTrackLine line,int x);
 	/**
 	 *
-     * @brief recBoundarys
+     * @brief encBoundarys
      *        record the boundarys's datas to a file, Especially record the meaningful symbol,
 	 *        example Languages, the first test is to do this.
      * @param ch    character
      * @param mode  open file mode "r/w b" default "wb+"
 	 *
 	 */
-	void   recBoundarys(const char* fpo, int ch, char* mode = "wb+");
+    void   encBoundarys(const char* fpo, int ch, char* mode = "wb+");
 	/**
 	 *
      * @brief encodeBoundarys
@@ -933,14 +937,14 @@ private://utils
      */
     bool    drawRect(const FramePoint& FP ,iColor rgb,int size = 1);
     /**
-     * @brief near
+     * @brief isnear
      *        test two PIXELS is near with LGranlarty or not
      * @param A
      * @param B
      * @param lgranlarty
      * @return <= LGranlarty true;else false
      */
-    bool    near(PIXELS& A,PIXELS& B,int lgranlarty)const;
+    bool    isnear(PIXELS& A,PIXELS& B,int lgranlarty)const;
 };
 
 }//namespace DPC

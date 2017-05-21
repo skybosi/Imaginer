@@ -74,11 +74,11 @@ bool    BmpPer::getHead()
     }
     rewind(fpi);
     //read head information for picture
-    fread(&head, sizeof(BITMAPFILEHEADER), 1, fpi);
+    fread(&head, sizeof(iBITMAPFILEHEADER), 1, fpi);
     // printf("BITMAPFILEHEADER:%ld\n",sizeof(BITMAPFILEHEADER));
     bfOffBits = head.bfOffBits;
     // 位图信息头结构变量,存放在变量head中
-    fread(&infohead, sizeof(BITMAPINFOHEADER), 1, fpi);
+    fread(&infohead, sizeof(iBITMAPINFOHEADER), 1, fpi);
     // printf("BITMAPINFOHEADER:%ld\n",sizeof(BITMAPINFOHEADER));
     // 获取图像宽、高、每像素所占位数等信息
     _width = infohead.biWidth;
@@ -228,7 +228,7 @@ bool    BmpPer::read(int width,int height,int beginX,int beginY)
  * write bmp image
  *
  */
-bool    BmpPer::setHead(BMPALLHEAD& newhead,int W,int H)
+bool    BmpPer::setHead(iBMPALLHEAD& newhead,int W,int H)
 {
     if(W <= 0 || H <= 0)
     {
@@ -435,8 +435,8 @@ bool    BmpPer::initHead(int width,int height)
     head.bfType = 0x4D42;
     //bmp类型
     //bfSize是图像文件4个组成部分之和
-    head.bfSize = sizeof(BITMAPFILEHEADER)+
-        sizeof(BITMAPINFOHEADER)+ colorTablesize +
+    head.bfSize = sizeof(iBITMAPFILEHEADER)+
+        sizeof(iBITMAPINFOHEADER)+ colorTablesize +
         lineBYTE * height;
     head.bfReserved1 = 0;
     head.bfReserved2 = 0;

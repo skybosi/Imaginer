@@ -26,7 +26,7 @@ typedef struct tagBITMAPFILEHEADER
     U16 bfReserved1;
     U16 bfReserved2;
     U32 bfOffBits;
-} BITMAPFILEHEADER;
+} iBITMAPFILEHEADER;
 
 typedef struct tagBITMAPINFOHEADER
 {
@@ -41,25 +41,25 @@ typedef struct tagBITMAPINFOHEADER
     U32 biYPelsPerMeter;
     U32 biClrUsed;
     U32 biClrImportant;
-} BITMAPINFOHEADER;
+} iBITMAPINFOHEADER;
 
 typedef struct tagBITMAPINFO
 {
-    BITMAPINFOHEADER bmiHeader;
+    iBITMAPINFOHEADER bmiHeader;
     iColor bmiColors[1];
-} BITMAPINFO;
+} iBITMAPINFO;
 
 typedef struct tagBITMAP
 {
-    BITMAPFILEHEADER bfHeader;
-    BITMAPINFO biInfo;
-} BITMAPFILE;
+    iBITMAPFILEHEADER bfHeader;
+    iBITMAPINFO biInfo;
+} iBITMAPFILE;
 
 typedef struct tagALLHEAD
 {
-    BITMAPFILEHEADER bmpHead;
-    BITMAPINFOHEADER infoHead;
-} BMPALLHEAD;
+    iBITMAPFILEHEADER bmpHead;
+    iBITMAPINFOHEADER infoHead;
+} iBMPALLHEAD;
 
 #pragma pack(pop)
 }//namespace BaseData
