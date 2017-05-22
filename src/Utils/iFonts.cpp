@@ -207,20 +207,18 @@ bool  iFonts::loader(const char* fpath, char* mode)
         //load font's file
         cfont cur;
         int ch = 0, size = 0;
+        int rsize = -1;
         char* chdata = NULL;
-        while(1){
-            fread(&ch, sizeof(int), 1, _ffont);
+        while(rsize != 0)
+        {
+            rsize = fread(&ch, sizeof(int), 1, _ffont);
             cur._ch = ch;
-            fread(&size, sizeof(int), 1, _ffont);
+            rsize = fread(&size, sizeof(int), 1, _ffont);
             cur._size = size;
             chdata = (char*)malloc(size* sizeof(char));
-            fread(chdata, size, 1, _ffont);
+            rsize = fread(chdata, 1, size, _ffont);
             cur._chdata = chdata;
             _fdata.push_back(cur);
-            if(!feof(_ffont))
-            {
-                break;
-            }
         }
     }
     return true;
@@ -231,7 +229,7 @@ void  iFonts::encoder(int ch, const cfont& fonts)
     if(NULL == _ffont) return;
     fwrite(&ch, sizeof(int), 1, _ffont);
     fwrite(&fonts._size, sizeof(int), 1, _ffont);
-    fwrite(fonts._chdata, fonts._size, 1, _ffont);
+    fwrite(fonts._chdata, 1, fonts._size, _ffont);
 }
 
 void  iFonts::encoder(int ch, const vdPIXELS& fonts)
@@ -247,7 +245,7 @@ void  iFonts::encoder(int ch, const vdPIXELS& fonts)
     inc.encode(ch, fonts);
     fwrite(&ch, sizeof(int), 1, _ffont);
     fwrite(&inc._size, sizeof(int), 1, _ffont);
-    fwrite(inc._chdata, inc._size, 1, _ffont);
+    fwrite(inc._chdata, 1, inc._size, _ffont);
 }
 
 cfont iFonts::decoder(int ch)

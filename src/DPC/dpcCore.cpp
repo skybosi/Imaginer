@@ -2675,13 +2675,13 @@ bool     dpcCore::zoomBoundary(dPIXELS& boundary,int step,Method method/* = UR*/
 }
 void   dpcCore::encBoundarys(const char* fpo, int ch, char* mode)
 {
-	if(NULL == fpo)
-	{
-		printf("file path is invalid!");
-		return;
-	}
-	if(boundarys.empty())
-		getBoundarys();
+    if(NULL == fpo)
+    {
+        printf("file path is invalid!");
+        return;
+    }
+    if(boundarys.empty())
+        getBoundarys();
     std::cout << "character: " << ch << " boundary: " << std::endl;
     for(size_t i = 0; i < boundarys.size(); ++i)
     {
@@ -2690,25 +2690,25 @@ void   dpcCore::encBoundarys(const char* fpo, int ch, char* mode)
             printf("$%2d: x: %2d; y: %2d\n", j, boundarys[i][j].getX(), boundarys[i][j].getY());
         }
     }
-	iFonts  ifont(fpo, mode);
-	ifont.encoder(ch, boundarys);
+    iFonts  ifont(fpo, mode);
+    ifont.encoder(ch, boundarys);
 }
 
 void   dpcCore::decBoundarys(const char* fpi, int ch, char* mode)
 {
-	if(NULL == fpi)
-	{
-		printf("file path is invalid!");
-		return;
-	}
-	iFonts ifont;
-	ifont.loader(fpi, mode);
-	cfont c = ifont.decoder(ch);
-	vdPIXELS vna;
-	int ot = 0;
+    if(NULL == fpi)
+    {
+        printf("file path is invalid!");
+        return;
+    }
+    iFonts ifont;
+    ifont.loader(fpi, mode);
+    cfont c = ifont.decoder(ch);
+    vdPIXELS vna;
+    int ot = 0;
     c.decode(ot, vna, 12, 4);
-	std::cout << c << std::endl;
-	std::cout << "decode cfont ..." << std::endl;
+    std::cout << c << std::endl;
+    std::cout << "decode cfont ..." << std::endl;
     for(size_t i = 0; i < vna.size(); ++i)
     {
         for(size_t j = 0; j < vna[i].size(); ++j)
@@ -2782,11 +2782,11 @@ bool     dpcCore::dealManager(int argc, char* argv[])
             break;
         case 'E':
             cout << "  -E     encBoundarys     : record boundarys's data to a file\n";
-            encBoundarys(sop[i][1].c_str(), sop[i][2][0]);
+            encBoundarys(sop[i][1].c_str(), atoi(sop[i][2].c_str()));
             break;
         case 'D':
             cout << "  -D     decBoundarys   : encode file and get boundarys's data\n";
-            decBoundarys(sop[i][1].c_str(), sop[i][2][0]);
+            decBoundarys(sop[i][1].c_str(), atoi(sop[i][2].c_str()));
             break;
         default:
             printf("Not deal with!\n");
