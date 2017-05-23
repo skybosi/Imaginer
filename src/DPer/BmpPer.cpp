@@ -17,23 +17,33 @@ BmpPer::BmpPer(int width,int height,bool grid):DperMum(""),fpi(NULL), fpo(NULL),
     dp_height = height;
 }
 
-BmpPer::BmpPer(const char *imagepath): DperMum(imagepath),fpi(NULL), fpo(NULL), pColorTable(NULL)
+BmpPer::BmpPer(const char *imagepath, char* mode, int width ,int height , bool grid): DperMum(imagepath),fpi(NULL), fpo(NULL),biBitCount(24), pColorTable(NULL)
 {
     // 二进制读方式打开指定的图像文件
-    fpi = fopen(_imagePath.c_str(), "rb");
-    if(!fpi)
+    fpi = fopen(_imagePath.c_str(), mode);
+    if(strchr(mode,'w') || strchr(mode,'a') || strchr(mode,'+'))
     {
-        printf("image file cannot find!\n");
-        exit(-1);
-    }
-    if (decoder())
-    {
-        printf("In %s decode bmp image is OK!\n",__FUNCTION__);
+        initHead(width, height);
+        _Data = PIXELS::allocator(height,width,grid);
+        _width = width;
+        _height = height;
     }
     else
     {
-        printf("In %s init bmp image is failed!\n",__FUNCTION__);
-        return;
+        if(!fpi)
+        {
+            printf("image file cannot find!\n");
+            exit(-1);
+        }
+        if (decoder())
+        {
+            printf("In %s decode bmp image is OK!\n",__FUNCTION__);
+        }
+        else
+        {
+            printf("In %s init bmp image is failed!\n",__FUNCTION__);
+            return;
+        }
     }
     cout << "create a BmpPer ...." << endl;
 }

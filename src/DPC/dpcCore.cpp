@@ -2673,7 +2673,8 @@ bool     dpcCore::zoomBoundary(dPIXELS& boundary,int step,Method method/* = UR*/
     }
     return true;
 }
-void   dpcCore::encBoundarys(const char* fpo, int ch, char* mode)
+
+void     dpcCore::encBoundarys(const char* fpo, int ch, char* mode)
 {
     if(NULL == fpo)
     {
@@ -2694,7 +2695,7 @@ void   dpcCore::encBoundarys(const char* fpo, int ch, char* mode)
     ifont.encoder(ch, boundarys);
 }
 
-void   dpcCore::decBoundarys(const char* fpi, int ch, char* mode)
+void     dpcCore::decBoundarys(const char* fpi, int ch, char* mode)
 {
     if(NULL == fpi)
     {
@@ -2713,9 +2714,12 @@ void   dpcCore::decBoundarys(const char* fpi, int ch, char* mode)
     {
         for(size_t j = 0; j < vna[i].size(); ++j)
         {
+            _Data[vna[i][j].getY()][vna[i][j].getX()].setRGBA(iColor::BLACK);
             printf("$%2d: x: %2d; y: %2d\n", j, vna[i][j].getX(), vna[i][j].getY());
         }
     }
+
+
 }
 
 bool     dpcCore::dealManager(int argc, char* argv[])

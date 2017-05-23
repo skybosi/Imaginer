@@ -38,8 +38,8 @@ public:
     PIXELS();
     PIXELS(const iColor& rgb);
     PIXELS(const iPoint& point,const iColor& rgb = iColor::WHITE);
-    PIXELS(const iColor& rgb,int x,int y = -1);
-    PIXELS(int rgba,int x = -1,int y = -1);
+    PIXELS(const iColor& rgb,int x,int y);
+    PIXELS(int x, int y, int rgba = iColor::WHITE);
     PIXELS  operator~();        //opposition the point color
     PIXELS& operator=(const PIXELS& pixel);
     PIXELS& operator=(const iPoint& pixel);

@@ -181,7 +181,7 @@ PIXELS::PIXELS():ppoint(),prgb(),rgb_threshold(128),bEdge(0),pix_P(None,0)
     //rgb_threshold  = 0;
 }
 
-PIXELS::PIXELS(int x,int y,int rgba):ppoint(x,y),prgb(rgba){}
+PIXELS::PIXELS(int x, int y, int rgba):ppoint(x,y),prgb(rgba),rgb_threshold(128),bEdge(0),pix_P(None,0){}
 
 PIXELS::PIXELS(const iColor& rgb):ppoint(),prgb(rgb),rgb_threshold(128),bEdge(0),pix_P(None,0)
 {

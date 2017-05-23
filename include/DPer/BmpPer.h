@@ -28,7 +28,7 @@ private:
     iColor* pColorTable;//颜色表指针
 public:
     BmpPer(int width,int height,bool grid = false);
-    BmpPer(const char* imagepath);
+    BmpPer(const char* imagepath, char* mode = "rb", int width = 500,int height = 500,bool grid = false);
     ~BmpPer();
     //Processing request
     /**

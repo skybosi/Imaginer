@@ -29,11 +29,11 @@ void testComm(int argc,char* argv[])
 void testCore(int argc,char* argv[])
 {
     std::cout << "Test dpcCore... " << std::endl;
-    BmpPer* bmpCore = new BmpPer(argv[0]);
+    BmpPer* bmpCore = new BmpPer(argv[0], "wb");
     if(bmpCore->read())
     {
-        //dataPcer dpcer(bmp);
-        dpcCore dpcer(bmpCore->getData(),bmpCore->getWidth(),bmpCore->getHeight());
+        dpcCore dpcer(bmpCore);
+        //dpcCore dpcer(bmpCore->getData(),bmpCore->getWidth(),bmpCore->getHeight());
         if(dpcer.dealManager(argc-2,argv+2))
         {
             //bmp->write(argv[2],dpcer.retnData(),dpcer.retnWidth(),dpcer.retnHeight());
