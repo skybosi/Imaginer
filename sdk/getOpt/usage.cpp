@@ -19,13 +19,20 @@ char* usage()
 	"-c\timageCutOut     <- NONE) \n\t- cutout the effective part of the image\n";
 	return (char*)usage.c_str();
 }
-void function(OPt::vvstr singleoptArray, OPt::mvstr multioptArray)
+
+void test(int a,int b,int c)
+{
+	printf("argv: %d %d %d", a, b, c);
+}
+void function(const OPt& opt)
 {
 	char dealType = 0;
 	size_t i = 0;
-	while (i < singleoptArray.size())
+	while (i < opt.ssize())
 	{
-		dealType = singleoptArray[i][0][1];
+		//dealType = singleoptArray[i][0][1];
+		dealType = opt.option(i);
+		OPt::vargv argv = opt.argvs(i);;
 		switch (dealType)
 		{
 			case 'T':
@@ -33,6 +40,8 @@ void function(OPt::vvstr singleoptArray, OPt::mvstr multioptArray)
 				break;
 			case 'R':
 				cout << "  -R     imageRevolution : Revolution a image\n";
+				printf("argv: %d %ld %f", (int)argv[1], (long)argv[2], (float)argv[3]);
+				test(argv[1], argv[2], argv[3]);
 				break;
 			case 's':
 				cout << "  -s     imageSpherize   : Spherize a image\n";
@@ -70,7 +79,7 @@ void function(OPt::vvstr singleoptArray, OPt::mvstr multioptArray)
 		}
 		i++;
 	}
-	if (multioptArray.empty())
+	if (! opt.msize())
 	{
 		printf("Not Multi Option deal with!\n");
 	}
