@@ -17,7 +17,7 @@ BmpPer::BmpPer(int width,int height,bool grid):DperMum(""),fpi(NULL), fpo(NULL),
     dp_height = height;
 }
 
-BmpPer::BmpPer(const char *imagepath, char* mode, int width ,int height , bool grid): DperMum(imagepath),fpi(NULL), fpo(NULL),biBitCount(24), pColorTable(NULL)
+BmpPer::BmpPer(const char *imagepath, const char* mode, int width ,int height , bool grid): DperMum(imagepath),fpi(NULL), fpo(NULL),biBitCount(24), pColorTable(NULL)
 {
     // 二进制读方式打开指定的图像文件
     fpi = fopen(_imagePath.c_str(), mode);

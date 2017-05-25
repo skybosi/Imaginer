@@ -2674,7 +2674,7 @@ bool     dpcCore::zoomBoundary(dPIXELS& boundary,int step,Method method/* = UR*/
     return true;
 }
 
-void     dpcCore::encBoundarys(const char* fpo, int ch, char* mode)
+void     dpcCore::encBoundarys(const char* fpo, int ch,const char* mode)
 {
     if(NULL == fpo)
     {
@@ -2695,7 +2695,7 @@ void     dpcCore::encBoundarys(const char* fpo, int ch, char* mode)
     ifont.encoder(ch, boundarys);
 }
 
-void     dpcCore::decBoundarys(const char* fpi, int ch, char* mode)
+void     dpcCore::decBoundarys(const char* fpi, int ch, int sx, int sy, const char* mode)
 {
     if(NULL == fpi)
     {
@@ -2703,38 +2703,34 @@ void     dpcCore::decBoundarys(const char* fpi, int ch, char* mode)
         return;
     }
     iFonts ifont;
-    ifont.loader(fpi, mode);
-    cfont c = ifont.decoder(ch);
-    vdPIXELS vna;
-    int ot = 0;
-    c.decode(ot, vna, 12, 4);
-    std::cout << c << std::endl;
-    std::cout << "decode cfont ..." << std::endl;
-    for(size_t i = 0; i < vna.size(); ++i)
+    if(ifont.loader(fpi, mode))
     {
-        for(size_t j = 0; j < vna[i].size(); ++j)
+        cfont c = ifont.decoder(ch);
+        vdPIXELS vna;
+        int ot = 0;
+        c.decode(ot, vna, sx, sy);
+        std::cout << c << std::endl;
+        std::cout << "decode cfont ..." << std::endl;
+        for(size_t i = 0; i < vna.size(); ++i)
         {
-            _Data[vna[i][j].getY()][vna[i][j].getX()].setRGBA(iColor::BLACK);
-            printf("$%2d: x: %2d; y: %2d\n", j, vna[i][j].getX(), vna[i][j].getY());
+            for(size_t j = 0; j < vna[i].size(); ++j)
+            {
+                _Data[vna[i][j].getY()][vna[i][j].getX()].setRGBA(iColor::BLACK);
+                printf("$%2d: x: %2d; y: %2d\n", j, vna[i][j].getX(), vna[i][j].getY());
+            }
         }
     }
-
-
+    return;
 }
 
-bool     dpcCore::dealManager(int argc, char* argv[])
+bool     dpcCore::dealManager(OPt& opt)
 {
     if(!_Data)
     {
         printf("cannot deal with,there are not Data!\n");
         return false;
     }
-    if(argc < 1)
-    {
-        printf("No option error!\n");
-        return false;
-    }
-    OPt opt(argc, argv, "bhcLldpE:D:", (char*)doc());
+    opt.manual((char*)doc());
     if(!opt.getOpt())
     {
         printf("deal with option error!\n");
@@ -2742,10 +2738,10 @@ bool     dpcCore::dealManager(int argc, char* argv[])
     }
     char dealType = 0;
     size_t i = 0;
-    OPt::vvstr sop = opt.getOptSarry();
-    while (i < sop.size())
+    while (i < opt.ssize())
     {
-        dealType = sop[i][0][1];
+        dealType = opt.option(i);
+        OPt::vargv argv = opt.argvs(i);
         switch (dealType)
         {
         case 'b':
@@ -2786,11 +2782,11 @@ bool     dpcCore::dealManager(int argc, char* argv[])
             break;
         case 'E':
             cout << "  -E     encBoundarys     : record boundarys's data to a file\n";
-            encBoundarys(sop[i][1].c_str(), atoi(sop[i][2].c_str()));
+            encBoundarys(argv[1], argv[2]);
             break;
         case 'D':
             cout << "  -D     decBoundarys   : encode file and get boundarys's data\n";
-            decBoundarys(sop[i][1].c_str(), atoi(sop[i][2].c_str()));
+            decBoundarys(argv[1], argv[2], _width/2, _height/2);
             break;
         default:
             printf("Not deal with!\n");
@@ -2823,14 +2819,14 @@ const char*  dpcCore::doc()
     return doc.c_str();
 }
 
-ppPIXELS dpcCore::MultiProces(int argc, char* argv[],ppPIXELS data,int deep)
+ppPIXELS dpcCore::MultiProces(OPt& opt, ppPIXELS data,int deep)
 {
     if(!data)
         return NULL;
     _Data = data;
     while(deep--)
     {
-        dealManager(argc, argv);
+        dealManager(opt);
         frames.clear();
         boundarys.clear();
         skipTables.clear();
@@ -2839,9 +2835,9 @@ ppPIXELS dpcCore::MultiProces(int argc, char* argv[],ppPIXELS data,int deep)
     return _Data;
 }
 
-ppPIXELS dpcCore::MultiProces(int argc, char* argv[],int deep)
+ppPIXELS dpcCore::MultiProces(OPt& opt,int deep)
 {
-    return MultiProces(argc, argv, _Data, deep);
+    return MultiProces(opt, _Data, deep);
 }
 
 }//namespace DPC

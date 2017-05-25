@@ -11,12 +11,13 @@ using namespace Imaginer::DPC;
 void testComm(int argc,char* argv[])
 {
     std::cout << "Test dpcComm... " << std::endl;
+    OPt opt(argc, argv, "bB:cC:d:gH:m:M:R:sS:TZ:");
     BmpPer* bmpComm = new BmpPer(argv[0]);
     if(bmpComm->read())
     {
-        //dataPcer dpcer(bmp);
-        dpcComm dpcer(bmpComm->getData(),bmpComm->getWidth(),bmpComm->getHeight());
-        if(dpcer.dealManager(argc-2,argv+2))
+        //dataPcer dpcomm(bmp);
+        dpcComm dpcomm(bmpComm->getData(),bmpComm->getWidth(),bmpComm->getHeight());
+        if(dpcomm.dealManager(opt))
         {
             //bmp->write(argv[2],dpcer.retnData(),dpcer.retnWidth(),dpcer.retnHeight());
             //等价于 bmp->write(argv[2],false);
@@ -29,12 +30,14 @@ void testComm(int argc,char* argv[])
 void testCore(int argc,char* argv[])
 {
     std::cout << "Test dpcCore... " << std::endl;
+    OPt opt(argc, argv, "bhcLldpE:D:");
+
     BmpPer* bmpCore = new BmpPer(argv[0], "wb");
     if(bmpCore->read())
     {
         dpcCore dpcer(bmpCore);
         //dpcCore dpcer(bmpCore->getData(),bmpCore->getWidth(),bmpCore->getHeight());
-        if(dpcer.dealManager(argc-2,argv+2))
+        if(dpcer.dealManager(opt))
         {
             //bmp->write(argv[2],dpcer.retnData(),dpcer.retnWidth(),dpcer.retnHeight());
             //等价于 bmp->write(argv[2],false);
@@ -55,13 +58,14 @@ void testCons(int argc,char* argv[])
     funlist.push_back("sin(x)*x");
     funlist.push_back("cos(x)*x");
     int t = 0;
+    OPt opt(argc, argv, "pl");
     /*
     while(t++ < 100)
     {
     */
         BmpPer bm(500,500);
         dpcCons dpcons(bm.getData(),bm.getWidth(),bm.getHeight(),funlist,-10+t,10+t,400);
-        if(dpcons.dealManager(argc-2,argv+2))
+        if(dpcons.dealManager(opt))
         {
             bm.write(argv[1]);
         }

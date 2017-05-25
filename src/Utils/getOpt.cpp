@@ -80,7 +80,7 @@ int OPt::isExist(string optstr)//test a optstr is exist or not
 	{
 		for (; i < _singleoptArray.size(); i++)
 		{
-			if (optstr == _singleoptArray[i][0])
+			if (_singleoptArray[i][0] == optstr)
 			{
 				return i;
 			}
@@ -91,7 +91,7 @@ int OPt::isExist(string optstr)//test a optstr is exist or not
 //analyze the mix options to simple option <= -ab > -a -b
 //@argv  : mix options string
 //@argvs : after deal with option
-bool OPt::dealMixopt(char* argv, vstr& argvs)
+bool OPt::dealMixopt(char* argv, vargv& argvs)
 {
 	if (!argv)
 		return false;
@@ -127,7 +127,7 @@ bool OPt::getSingleArgv(const char* opt, int &i)
 {
 	if (!opt)
 		return false;
-	vector < string > argvlist;
+	vector < argv > argvlist;
 	OPtState State = NOO;
 	State = isSingleOpt(opt[1]);//skip ECc -
 	argvlist.push_back(opt);
@@ -156,7 +156,7 @@ bool OPt::getSingleArgv(const char* opt, int &i)
 					_singleoptArray[Epos] = argvlist;
 					printf("\t[%s] Have argumets : ", opt);
 					for (size_t j = 1; j < argvlist.size(); j++)
-						printf("%s ", argvlist[j].c_str());
+						printf("%s ", argvlist[j].toString());
 					printf("\n");
 				}
 				else
@@ -164,7 +164,7 @@ bool OPt::getSingleArgv(const char* opt, int &i)
 					_singleoptArray.push_back(argvlist);
 					printf("\t[%s] Have argumets : ", opt);
 					for (size_t j = 1; j < argvlist.size(); j++)
-						printf("%s ", argvlist[j].c_str());
+						printf("%s ", argvlist[j].toString());
 					printf("\n");
 				}
 			}
@@ -298,18 +298,14 @@ bool OPt::getOpt()
 		printf("please set base option string!\n");
 		return false;
 	}
-	/*
-	   if (_argc < 2)
-	   {
-	   printf("please chose option!\n");
-	   return false;
-	   }
-	   int i = 1;*/
 	int i = 0;
+	bool res = true;
+	string tmp;
 	for (; i < _argc; i++)
 	{
 		if (SCMP(_argv[i]))
 		{
+			tmp = _argv[i];
 			int argvl = strlen(_argv[i]);
 			if (argvl > 1)
 			{
@@ -319,28 +315,26 @@ bool OPt::getOpt()
 					if (_moptStr.empty())
 						printf("You are not set Multi-option String!\n");
 					else
-						getMultiArgv(_argv[i], i);
+						res = getMultiArgv(_argv[i], i);
 				}
 				else if (argvl > 2)	// -ab
 				{
-					vstr mixOpt;
+					vargv mixOpt;
 					size_t j = 0;
-					bool res = true;
 					printf("Mix options :%s\n", _argv[i]);
 					if (dealMixopt(_argv[i], mixOpt))
 					{
 						for (; j < mixOpt.size(); j++)
 						{
-							res = getSingleArgv(mixOpt[j].c_str(), i);
+							res = getSingleArgv(mixOpt[j].toString(), i);
 						}
 					}
 					else
 						printf("mix option error!!\n");
-					return res;
 				}
 				else			// -a
 				{
-					return getSingleArgv(_argv[i], i);
+					res = getSingleArgv(_argv[i], i);
 				}
 			}
 			else
@@ -353,9 +347,10 @@ bool OPt::getOpt()
 		else
 		{
 			printf("[%s] Invalid argument, will be ignored...\n", _argv[i]);
+			res = false;
 		}
 	}
-	return true;
+	return res;
 }
 
 std::string OPt::OPtState2Str(OPtState State)
@@ -382,9 +377,9 @@ void OPt::showOptArray()
 	size_t i, j;
 	for (i = 0; i < _singleoptArray.size(); i++)
 	{
-		printf("[%s] Single-option\n", _singleoptArray[i][0].c_str());
+		printf("[%s] Single-option\n", _singleoptArray[i][0].toString());
 		for (j = 0; j < _singleoptArray[i].size(); j++)
-			printf("\t%s\t", _singleoptArray[i][j].c_str());
+			printf("\t%s\t", _singleoptArray[i][j].toString());
 		printf("\n");
 	}
 	for (i = 0; i < _multioptArray.size(); i++)
@@ -394,20 +389,12 @@ void OPt::showOptArray()
 		{
 			printf("\t[%s] Multi-option's argumet: ", _multioptArray[i].longOpt.c_str());
 			for (j = 0; j < _multioptArray[i].margv.size(); j++)
-				printf("%s\t", _multioptArray[i].margv[j].c_str());
+				printf("%s\t", _multioptArray[i].margv[j].toString());
 		}
 		printf("\n");
 	}
 }
 
-void OPt::handle(FUNCTION handler)
-{
-	if(! getOpt())
-	{
-		printf("deal with the option error!");
-	}
-	handler(_singleoptArray,_multioptArray);
-}
 /*
 	int main(int argc, char **argv)
 	{

@@ -68,7 +68,7 @@ protected:
         initData(_dp->getData(),_dp->getWidth(),_dp->getHeight());
     }
     virtual ~dataPcer(){printf("out the dataPcer\n");}
-    virtual bool dealManager(int argc, char* argv[]){ return false;}
+    virtual bool dealManager(OPt& opt){ return false;}
 
 public://return all Data
     int      retnWidth();

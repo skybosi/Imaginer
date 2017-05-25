@@ -396,7 +396,7 @@ public:
      * @param dealType  ctrlon deal way
      * @return
      */
-    virtual bool dealManager(int argc, char* argv[]);
+    virtual bool dealManager(OPt& opt);
     const char*  doc();
     /**
      * @brief MultiProces
@@ -406,8 +406,8 @@ public:
      * @param deep
      * @return
      */
-    ppPIXELS MultiProces(int argc, char* argv[],ppPIXELS data,int deep = 2);
-    ppPIXELS MultiProces(int argc, char* argv[],int deep = 2);
+    ppPIXELS MultiProces(OPt& opt, ppPIXELS data,int deep = 2);
+    ppPIXELS MultiProces(OPt& opt,int deep = 2);
     /**
      * @brief autoMove
      * @param x
@@ -554,7 +554,7 @@ private://core function
      * @param mode  open file mode "r/w b" default "wb+"
 	 *
 	 */
-    void   encBoundarys(const char* fpo, int ch, char* mode = "ab");
+    void   encBoundarys(const char* fpo, int ch,const char* mode = "ab");
 	/**
 	 *
      * @brief encodeBoundarys
@@ -564,7 +564,7 @@ private://core function
      * @param mode  open file mode "r/w b", default "rb"
 	 *
 	 */
-	void   decBoundarys(const char* fpi, int ch, char* mode = "rb");
+    void   decBoundarys(const char* fpi, int ch, int sx, int sy, const char* mode = "rb");
 private://core function get message
     /**
      * @brief setBackground

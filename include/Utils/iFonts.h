@@ -138,7 +138,7 @@ class iFonts
 {
 public:
     iFonts();
-    iFonts(const char* fpath, char* mode = "wb+");
+    iFonts(const char* fpath, const char* mode = "wb+");
     ~iFonts();
 public:
     /**
@@ -146,7 +146,7 @@ public:
      * @param fpath
      * @return
      */
-    bool  loader(const char* fpath, char* mode = "rb");
+    bool  loader(const char* fpath, const char* mode = "rb");
     /**
      * @brief encoder : write cfont structure data into a font's file
      * @param ch

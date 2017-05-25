@@ -227,19 +227,13 @@ inline iPoint dpcCons::fitter(float x,float y,const int& color)
 #undef RESET
 }
 
-bool   dpcCons::dealManager(int argc, char* argv[])
+bool   dpcCons::dealManager(OPt& opt)
 {
     if(!_Data)
     {
         printf("cannot deal with,there are not Data!\n");
         return false;
     }
-    if(argc < 1)
-    {
-        printf("No option error!\n");
-        return false;
-    }
-    OPt opt(argc, argv, "pl", (char*)doc());
     if(!opt.getOpt())
     {
         printf("deal with option error!\n");
@@ -247,10 +241,10 @@ bool   dpcCons::dealManager(int argc, char* argv[])
     }
     char dealType = 0;
     size_t i = 0;
-    OPt::vvstr sop = opt.getOptSarry();
-    while (i < sop.size())
+    while (i < opt.ssize())
     {
-        dealType = sop[i][0][1];
+        dealType = opt.option(i);
+        OPt::vargv argv = opt.argvs(i);
         switch (dealType)
         {
         case 'p':

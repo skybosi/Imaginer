@@ -171,6 +171,8 @@ bool OPt::getSingleArgv(const char* opt, int &i)
 			else
 			{
 				printf("\tSingle-Option [%s] need argument, but Not gived...This option will be ignored\n", opt);
+				printf("%s", manual());
+				return false;
 			}
 			break;
 		case NnA:
@@ -188,6 +190,8 @@ bool OPt::getSingleArgv(const char* opt, int &i)
 			break;
 		case InA:
 			printf("\t[%s] Invalid option, will be ignored...\n", opt);
+			printf("%s", manual());
+			return false;
 			break;
 		default:
 			break;
@@ -336,6 +340,8 @@ bool OPt::getOpt()
 			else
 			{
 				printf("[%s] dafault help option!\n", _argv[i]);
+				printf("%s", manual());
+				return false;
 			}
 		}
 		else
@@ -389,13 +395,14 @@ void OPt::showOptArray()
 	}
 }
 
-void OPt::handle(FUNCTION handler)
+bool OPt::handle(void* fun)
 {
+    FUNCTION switcher = (FUNCTION) fun;
 	if(! getOpt())
 	{
 		printf("deal with the option error!");
 	}
-	handler(*this);
+    return switcher(*this);
 }
 /*
 	 int main(int argc, char **argv)

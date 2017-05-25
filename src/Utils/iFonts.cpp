@@ -176,7 +176,7 @@ void  cfont::init(char ox, char oy)  //first postion save (x, y), default init t
 
 iFonts::iFonts():_ffont(NULL){}
 
-iFonts::iFonts(const char* fpath, char* mode)
+iFonts::iFonts(const char* fpath,const char* mode)
 {
     if(NULL != fpath){
         if(!(_ffont = fopen(fpath, mode))){
@@ -196,13 +196,14 @@ iFonts::~iFonts()
     }
 }
 
-bool  iFonts::loader(const char* fpath, char* mode)
+bool  iFonts::loader(const char* fpath, const char* mode)
 {
     if(NULL == fpath)
         return false;
     if(NULL == _ffont){
         if(!(_ffont = fopen(fpath, mode))){
             printf("open file: %s is failed!", fpath);
+            return false;
         }
         //load font's file
         cfont cur;

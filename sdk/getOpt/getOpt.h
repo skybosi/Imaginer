@@ -4,8 +4,8 @@
 #include <iostream>
 #include <string>
 #include <vector>
-#include <stdlib.h>
 #include <string.h>
+#include <stdlib.h>
 using namespace std;
 class OPt
 {
@@ -120,7 +120,7 @@ enum OPtState
 		};
 typedef vector < MultiOption > mvargv;//record Mulit option's arguments
 typedef vector < vargv > vvargv; //record single option's arguments
-typedef void (*FUNCTION) (const OPt& );
+typedef bool (*FUNCTION) (const OPt& );
 	public:
 		OPt(int argc, char **argv, char* mans = NULL) :_argc(argc), _argv(argv),_man(mans) { }
 		OPt(int argc, char **argv, string optstr, char* mans = NULL) :_argc(argc), _argv(argv), _optStr(optstr), _man(mans) { }
@@ -132,7 +132,7 @@ typedef void (*FUNCTION) (const OPt& );
 		bool setMultioptStr(const char *Multioptstr);
 		vvargv getOptSarry() { return _singleoptArray; }
 		mvargv getOptMarry() { return _multioptArray; }
-		void handle(FUNCTION handler);
+        bool handle(void* fun);
 		void manual(char* mans) { _man = mans;}
 		char* manual() { return _man;}
 	public:

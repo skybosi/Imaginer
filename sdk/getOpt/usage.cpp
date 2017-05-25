@@ -93,8 +93,12 @@ int main(int argc, char **argv)
 	{
 		printf("%s", Opts.manual());
 	}
+	if(! Opts.getOpt())
+	{
+		printf("getOpt is Error!!!");
+	}
 	//Opts.setMultioptStr("help_h|add_a:|");
-	Opts.handle(function);
+	function(Opts);
 	printf("\n====================\n");
 	Opts.showOptArray();
 	return 0;

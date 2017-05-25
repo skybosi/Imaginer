@@ -798,31 +798,25 @@ bool     dpcComm::genBardiagram(ppPIXELS& allData,colorType color,bool isOverWri
     return true;
 }
 
-bool     dpcComm::dealManager(int argc, char* argv[])
+bool     dpcComm::dealManager(OPt& opt)
 {
     if(!_Data)
     {
         printf("cannot deal with,there are not Data!\n");
         return false;
     }
-    if(argc < 1)
-    {
-        printf("No option error!\n");
-        return false;
-    }
-    iTransfMatrix m(D2R(-45),iTransfMatrix::ROTATEz);
-    OPt opt(argc, argv, "bB:cC:d:gH:m:M:R:sS:TZ:", (char*)doc());
     if(!opt.getOpt())
     {
         printf("deal with option error!\n");
         return false;
     }
+    iTransfMatrix m(D2R(-45),iTransfMatrix::ROTATEz);
     char dealType = 0;
     size_t i = 0;
-    OPt::vvstr sop = opt.getOptSarry();
-    while (i < sop.size())
+    while (i < opt.ssize())
     {
-        dealType = sop[i][0][1];
+        dealType = opt.option(i);
+        OPt::vargv argv = opt.argvs(i);
         switch (dealType)
         {
         case 'T':
@@ -831,7 +825,7 @@ bool     dpcComm::dealManager(int argc, char* argv[])
             break;
         case 'R':
             cout << "  -R     imageRevolution : Revolution a image\n";
-            revolution(_Data,OPt::toint(sop[i][1]), OPt::toint(sop[i][2]), OPt::tofd(sop[i][3]));
+            revolution(_Data, argv[1], argv[2], argv[3]);
             break;
         case 's':
             cout << "  -s     imageSpherize   : Spherize a image\n";
@@ -839,7 +833,7 @@ bool     dpcComm::dealManager(int argc, char* argv[])
             break;
         case 'Z':
             cout << "  -Z     imageZoom       : zoom a image\n";
-            zoom(_Data, OPt::tofd(sop[i][1]), OPt::tofd(sop[i][2]));
+            zoom(_Data, argv[1], argv[2]);
             break;
         case 'M':
             cout << "  -M     imageMirror     : Mirror a image\n";
@@ -848,19 +842,19 @@ bool     dpcComm::dealManager(int argc, char* argv[])
             break;
         case 'S':
             cout << "  -S     imageShear      : Shear a image\n";
-            shear(_Data,OPt::tobool(sop[i][1]), OPt::tofd(sop[i][2]));
+            shear(_Data, argv[1], argv[2]);
             break;
         case 'm':
             cout << "  -m     imageMove       : move a image\n";
-            move(_Data,OPt::toint(sop[i][1]), OPt::tofd(sop[i][2]));
+            move(_Data, argv[1], argv[2]);
             break;
         case 'C':
             cout << "  -C     getImage3Color  : get a image's 3(R,G,B) color image\n";
-            getImage3Color(_Data,(colorType)OPt::toint(sop[i][1]));
+            getImage3Color(_Data,(colorType)(int)argv[1]);
             break;
         case 'H':
             cout << "  -H     genHistogram    : get a image's 3(R,G,B) color Histogram\n";
-            genBardiagram(_Data,(colorType)OPt::toint(sop[i][1]));
+            genBardiagram(_Data, (colorType)(int)argv[1]);
             //genBardiagram(_Data,Green);
             //genBardiagram(_Data,Blue);
             //genBardiagram(_Data);
@@ -868,7 +862,7 @@ bool     dpcComm::dealManager(int argc, char* argv[])
         case 'B':
             cout << "  -B     genBardiagram   : get a image's 3(R,G,B) color Bar diagram\n";
             //genHistogram(_Data,Red);
-            genHistogram(_Data,(colorType)OPt::toint(sop[i][1]));
+            genHistogram(_Data, (colorType)(int)argv[1]);
             //genHistogram(_Data,Blue);
             //genHistogram(_Data);
             break;
@@ -878,7 +872,7 @@ bool     dpcComm::dealManager(int argc, char* argv[])
             break;
         case 'd':
             cout << "  -d     imageDensity     : Change a image each pixel's Idensity\n";
-            density(_Data,OPt::tofd(sop[i][1]));
+            density(_Data, argv[1]);
             break;
         case 'g':
             cout << "  -g     imageGray        : get a image's gray image\n";
