@@ -22,7 +22,7 @@
 
 <img src="./doc/sample/old3.bmp" width="250"/>TO<img src="./doc/sample/change.gif" width="250"/>
 
-### This sample show a character 'W', draw use [fonts file](./doc/fonts.ifs)
+### This sample show a character 'W', draw use [fonts file](./doc/fonts/fonts.ifs)
 
 <img src="./doc/sample/W.bmp" width="100"/>
 

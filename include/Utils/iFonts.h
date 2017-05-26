@@ -122,6 +122,8 @@ public:
         }
         return out;
     }
+    bool  empty() {return _size == 0;}
+    bool  size()  {return _size;}
 private:
     int    _curpos;	  // current add position's number
     int    _bnums;    // boundary's number

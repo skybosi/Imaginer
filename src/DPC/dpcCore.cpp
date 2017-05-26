@@ -2699,13 +2699,17 @@ void     dpcCore::decBoundarys(const char* fpi, int ch, int sx, int sy, const ch
 {
     if(NULL == fpi)
     {
-        printf("file path is invalid!");
+        printf("file path is invalid!\n");
         return;
     }
     iFonts ifont;
     if(ifont.loader(fpi, mode))
     {
         cfont c = ifont.decoder(ch);
+        if(c.empty()){
+            printf("fonts no this character!\n");
+            return;
+        }
         vdPIXELS vna;
         int ot = 0;
         c.decode(ot, vna, sx, sy);
