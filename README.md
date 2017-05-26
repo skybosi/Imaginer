@@ -10,24 +10,27 @@
 
 ## some example show here
 
-<img src="./doc/old1.bmp" width="250"/>TO<img src="./doc/result.bmp" width="250"/>
+<img src="./doc/sample/old1.bmp" width="250"/>TO<img src="./doc/sample/result.bmp" width="250"/>
 
-<img src="./doc/old3.bmp" width="250"/>TO<img src="./doc/result3.bmp" width="250"/>
+<img src="./doc/sample/old3.bmp" width="250"/>TO<img src="./doc/sample/result3.bmp" width="250"/>
 
-<img src="./doc/old4.bmp" width="250"/>TO<img src="./doc/result4.bmp" width="250"/>
+<img src="./doc/sample/old4.bmp" width="250"/>TO<img src="./doc/sample/result4.bmp" width="250"/>
 
-<img src="./doc/old2.bmp" width="250"/>TO<img src="./doc/result2.bmp" width="250"/>
+<img src="./doc/sample/old2.bmp" width="250"/>TO<img src="./doc/sample/result2.bmp" width="250"/>
 
 ### This a  gif for show a image that after several iterative processing
 
-<img src="./doc/old3.bmp" width="250"/>TO<img src="./doc/change.gif" width="250"/>
+<img src="./doc/sample/old3.bmp" width="250"/>TO<img src="./doc/sample/change.gif" width="250"/>
 
+### This sample show a character 'W', draw use [fonts file](./doc/fonts.ifs)
+
+<img src="./doc/sample/W.bmp" width="100"/>
 
 ## This is first Code refactoring for Imaginer
 
 ### Here
 
-<img src="./doc/Imaginer recode.bmp" width="500" />
+<img src="./doc/help/Imaginer recode.bmp" width="500" />
 
 ## Android
 

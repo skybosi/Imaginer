@@ -137,7 +137,7 @@ iColor  iColor::operator/(const float& scale)
 
 iColor iColor::operator~()
 {
-    return iColor(iColor::WHITE-*this);
+    return iColor(iColor(iColor::WHITE)-*this);
 }
 
 iColor::operator bool()const
