@@ -2726,8 +2726,8 @@ void     dpcCore::decBoundarys(const char* fpi, char* chs, int sx, int sy, const
                 printf("fonts no this character!\n");
                 continue;
             }
-            csx = sx + ceil((frame - c._frames[0])/2);
-            csy = sy + ceil((frame - c._frames[1])/2);
+            csx = sx + ceil((frame - c.width())/2);
+            csy = sy + ceil((frame - c.height())/2);
             sx += frame;
             //sy += frame;
             c.decode(ot, vna, csx, csy);

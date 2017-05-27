@@ -8,15 +8,19 @@ namespace Utils
 
 cfont::cfont():_curpos(0),_bnums(0),_size(0),_chdata(NULL)
 {
-    _frames[0] = 0;  // width
-    _frames[1] = 0;  // height
+    _frames[0] = INT_MAX;  // top
+    _frames[1] = INT_MIN;  // buttom
+    _frames[2] = INT_MAX;  // left
+    _frames[3] = INT_MIN;  // right
 }
 
 cfont::cfont(int ch, int size, int nums):_curpos(0),_bnums(nums),_ch(ch),_size(size)
 {
     _chdata = (char*)malloc(size * sizeof(char));
-    _frames[0] = 0;  // width
-    _frames[1] = 0;  // height
+    _frames[0] = INT_MAX;  // top
+    _frames[1] = INT_MIN;  // buttom
+    _frames[2] = INT_MAX;  // left
+    _frames[3] = INT_MIN;  // right
 }
 
 cfont::cfont(const cfont& cf)
@@ -27,7 +31,7 @@ cfont::cfont(const cfont& cf)
     _size  = cf._size;
     _chdata = (char*)malloc(_size * sizeof(char));
     memcpy(_chdata, cf._chdata, _size);
-    memcpy(_frames, cf._frames, 2*sizeof(int));
+    memcpy(_frames, cf._frames, 4*sizeof(int));
 }
 
 cfont::~cfont()
@@ -86,9 +90,8 @@ void  cfont::encode(int ch, const vdPIXELS& fonts)
      * cy: current point's x
      *
      */
-    int top = INT_MAX, buttom = INT_MIN,left = INT_MAX,right = INT_MIN;
     int ox = fonts[0][0].getX(), oy = fonts[0][0].getY();
-    XEDGE(left,right,ox);XEDGE(top,buttom,oy);
+    XRANGE(0);YRANGE(0);
     int sx = ox, sy = oy;
     int px = sx, py = sy;
     int cx = 0, cy = 0;
@@ -103,7 +106,7 @@ void  cfont::encode(int ch, const vdPIXELS& fonts)
         for(size_t j = 1; j < size; ++j)
         {
             cx = fonts[i][j].getX(), cy = fonts[i][j].getY();
-            XEDGE(left,right,cx);XEDGE(top,buttom,cy);
+            XRANGE(cx - ox);YRANGE(cy - oy);
             if(py == cy)
             {
                 diff = cx - px;
@@ -122,8 +125,6 @@ void  cfont::encode(int ch, const vdPIXELS& fonts)
         // add boundary separator character
         add(0, 3);  // note: 0 is no use,just for call function add
     }
-    _frames[0] = right - left;
-    _frames[1] = buttom - top;
     //delete last add(0, 3)
     //_curpos--;  //see add function first test
 }
@@ -229,7 +230,7 @@ bool  iFonts::loader(const char* fpath, const char* mode)
             rsize = fread(&cur._ch, sizeof(int), 1, _ffont);
             BREAK(rsize);
             //curpos = ftell(_ffont);
-            rsize = fread(&cur._frames, 2*sizeof(int), 1, _ffont);
+            rsize = fread(&cur._frames, 4*sizeof(int), 1, _ffont);
             BREAK(rsize);
             //curpos = ftell(_ffont);
             rsize = fread(&size, sizeof(int), 1, _ffont);
@@ -251,7 +252,7 @@ void  iFonts::encoder(int ch, const cfont& fonts)
 {
     if(NULL == _ffont) return;
     fwrite(&ch, sizeof(int), 1, _ffont);
-    fwrite(&fonts._frames, 2*sizeof(int), 1, _ffont);
+    fwrite(&fonts._frames, 4*sizeof(int), 1, _ffont);
     fwrite(&fonts._size, sizeof(int), 1, _ffont);
     fwrite(fonts._chdata, 1, fonts._size, _ffont);
 }
@@ -260,7 +261,7 @@ void  iFonts::encoder(char* chs, const cfont& fonts)
 {
     if(NULL == _ffont) return;
     fwrite(&chs, sizeof(int), 1, _ffont);
-    fwrite(&fonts._frames, 2*sizeof(int), 1, _ffont);
+    fwrite(&fonts._frames, 4*sizeof(int), 1, _ffont);
     fwrite(&fonts._size, sizeof(int), 1, _ffont);
     fwrite(fonts._chdata, 1, fonts._size, _ffont);
 }
@@ -277,7 +278,7 @@ void  iFonts::encoder(int ch, const vdPIXELS& fonts)
     cfont inc(ch,  size, fonts.size());
     inc.encode(ch, fonts);
     fwrite(&ch, sizeof(int), 1, _ffont);
-    fwrite(&inc._frames, 2*sizeof(int), 1, _ffont);
+    fwrite(&inc._frames, 4*sizeof(int), 1, _ffont);
     fwrite(&inc._size, sizeof(int), 1, _ffont);
     fwrite(inc._chdata, 1, inc._size, _ffont);
 }
@@ -298,7 +299,7 @@ void  iFonts::encoder(char* chs, const vdPIXELS& fonts)
     inc.encode(ch, fonts);
     fwrite(&ch, sizeof(int), 1, _ffont);
     //fwrite(&chs, sizeof(int), 1, _ffont);
-    fwrite(&inc._frames, 2*sizeof(int), 1, _ffont);
+    fwrite(&inc._frames, 4*sizeof(int), 1, _ffont);
     fwrite(&inc._size, sizeof(int), 1, _ffont);
     fwrite(inc._chdata, 1, inc._size, _ffont);
 }

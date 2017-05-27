@@ -90,15 +90,15 @@ public:
         char rt = (y > 0) ? (0x80 | (y)) : (0xc0 | (-y));
         return rt;
     }
-    inline void XEDGE(int& left,int& right,int x)
+    inline void XRANGE(int x)
     {
-        left = (x < left) ? x : left;
-        right = (x > right) ? x : right;
+        _frames[2] = (x < _frames[2]) ? x : _frames[2];
+        _frames[3] = (x > _frames[3]) ? x : _frames[3];
     }
-    inline void YEDGE(int& top,int& buttom, int y)
+    inline void YRANGE(int y)
     {
-        top = (y < top) ? y : top;
-        buttom = (y > buttom) ? y : buttom;
+        _frames[0] = (y < _frames[0]) ? y : _frames[0];
+        _frames[1] = (y > _frames[1]) ? y : _frames[1];
     }
 #endif
 public:
@@ -128,15 +128,18 @@ public:
         int size = c._size + 1 - 2 * c._bnums;
         out << "cfont data size: " << size << "\n"
             << "cfont frame: "
-            << c._frames[0] << " " << c._frames[1] << "\n";
+            << c._frames[0] << " " << c._frames[1] << " "
+            << c._frames[2] << " " << c._frames[3] << "\n";
         for(int i = 0; i < size; ++i)
         {
             out << hex << "0x" << (unsigned int)(unsigned char)(c._chdata[i]) << " ";
         }
         return out << dec << std::endl;
     }
-    bool  empty() {return _size == 0;}
-    bool  size()  {return _size;}
+    inline bool  empty() {return _size == 0;}
+    inline bool  size()  {return _size;}
+    inline int   width() {return (_frames[3] - _frames[2]);}
+    inline int   height() {return (_frames[1] - _frames[0]);}
 private:
     int    _curpos;	  // current add position's number
     int    _bnums;    // boundary's number
@@ -146,7 +149,7 @@ public:
     int    _ch;       // save character (unicode)
     int    _size;     // the size of ch boundary data (NOTE: include separate character -128)
     char*  _chdata;   // multi-boundary 's relative position data, each boundary is separate with -128
-    int    _frames[2];// save the data's top/buttom - left/right position
+    int    _frames[4];// save the data's top/buttom - left/right position
 };
 
 typedef vector<cfont> vfont;
