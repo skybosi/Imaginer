@@ -2674,7 +2674,7 @@ bool     dpcCore::zoomBoundary(dPIXELS& boundary,int step,Method method/* = UR*/
     return true;
 }
 
-void     dpcCore::encBoundarys(const char* fpo, int ch,const char* mode)
+void     dpcCore::encBoundarys(const char* fpo, char* chs, const char* mode)
 {
     if(NULL == fpo)
     {
@@ -2683,16 +2683,17 @@ void     dpcCore::encBoundarys(const char* fpo, int ch,const char* mode)
     }
     if(boundarys.empty())
         getBoundarys();
-    std::cout << "character: " << ch << " boundary: " << std::endl;
+    /*
+    std::cout << "character: " << chs << " boundary: " << std::endl;
     for(size_t i = 0; i < boundarys.size(); ++i)
     {
         for(size_t j = 0; j < boundarys[i].size(); ++j)
         {
             printf("$%2d: x: %2d; y: %2d\n", j, boundarys[i][j].getX(), boundarys[i][j].getY());
         }
-    }
+    }*/
     iFonts  ifont(fpo, mode);
-    ifont.encoder(ch, boundarys);
+    ifont.encoder(chs, boundarys);
 }
 
 void     dpcCore::decBoundarys(const char* fpi, char* chs, int sx, int sy, const char* mode)
@@ -2707,12 +2708,20 @@ void     dpcCore::decBoundarys(const char* fpi, char* chs, int sx, int sy, const
     {
         vdPIXELS vna;
         int ot = 0;
+        int ch = 0;
         size_t size = strlen(chs);
+        int metasize = strlen("中");
         int frame = 28; //default frame size: 28px
         int csx = 0, csy = 0;
-        for(int k = 0; k < size; ++k)
+        for(int k = 0; k < size;)
         {
-            cfont c = ifont.decoder(chs[k]);
+            if(chs[k] & 0x80) {
+                memcpy(&ch, chs+k, metasize);
+                k += metasize;
+            }else{
+                ch = chs[k++];
+            }
+            cfont c = ifont.decoder(ch);
             if(c.empty()){
                 printf("fonts no this character!\n");
                 continue;

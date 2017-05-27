@@ -554,7 +554,7 @@ private://core function
      * @param mode  open file mode "r/w b" default "wb+"
 	 *
 	 */
-    void   encBoundarys(const char* fpo, int ch,const char* mode = "ab");
+    void   encBoundarys(const char* fpo, char* chs,const char* mode = "ab");
 	/**
 	 *
      * @brief encodeBoundarys

@@ -210,6 +210,7 @@ iFonts::~iFonts()
 
 bool  iFonts::loader(const char* fpath, const char* mode)
 {
+#define BREAK(_V) if(!_V){break;}
     if(NULL == fpath)
         return false;
     if(NULL == _ffont){
@@ -222,14 +223,23 @@ bool  iFonts::loader(const char* fpath, const char* mode)
         int size = 0;
         int rsize = -1;
         char* chdata = NULL;
-        while(rsize != 0)
+        //int curpos = 0;
+        while(1)
         {
             rsize = fread(&cur._ch, sizeof(int), 1, _ffont);
+            BREAK(rsize);
+            //curpos = ftell(_ffont);
             rsize = fread(&cur._frames, 2*sizeof(int), 1, _ffont);
+            BREAK(rsize);
+            //curpos = ftell(_ffont);
             rsize = fread(&size, sizeof(int), 1, _ffont);
+            BREAK(rsize);
+            //curpos = ftell(_ffont);
             cur._size = size;
             chdata = (char*)malloc(size* sizeof(char));
             rsize = fread(chdata, 1, size, _ffont);
+            BREAK(rsize);
+            //curpos = ftell(_ffont);
             cur._chdata = chdata;
             _fdata.push_back(cur);
         }
@@ -241,6 +251,15 @@ void  iFonts::encoder(int ch, const cfont& fonts)
 {
     if(NULL == _ffont) return;
     fwrite(&ch, sizeof(int), 1, _ffont);
+    fwrite(&fonts._frames, 2*sizeof(int), 1, _ffont);
+    fwrite(&fonts._size, sizeof(int), 1, _ffont);
+    fwrite(fonts._chdata, 1, fonts._size, _ffont);
+}
+
+void  iFonts::encoder(char* chs, const cfont& fonts)
+{
+    if(NULL == _ffont) return;
+    fwrite(&chs, sizeof(int), 1, _ffont);
     fwrite(&fonts._frames, 2*sizeof(int), 1, _ffont);
     fwrite(&fonts._size, sizeof(int), 1, _ffont);
     fwrite(fonts._chdata, 1, fonts._size, _ffont);
@@ -258,6 +277,27 @@ void  iFonts::encoder(int ch, const vdPIXELS& fonts)
     cfont inc(ch,  size, fonts.size());
     inc.encode(ch, fonts);
     fwrite(&ch, sizeof(int), 1, _ffont);
+    fwrite(&inc._frames, 2*sizeof(int), 1, _ffont);
+    fwrite(&inc._size, sizeof(int), 1, _ffont);
+    fwrite(inc._chdata, 1, inc._size, _ffont);
+}
+
+void  iFonts::encoder(char* chs, const vdPIXELS& fonts)
+{
+    if(NULL == _ffont) return;
+    int vsize = 0;
+    for(size_t i = 0; i < fonts.size(); ++i)
+    {
+        vsize += (fonts[i].size() + 1);
+    }
+    int  size = vsize + fonts.size() - 1;
+    std::cout << "encoder: " << chs << std::endl;
+    int ch = 0;
+    memcpy(&ch, chs, strlen(chs));
+    cfont inc(ch,  size, fonts.size());
+    inc.encode(ch, fonts);
+    fwrite(&ch, sizeof(int), 1, _ffont);
+    //fwrite(&chs, sizeof(int), 1, _ffont);
     fwrite(&inc._frames, 2*sizeof(int), 1, _ffont);
     fwrite(&inc._size, sizeof(int), 1, _ffont);
     fwrite(inc._chdata, 1, inc._size, _ffont);

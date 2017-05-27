@@ -169,12 +169,14 @@ public:
      * @param fonts
      */
     void  encoder(int ch, const cfont& fonts);
+    void  encoder(char* chs, const cfont& fonts);
     /**
      * @brief encoder
      * @param ch
      * @param fonts
      */
     void  encoder(int ch, const vdPIXELS& fonts);
+    void  encoder(char* chs, const vdPIXELS& fonts);
     /**
      * @brief decoder : read _fdata and get a character's boundary's data
      * @param ch
