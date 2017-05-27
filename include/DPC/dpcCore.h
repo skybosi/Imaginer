@@ -564,7 +564,7 @@ private://core function
      * @param mode  open file mode "r/w b", default "rb"
 	 *
 	 */
-    void   decBoundarys(const char* fpi, int ch, int sx, int sy, const char* mode = "rb");
+    void   decBoundarys(const char* fpi, char* chs, int sx, int sy, const char* mode = "rb");
 private://core function get message
     /**
      * @brief setBackground

@@ -2695,7 +2695,7 @@ void     dpcCore::encBoundarys(const char* fpo, int ch,const char* mode)
     ifont.encoder(ch, boundarys);
 }
 
-void     dpcCore::decBoundarys(const char* fpi, int ch, int sx, int sy, const char* mode)
+void     dpcCore::decBoundarys(const char* fpi, char* chs, int sx, int sy, const char* mode)
 {
     if(NULL == fpi)
     {
@@ -2705,22 +2705,27 @@ void     dpcCore::decBoundarys(const char* fpi, int ch, int sx, int sy, const ch
     iFonts ifont;
     if(ifont.loader(fpi, mode))
     {
-        cfont c = ifont.decoder(ch);
-        if(c.empty()){
-            printf("fonts no this character!\n");
-            return;
-        }
+
         vdPIXELS vna;
         int ot = 0;
-        c.decode(ot, vna, sx, sy);
-        std::cout << c << std::endl;
-        std::cout << "decode cfont ..." << std::endl;
-        for(size_t i = 0; i < vna.size(); ++i)
+        size_t size = strlen(chs);
+        for(int k = 0; k < size; ++k)
         {
-            for(size_t j = 0; j < vna[i].size(); ++j)
+            cfont c = ifont.decoder(chs[k]);
+            if(c.empty()){
+                printf("fonts no this character!\n");
+                continue;
+            }
+            c.decode(ot, vna, sx + k * 20, sy);
+            std::cout << c << std::endl;
+            std::cout << "decode cfont ..." << std::endl;
+            for(size_t i = 0; i < vna.size(); ++i)
             {
-                _Data[vna[i][j].getY()][vna[i][j].getX()].setRGBA(iColor::BLACK);
-                printf("$%2d: x: %2d; y: %2d\n", j, vna[i][j].getX(), vna[i][j].getY());
+                for(size_t j = 0; j < vna[i].size(); ++j)
+                {
+                    _Data[vna[i][j].getY()][vna[i][j].getX()].setRGBA(iColor::BLACK);
+                    printf("$%2d: x: %2d; y: %2d\n", j, vna[i][j].getX(), vna[i][j].getY());
+                }
             }
         }
     }
