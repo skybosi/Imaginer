@@ -2705,10 +2705,11 @@ void     dpcCore::decBoundarys(const char* fpi, char* chs, int sx, int sy, const
     iFonts ifont;
     if(ifont.loader(fpi, mode))
     {
-
         vdPIXELS vna;
         int ot = 0;
         size_t size = strlen(chs);
+        int frame = 28; //default frame size: 28px
+        int csx = 0, csy = 0;
         for(int k = 0; k < size; ++k)
         {
             cfont c = ifont.decoder(chs[k]);
@@ -2716,7 +2717,11 @@ void     dpcCore::decBoundarys(const char* fpi, char* chs, int sx, int sy, const
                 printf("fonts no this character!\n");
                 continue;
             }
-            c.decode(ot, vna, sx + k * 20, sy);
+            csx = sx + ceil((frame - c._frames[0])/2);
+            csy = sy + ceil((frame - c._frames[1])/2);
+            sx += frame;
+            //sy += frame;
+            c.decode(ot, vna, csx, csy);
             std::cout << c << std::endl;
             std::cout << "decode cfont ..." << std::endl;
             for(size_t i = 0; i < vna.size(); ++i)
@@ -2724,7 +2729,7 @@ void     dpcCore::decBoundarys(const char* fpi, char* chs, int sx, int sy, const
                 for(size_t j = 0; j < vna[i].size(); ++j)
                 {
                     _Data[vna[i][j].getY()][vna[i][j].getX()].setRGBA(iColor::BLACK);
-                    printf("$%2d: x: %2d; y: %2d\n", j, vna[i][j].getX(), vna[i][j].getY());
+                    //printf("$%2d: x: %2d; y: %2d\n", j, vna[i][j].getX(), vna[i][j].getY());
                 }
             }
         }
@@ -2795,7 +2800,7 @@ bool     dpcCore::dealManager(OPt& opt)
             break;
         case 'D':
             cout << "  -D     decBoundarys   : encode file and get boundarys's data\n";
-            decBoundarys(argv[1], argv[2], _width/2, _height/2);
+            decBoundarys(argv[1], argv[2], 28, 28);
             break;
         default:
             printf("Not deal with!\n");
