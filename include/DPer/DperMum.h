@@ -61,6 +61,8 @@ public:
     virtual ppPIXELS&   getData(){return dp_Data;}
     virtual int&        getWidth(){return dp_width;}
     virtual int&        getHeight(){return dp_height;}
+    virtual int&        Width(){return _width;}
+    virtual int&        Height(){return _height;}
     virtual void        setData(ppPIXELS data){dp_Data = data;}
     virtual void        setWidth(int width){dp_width = width;}
     virtual void        setHeight(int height){dp_height = height;}

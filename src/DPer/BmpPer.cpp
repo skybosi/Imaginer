@@ -289,7 +289,7 @@ bool    BmpPer::write(const char *outpath,bool isOverWrite)
         default:
             break;
     }
-    printf("write OK!\n");
+    //printf("write OK!\n");
     return true;
 }
 
