@@ -32,7 +32,7 @@ void testCore(int argc,char* argv[])
     std::cout << "Test dpcCore... " << std::endl;
     OPt opt(argc, argv, "bhcLldpE:D:");
 
-    BmpPer* bmpCore = new BmpPer(argv[0]);  // wb user to create a new image
+    BmpPer* bmpCore = new BmpPer(argv[0], "wb");  // wb user to create a new image
     if(bmpCore->read())
     {
         dpcCore dpcer(bmpCore);

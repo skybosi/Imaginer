@@ -2715,7 +2715,17 @@ void     dpcCore::decBoundarys(const char* fpi, char* chs, int sx, int sy, const
         int csx = 0, csy = 0;
         for(int k = 0; k < size;)
         {
-            if(chs[k] & 0x80) {
+            if(chs[k] == ' ')  // blank is half of frame number
+            {
+                sx += frame/2;k++;
+                continue;
+            }
+            if(chs[k] == '\t') // tabs is frame number size
+            {
+                sx += frame;k++;
+                continue;
+            }
+            if(chs[k] & 0x80) {// Used to test whether it is Chinese, but it may not work properly
                 memcpy(&ch, chs+k, metasize);
                 k += metasize;
             }else{
@@ -2726,8 +2736,8 @@ void     dpcCore::decBoundarys(const char* fpi, char* chs, int sx, int sy, const
                 printf("fonts no this character!\n");
                 continue;
             }
-            csx = sx + ceil((frame - c.width())/2);
-            csy = sy + ceil((frame - c.height())/2);
+            csx = sx + (frame - c.width())/2 - c._frames[2];
+            csy = sy + (frame - c.height())/2 - c._frames[0];
             sx += frame;
             //sy += frame;
             c.decode(ot, vna, csx, csy);

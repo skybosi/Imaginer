@@ -294,7 +294,11 @@ void  iFonts::encoder(char* chs, const vdPIXELS& fonts)
     int  size = vsize + fonts.size() - 1;
     std::cout << "encoder: " << chs << std::endl;
     int ch = 0;
-    memcpy(&ch, chs, strlen(chs));
+    if(chs[0] & 0x80){ // Used to test whether it is Chinese, but it may not work properly
+        memcpy(&ch, chs, strlen(chs));
+    }else{
+        ch = atoi(chs);
+    }
     cfont inc(ch,  size, fonts.size());
     inc.encode(ch, fonts);
     fwrite(&ch, sizeof(int), 1, _ffont);
