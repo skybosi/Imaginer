@@ -22,9 +22,16 @@
 
 <img src="./doc/sample/old3.bmp" width="250"/>TO<img src="./doc/sample/change.gif" width="250"/>
 
-### This sample show a character 'W', draw use [fonts file](./doc/fonts/fonts.ifs)
+### This sample show a character 'W', draw use [fonts.ifs file](./doc/fonts/fonts.ifs)
 
 <img src="./doc/sample/W.bmp" width="100"/>
+
+### This sample show Chinese words, draw use [words.ifs file](./doc/fonts/words.ifs)
+
+<img src="./doc/sample/chinese.bmp"/>
+
+- NOTE:  [fonts.ifs](./doc/fonts/fonts.ifs) record some ascii code character, [chinese.ifs](./doc/fonts/chinese.ifs) 
+record 2994 chinese words; [words.ifs](./doc/fonts/words.ifs) is sum of [chinese.ifs](./doc/fonts/chinese.ifs)  and [fonts.ifs](./doc/fonts/fonts.ifs) ,
 
 ## This is first Code refactoring for Imaginer
 

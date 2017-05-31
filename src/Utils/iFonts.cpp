@@ -9,7 +9,7 @@ namespace Utils
 cfont::cfont():_curpos(0),_bnums(0),_size(0),_chdata(NULL)
 {
     _frames[0] = INT_MAX;  // top
-    _frames[1] = INT_MIN;  // buttom
+    _frames[1] = INT_MIN;  // bottom
     _frames[2] = INT_MAX;  // left
     _frames[3] = INT_MIN;  // right
 }
@@ -18,7 +18,7 @@ cfont::cfont(int ch, int size, int nums):_curpos(0),_bnums(nums),_ch(ch),_size(s
 {
     _chdata = (char*)malloc(size * sizeof(char));
     _frames[0] = INT_MAX;  // top
-    _frames[1] = INT_MIN;  // buttom
+    _frames[1] = INT_MIN;  // bottom
     _frames[2] = INT_MAX;  // left
     _frames[3] = INT_MIN;  // right
 }

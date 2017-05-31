@@ -149,7 +149,7 @@ public:
     int    _ch;       // save character (unicode)
     int    _size;     // the size of ch boundary data (NOTE: include separate character -128)
     char*  _chdata;   // multi-boundary 's relative position data, each boundary is separate with -128
-    int    _frames[4];// save the data's top/buttom - left/right position
+    int    _frames[4];// save the data's top/bottom - left/right position
 };
 
 typedef vector<cfont> vfont;
