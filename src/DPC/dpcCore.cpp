@@ -2713,6 +2713,7 @@ void     dpcCore::decBoundarys(const char* fpi, char* chs, int sx, int sy, const
         int metasize = strlen("中");
         int frame = 28; //default frame size: 28px
         int csx = 0, csy = 0;
+        int osx = sx, osy = sy; //old sx sy
         for(int k = 0; k < size;)
         {
             if(chs[k] == ' ')  // blank is half of frame number
@@ -2739,6 +2740,10 @@ void     dpcCore::decBoundarys(const char* fpi, char* chs, int sx, int sy, const
             csx = sx + (frame - c.width())/2 - c._frames[2];
             csy = sy + (frame - c.height())/2 - c._frames[0];
             sx += frame;
+            if(sx >= 0.9 * _width){
+                sy += frame + 2;
+                sx = osx;
+            }
             //sy += frame;
             c.decode(ot, vna, csx, csy);
             std::cout << c << std::endl;
