@@ -395,15 +395,6 @@ void OPt::showOptArray()
 	}
 }
 
-bool OPt::handle(void* fun)
-{
-    FUNCTION switcher = (FUNCTION) fun;
-	if(! getOpt())
-	{
-		printf("deal with the option error!");
-	}
-    return switcher(*this);
-}
 /*
 	 int main(int argc, char **argv)
 	 {

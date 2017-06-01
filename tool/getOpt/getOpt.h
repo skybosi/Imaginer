@@ -46,7 +46,10 @@ public:
 			int   _type;
 		public:
 			argv():_opt(NULL), _type(-1){}
-			argv(const char* arg):_opt((char*)arg) { _type = type(arg); }
+            argv(const char* arg){
+                _opt = (char*)arg;
+                _type = type(arg);
+            }
 			argv(const string& arg){argv(arg.c_str());}
 			argv(const argv& rhs)
 			{
@@ -55,8 +58,9 @@ public:
 				strcpy(_opt, rhs._opt);
 			}
 			inline operator char()   { return _opt[0];}
-			inline operator int()    { return atoi(_opt);}
-			inline operator long()   { return atol(_opt);}
+            inline operator bool()   { return atoi(_opt) != 0;}
+            inline operator int()    { return (strlen(_opt) == 1) ? _opt[0] : atoi(_opt);}
+            inline operator long()   { return (strlen(_opt) == 1) ? _opt[0] : atol(_opt);}
 			inline operator float()  { return atof(_opt);}
 			inline operator double() { return atof(_opt);}
 			inline operator char*()  { return _opt;}
@@ -122,17 +126,16 @@ typedef vector < MultiOption > mvargv;//record Mulit option's arguments
 typedef vector < vargv > vvargv; //record single option's arguments
 typedef bool (*FUNCTION) (const OPt& );
 	public:
-		OPt(int argc, char **argv, char* mans = NULL) :_argc(argc), _argv(argv),_man(mans) { }
-		OPt(int argc, char **argv, string optstr, char* mans = NULL) :_argc(argc), _argv(argv), _optStr(optstr), _man(mans) { }
-		virtual ~OPt() {}
+        OPt(int argc, char **argv, const char* optstr) :_argc(argc), _argv(argv),_optStr(optstr) { }
+        OPt(int argc, char **argv, const char* optstr, char* mans) :_argc(argc), _argv(argv), _optStr(optstr), _man(mans) { }
+        virtual ~OPt() {}
 	public:
-		bool getOpt();
+        bool getOpt();
 		void showOptArray();
 		bool setoptStr(const char *optstr);
 		bool setMultioptStr(const char *Multioptstr);
 		vvargv getOptSarry() { return _singleoptArray; }
 		mvargv getOptMarry() { return _multioptArray; }
-        bool handle(void* fun);
 		void manual(char* mans) { _man = mans;}
 		char* manual() { return _man;}
 	public:
