@@ -46,21 +46,31 @@ public:
 			int   _type;
 		public:
 			argv():_opt(NULL), _type(-1){}
-            argv(const char* arg){
-                _opt = (char*)arg;
-                _type = type(arg);
-            }
+			argv(const char* arg){
+				//_opt = (char*)arg;
+				_opt = (char*) malloc((strlen(arg)+1) * sizeof(char));
+				strcpy(_opt, arg);
+				_type = type(arg);
+			}
 			argv(const string& arg){argv(arg.c_str());}
 			argv(const argv& rhs)
 			{
 				_type = rhs._type;
-				_opt = (char*) malloc(strlen(rhs._opt) * sizeof(char));
+				_opt = (char*) malloc((strlen(rhs._opt)+1) * sizeof(char));
 				strcpy(_opt, rhs._opt);
 			}
+			~argv()
+			{
+				if(_opt)
+				{
+					free(_opt);
+					_opt = NULL;
+				}
+			}
 			inline operator char()   { return _opt[0];}
-            inline operator bool()   { return atoi(_opt) != 0;}
-            inline operator int()    { return (strlen(_opt) == 1) ? _opt[0] : atoi(_opt);}
-            inline operator long()   { return (strlen(_opt) == 1) ? _opt[0] : atol(_opt);}
+			inline operator bool()   { return atoi(_opt) != 0;}
+			inline operator int()    { return (strlen(_opt) == 1) ? _opt[0] : atoi(_opt);}
+			inline operator long()   { return (strlen(_opt) == 1) ? _opt[0] : atol(_opt);}
 			inline operator float()  { return atof(_opt);}
 			inline operator double() { return atof(_opt);}
 			inline operator char*()  { return _opt;}
@@ -70,7 +80,9 @@ public:
 			{
 				if(this != &rhs)
 				{
-					_opt  = rhs._opt;
+					//_opt  = rhs._opt;
+					_opt = (char*) malloc((strlen(rhs._opt)+1) * sizeof(char));
+					strcpy(_opt, rhs._opt);
 					_type = rhs._type;
 				}
 				return *this;

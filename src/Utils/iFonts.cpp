@@ -220,13 +220,13 @@ bool  iFonts::loader(const char* fpath, const char* mode)
             return false;
         }
         //load font's file
-        cfont cur;
         int size = 0;
         int rsize = -1;
         char* chdata = NULL;
         //int curpos = 0;
         while(1)
         {
+			cfont cur;
             rsize = fread(&cur._ch, sizeof(int), 1, _ffont);
             BREAK(rsize);
             //curpos = ftell(_ffont);
