@@ -363,7 +363,7 @@ inline bool iRpn::digit(char c)
 
 char   iRpn::getFun(std::string funname)
 {
-    char index = -1;
+    unsigned char index = -1;
     while(++index < FUNNUM && funname != _sysfunS[index]);
     return (index - 128);
 }

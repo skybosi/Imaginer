@@ -805,7 +805,7 @@ bool     dpcComm::dealManager(OPt& opt)
         printf("cannot deal with,there are not Data!\n");
         return false;
     }
-    if(!opt.getOpt())
+    if(opt.empty() && !opt.getOpt())
     {
         printf("deal with option error!\n");
         return false;

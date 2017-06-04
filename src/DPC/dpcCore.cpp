@@ -2714,7 +2714,7 @@ void     dpcCore::decBoundarys(const char* fpi, char* chs, int sx, int sy, const
         int frame = 28; //default frame size: 28px
         int csx = 0, csy = 0;
         int osx = sx, osy = sy; //old sx sy
-        for(int k = 0; k < size;)
+        for(size_t k = 0; k < size;)
         {
             if(chs[k] == ' ')  // blank is half of frame number
             {
@@ -2769,7 +2769,7 @@ bool     dpcCore::dealManager(OPt& opt)
         return false;
     }
     opt.manual((char*)doc());
-    if(!opt.getOpt())
+    if(opt.empty() && !opt.getOpt())
     {
         printf("deal with option error!\n");
         return false;

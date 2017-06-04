@@ -20,6 +20,16 @@ bool OPt::setMultioptStr(const char *Multioptstr)
 	return true;
 }
 
+// overwrite the old option and arguments
+bool OPt::update(const char *optstr, const char *Multioptstr)
+{
+	_optStr = optstr;
+	_singleoptArray.clear();
+	_moptStr = Multioptstr;
+	_multioptArray.clear();
+	return true;
+}
+
 // The single-option char is right or not
 //@ optChar : option characters,To determine whether in _optStr
 OPt::OPtState OPt::isSingleOpt(char optChar)
@@ -191,7 +201,7 @@ bool OPt::getSingleArgv(const char* opt, int &i)
 		case InA:
 			printf("\t[%s] Invalid option, will be ignored...\n", opt);
 			printf("%s", manual());
-			return false;
+			//return false;
 			break;
 		default:
 			break;
@@ -347,7 +357,7 @@ bool OPt::getOpt()
 		else
 		{
 			printf("[%s] Invalid argument, will be ignored...\n", _argv[i]);
-			res = false;
+			//res = false;
 		}
 	}
 	return res;
@@ -393,6 +403,34 @@ void OPt::showOptArray()
 		}
 		printf("\n");
 	}
+}
+
+OPt::vargv OPt::opt2Sargvs(const char opt)
+{
+	vargv vg;
+	size_t size = _singleoptArray.size();
+	for(size_t i = 0; i < size; ++i)
+	{
+		if(opt == option(i))
+		{
+			size_t asize = _singleoptArray[i].size();
+			for(size_t j = 1; j < asize; ++j){
+				vg.push_back(_singleoptArray[i][j]);
+			}
+			break;
+		}
+	}
+	return vg;
+}
+
+OPt::mvargv OPt::opt2Margvs(const char* opt)
+{
+	mvargv mvg;
+	if(!opt)
+	{
+		// TODO
+	}
+	return mvg;
 }
 
 /*

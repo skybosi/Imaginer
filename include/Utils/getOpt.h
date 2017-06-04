@@ -150,11 +150,15 @@ typedef bool (*FUNCTION) (const OPt& );
 		mvargv getOptMarry() { return _multioptArray; }
 		void manual(char* mans) { _man = mans;}
 		char* manual() { return _man;}
+		vargv opt2Sargvs(const char opt);
+		mvargv opt2Margvs(const char* opt);
 	public:
 		inline char  option(int i)const { return _singleoptArray.at(i).at(0)[1];}
 		inline vargv argvs(int i)const { return _singleoptArray.at(i);}
 		inline size_t ssize()const {return _singleoptArray.size();}
 		inline size_t msize()const {return _multioptArray.size();}
+		bool update(const char *optstr, const char *Multioptstr = NULL);
+		inline bool   empty()const {return (!_singleoptArray.size()) && (!_multioptArray.size());}
 	private:
 		OPtState isSingleOpt(char optChar);
 		OPtState isMultiOpt(string optstr, int& pos);

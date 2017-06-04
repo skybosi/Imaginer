@@ -11,8 +11,23 @@ using namespace Imaginer::DPC;
 void testComm(int argc,char* argv[])
 {
     std::cout << "Test dpcComm... " << std::endl;
-    OPt opt(argc, argv, "bB:cC:d:gH:m:M:R:sS:TZ:");
-    BmpPer* bmpComm = new BmpPer(argv[0]);
+    OPt opt(argc, argv, "i:o:bB:cC:d:gH:m:M:R:sS:TZ:");
+    if(!opt.getOpt())
+    {
+        printf("deal with option error!\n");
+        return;
+    }
+    OPt::vargv vg = opt.opt2Sargvs('i');
+    char* in = NULL;
+    char* out = NULL;
+    if(!vg.empty()){
+        in = vg[0];
+    }
+    vg = opt.opt2Sargvs('o');
+    if(!vg.empty()){
+        out = vg[0];
+    }
+    BmpPer* bmpComm = new BmpPer(in);
     if(bmpComm->read())
     {
         //dataPcer dpcomm(bmp);
@@ -21,7 +36,7 @@ void testComm(int argc,char* argv[])
         {
             //bmp->write(argv[2],dpcer.retnData(),dpcer.retnWidth(),dpcer.retnHeight());
             //等价于 bmp->write(argv[2],false);
-            bmpComm->write(argv[1],true);
+            bmpComm->write(out,true);
         }
 	}
     delete bmpComm;
@@ -30,9 +45,28 @@ void testComm(int argc,char* argv[])
 void testCore(int argc,char* argv[])
 {
     std::cout << "Test dpcCore... " << std::endl;
-    OPt opt(argc, argv, "bhcLldpE:D:");
-
-    BmpPer* bmpCore = new BmpPer(argv[0], "wb");  // wb user to create a new image
+    OPt opt(argc, argv, "i:o:bhcLldpE:D:");
+    if(!opt.getOpt())
+    {
+        printf("deal with option error!\n");
+        return;
+    }
+    OPt::vargv vg = opt.opt2Sargvs('i');
+    char* in = NULL;
+    char* out = NULL;
+    if(!vg.empty()){
+        in = vg[0];
+    }
+    vg = opt.opt2Sargvs('o');
+    if(!vg.empty()){
+        out = vg[0];
+    }
+    BmpPer* bmpCore;
+    if(!in){
+        bmpCore = new BmpPer(out, "wb");  // wb user to create a new image
+    }else{
+        bmpCore = new BmpPer(in);  // wb user to create a new image
+    }
     if(bmpCore->read())
     {
         dpcCore dpcer(bmpCore);
@@ -41,7 +75,7 @@ void testCore(int argc,char* argv[])
         {
             //bmp->write(argv[2],dpcer.retnData(),dpcer.retnWidth(),dpcer.retnHeight());
             //等价于 bmp->write(argv[2],false);
-            bmpCore->write(argv[1],true);
+            bmpCore->write(out,true);
         }
     }
     delete bmpCore;
@@ -49,6 +83,22 @@ void testCore(int argc,char* argv[])
 
 void testCons(int argc,char* argv[])
 {
+    OPt opt(argc, argv, "i:o:pl");
+    if(!opt.getOpt())
+    {
+        printf("deal with option error!\n");
+        return;
+    }
+    OPt::vargv vg = opt.opt2Sargvs('i');
+    char* in = NULL;
+    char* out = NULL;
+    if(!vg.empty()){
+        in = vg[0];
+    }
+    vg = opt.opt2Sargvs('o');
+    if(!vg.empty()){
+        out = vg[0];
+    }
     std::cout << "Test dpcCons... " << std::endl;
     std::vector<std::string> funlist;
     funlist.push_back("x + y");
@@ -58,7 +108,6 @@ void testCons(int argc,char* argv[])
     funlist.push_back("sin(x)*x");
     funlist.push_back("cos(x)*x");
     int t = 0;
-    OPt opt(argc, argv, "pl");
     /*
     while(t++ < 100)
     {
@@ -67,7 +116,7 @@ void testCons(int argc,char* argv[])
         dpcCons dpcons(bm.getData(),bm.getWidth(),bm.getHeight(),funlist,-10+t,10+t,400);
         if(dpcons.dealManager(opt))
         {
-            bm.write(argv[1]);
+            bm.write(out);
         }
     /*
       std::cout << "sleep ..." << std::endl;
@@ -112,7 +161,7 @@ int main(int argc,char* argv[])
         printf("case 0 : %s 用来处理普通的图像操作(平移，镜像...)\n","COMM");
         printf("case 1 : %s 用来处理core的图像操作(边界获取)\n","CORE");
         printf("case 2 : %s 用来构造一些数学函数图像的操作(sin(x))\n","CONS");
-        printf("case 3 : %s 用来大图片切割","cut picture");
+        printf("case 3 : %s 用来大图片切割\n","cut picture");
         printf("NOTE   : 由于正在开发相关命令行处理操作没有完善，相关功能请参考代码\n");
         return 0;
     }
