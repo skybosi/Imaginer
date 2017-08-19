@@ -397,7 +397,7 @@ public:
      * @return
      */
     virtual bool dealManager(OPt& opt);
-    const char*  doc();
+    static const char*  doc();
     /**
      * @brief MultiProces
      *        Multiple processing use one or more processing way

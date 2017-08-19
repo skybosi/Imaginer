@@ -21,12 +21,26 @@ public:
         SCALE,
         ROTATEx,
         ROTATEy,
-        ROTATEz
+        ROTATEz,
+        MIRRORx,
+        MIRRORy,
+        MIRRORz,
+        MIRRORxy,
+        MIRRORyz,
+        MIRRORzx,
+        PERSPECTIVE,
+        SHEARxy,
+        SHEARxz,
+        SHEARyx,
+        SHEARyz,
+        SHEARzx,
+        SHEARzy
     }TsMd;
 public:
     iTransfMatrix();
     iTransfMatrix(const MeT& tx,const MeT& ty,const MeT& tz,TsMd tm = MOVE);
     iTransfMatrix(const MeT& theta,TsMd tm = ROTATEx);
+    iTransfMatrix(TsMd tm = MIRRORx);
 public:
 };
 

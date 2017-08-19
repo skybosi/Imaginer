@@ -68,9 +68,9 @@ public:
 				}
 			}
 			inline operator char()   { return _opt[0];}
-			inline operator bool()   { return atoi(_opt) != 0;}
-			inline operator int()    { return (strlen(_opt) == 1) ? _opt[0] : atoi(_opt);}
-			inline operator long()   { return (strlen(_opt) == 1) ? _opt[0] : atol(_opt);}
+			inline operator bool()   { return atoi(_opt) != 0 || !strcmpi(_opt,"false");}
+			inline operator int()    { return /*(strlen(_opt) == 1) ? _opt[0] : */atoi(_opt);}
+			inline operator long()   { return /*(strlen(_opt) == 1) ? _opt[0] : */atol(_opt);}
 			inline operator float()  { return atof(_opt);}
 			inline operator double() { return atof(_opt);}
 			inline operator char*()  { return _opt;}
@@ -125,7 +125,7 @@ enum OPtState
 	NOO     //Unknown Error
 };
 #define ECc "-"    // Explain characters
-#define SCMP(_V) (!strncmp(_V,ECc,1))
+#define SCMP(_V) (!strncmp(_V,ECc,1) && (_V[1] < '0' || _V[1] > '9'))
 	public:
         typedef vector < argv > vargv;
 		struct MultiOption
@@ -139,7 +139,7 @@ typedef vector < vargv > vvargv; //record single option's arguments
 typedef bool (*FUNCTION) (const OPt& );
 	public:
         OPt(int argc, char **argv, const char* optstr) :_argc(argc), _argv(argv),_optStr(optstr) { }
-        OPt(int argc, char **argv, const char* optstr, char* mans) :_argc(argc), _argv(argv), _optStr(optstr), _man(mans) { }
+        OPt(int argc, char **argv, const char* optstr, const char* mans) :_argc(argc), _argv(argv), _optStr(optstr), _man(mans) { }
         virtual ~OPt() {}
 	public:
         bool getOpt();
@@ -149,7 +149,7 @@ typedef bool (*FUNCTION) (const OPt& );
 		vvargv getOptSarry() { return _singleoptArray; }
 		mvargv getOptMarry() { return _multioptArray; }
 		void manual(char* mans) { _man = mans;}
-		char* manual() { return _man;}
+		const char* manual() { return _man;}
 		vargv opt2Sargvs(const char opt);
 		mvargv opt2Margvs(const char* opt);
 	public:
@@ -174,7 +174,7 @@ typedef bool (*FUNCTION) (const OPt& );
 		string _moptStr;
 		vvargv  _singleoptArray; //single option's arguments
 		mvargv  _multioptArray;//Mulit option's arguments
-		char*  _man;
+		const char*  _man;
 };
 
 #endif 

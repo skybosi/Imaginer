@@ -13,6 +13,7 @@ namespace Imaginer
 {
 namespace DPC
 {
+#define MATRIX 1
 
 class dpcComm :public dataPcer
 {
@@ -21,7 +22,7 @@ public:
     dpcComm(DperMum* dp):dataPcer(dp){}
     ~dpcComm(){}
     virtual bool dealManager(OPt& opt);
-    const char*  doc();
+    static const char*  doc();
 private://common function
     //Function: generate the image's bar diagram
     //@ imageData: will dealwith data source
@@ -98,6 +99,15 @@ private://common function
      * @return
      */
     ppPIXELS change(ppPIXELS& allData,const iMatrix& method);
+    /**
+     * @brief perspective
+     * @param allData
+     * @param p
+     * @param q
+     * @param r
+     * @return
+     */
+    ppPIXELS perspective(ppPIXELS& allData,float p,float q,float r);
 };
 
 }//namespace DPC

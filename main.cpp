@@ -11,7 +11,7 @@ using namespace Imaginer::DPC;
 void testComm(int argc,char* argv[])
 {
     std::cout << "Test dpcComm... " << std::endl;
-    OPt opt(argc, argv, "i:o:bB:cC:d:gH:m:M:R:sS:TZ:");
+    OPt opt(argc, argv, "i:o:bB:cC:d:gH:m:M:R:sS:TZ:p:",dpcComm::doc());
     if(!opt.getOpt())
     {
         printf("deal with option error!\n");
@@ -23,9 +23,9 @@ void testComm(int argc,char* argv[])
     if(!vg.empty()){
         in = vg[0];
     }
-    vg = opt.opt2Sargvs('o');
-    if(!vg.empty()){
-        out = vg[0];
+    OPt::vargv vg1 = opt.opt2Sargvs('o');
+    if(!vg1.empty()){
+        out = vg1[0];
     }
     BmpPer* bmpComm = new BmpPer(in);
     if(bmpComm->read())
@@ -45,7 +45,7 @@ void testComm(int argc,char* argv[])
 void testCore(int argc,char* argv[])
 {
     std::cout << "Test dpcCore... " << std::endl;
-    OPt opt(argc, argv, "i:o:bhcLldpE:D:");
+    OPt opt(argc, argv, "i:o:bhcLldpE:D:",dpcCore::doc());
     if(!opt.getOpt())
     {
         printf("deal with option error!\n");
@@ -83,7 +83,7 @@ void testCore(int argc,char* argv[])
 
 void testCons(int argc,char* argv[])
 {
-    OPt opt(argc, argv, "i:o:pl");
+    OPt opt(argc, argv, "i:o:pl",dpcCons::doc());
     if(!opt.getOpt())
     {
         printf("deal with option error!\n");

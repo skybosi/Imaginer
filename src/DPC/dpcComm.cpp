@@ -51,9 +51,21 @@ ppPIXELS dpcComm::colorful(ppPIXELS& allData)
     return allData;
 }
 
-
 ppPIXELS dpcComm::shear(ppPIXELS& allData,bool XorY,float angle)
 {
+#if MATRIX
+/*
+    SHEARxy: X shear (+)left (-)right
+    SHEARyx: Y shear (+)up (-)down
+*/
+    if (XorY){
+        iTransfMatrix m(angle,iTransfMatrix::SHEARxy);
+        this->change(allData,m);
+    }else{
+        iTransfMatrix m(angle,iTransfMatrix::SHEARyx);
+        this->change(allData,m);
+    }
+#else
     angle = D2R(angle);
     ppPIXELS tmpData = NULL;
     int nx, ny;
@@ -71,15 +83,14 @@ ppPIXELS dpcComm::shear(ppPIXELS& allData,bool XorY,float angle)
     {
         for (int x = 0; x < W; x++)
         {
-            /*
+/*
             //right up
             nx = XorY ? x + tan(angle) * (y - _height): x;
             ny = XorY ? y : y + tan(angle) * (x - _width);
             //left down
             nx = XorY ? x - tan(angle) * (y - _height)- _height: x;
             ny = XorY ? y : y - tan(angle) * (x - _width) - _width;
-            */
-
+*/
             nx = (XorY ? ((angle > 0) ? (x + tan(angle) * (y - _height)) : (x + tan(angle) * (y - _height) - _height)) : x);
             ny = (XorY ? y : ((angle > 0) ? (y + tan(angle) * (x - _width)) :(y + tan(angle) * (x - _width) - _width)));
             //printf("Shear after: x:%d nx:%d y:%d ny:%d\n",x,nx,y,ny);
@@ -94,11 +105,23 @@ ppPIXELS dpcComm::shear(ppPIXELS& allData,bool XorY,float angle)
     _height= H;
     //reset _height and _width
     delData(tmpData, _height);
+#endif
     return allData;
 }
 
 ppPIXELS dpcComm::revolution(ppPIXELS& allData,int px,int py,float angle)
 {
+#if MATRIX
+    if (px != 0 || px != 0){
+        iTransfMatrix mM(-px,-py,0,iTransfMatrix::MOVE);
+        iTransfMatrix mR(D2R(angle),iTransfMatrix::ROTATEz);
+        iTransfMatrix mM2(px,py,0,iTransfMatrix::MOVE);
+        this->change(allData,mM*mR*mM2);
+    }else{
+        iTransfMatrix mR(D2R(angle),iTransfMatrix::ROTATEz);
+        this->change(allData,mR);
+    }
+#else
     angle = D2R(angle);
     ppPIXELS tmpData;
     int nx, ny;
@@ -118,6 +141,7 @@ ppPIXELS dpcComm::revolution(ppPIXELS& allData,int px,int py,float angle)
         }
     }
     delData(tmpData, _height);
+#endif
     return allData;
 }
 
@@ -224,8 +248,6 @@ ppPIXELS dpcComm::spherize(ppPIXELS& allData,float radius)
 
 ppPIXELS dpcComm::zoom(ppPIXELS& allData,float scalex, float scaley)
 {
-    ppPIXELS tmpData;
-    dataDup2(allData, tmpData);
     if (scalex <= 0.0 || scaley <= 0.0)
     {
         printf("In %s zoom number is <= 0 ,is wrong",__FUNCTION__);
@@ -233,6 +255,12 @@ ppPIXELS dpcComm::zoom(ppPIXELS& allData,float scalex, float scaley)
     }
     else
     {
+#if MATRIX
+        iTransfMatrix m(scalex,scaley,1,iTransfMatrix::SCALE);
+        this->change(allData,m);
+#else
+        ppPIXELS tmpData;
+        dataDup2(allData, tmpData);
         int W = _width * scalex;
         int H = _height * scaley;
         delData(allData, _height);	// free
@@ -262,6 +290,7 @@ ppPIXELS dpcComm::zoom(ppPIXELS& allData,float scalex, float scaley)
         _width = W;
         _height = H;
         //reset _height and _width
+#endif
     }
     return allData;
 }
@@ -305,6 +334,10 @@ ppPIXELS dpcComm::getImage3Color(ppPIXELS& allData,colorType color)
 
 ppPIXELS dpcComm::mirror(ppPIXELS& allData,Method method)
 {
+#ifdef MATRIX
+    iTransfMatrix m(iTransfMatrix::MIRRORx);
+    this->change(allData,m);
+#else
     ppPIXELS tmpData;
     dataDup2(allData, tmpData);
     switch (method)
@@ -347,6 +380,14 @@ ppPIXELS dpcComm::mirror(ppPIXELS& allData,Method method)
             break;
     }
     delData(tmpData, _height);
+#endif
+    return allData;
+}
+
+ppPIXELS dpcComm::perspective(ppPIXELS& allData,float p,float q,float r)
+{
+    iTransfMatrix m(p,q,r,iTransfMatrix::PERSPECTIVE);
+    this->change(allData,m);
     return allData;
 }
 
@@ -363,18 +404,23 @@ ppPIXELS dpcComm::change(ppPIXELS& allData,const iMatrix& method)
         {
             allData[y][x] = iColor::WHITE;
             tmp  = tmpData[y][x] * method;
-            newX = REPAIR(tmp.getX(),_width);
-            newY = REPAIR(tmp.getY(),_height);
-            allData[newY][newX] = tmp;
+            newX = tmp.getX();
+            newY = tmp.getY();
+            if (newX >= 0 && newY >= 0 && newX < _width && newY < _height){
+                allData[y][x] = tmpData[newY][newX];
+            }
         }
     }
     delData(tmpData, _height);
     return allData;
 }
 
-
 ppPIXELS dpcComm::move(ppPIXELS& allData,int mx, int my)
 {
+#if MATRIX
+    iTransfMatrix m(mx,my,0,iTransfMatrix::MOVE);
+    this->change(allData,m);
+#else
 #define MOVEX(Mx,x) ((Mx)>0 ? (x <= Mx) : (x > _width-1+Mx))
 #define MOVEY(My,y) ((My)>0 ? (y <= My) : (y > _height-1+My))
     ppPIXELS tmpData;
@@ -390,6 +436,7 @@ ppPIXELS dpcComm::move(ppPIXELS& allData,int mx, int my)
         }
     }
     delData(tmpData, _height);
+#endif
     return allData;
 }
 
@@ -810,7 +857,6 @@ bool     dpcComm::dealManager(OPt& opt)
         printf("deal with option error!\n");
         return false;
     }
-    iTransfMatrix m(D2R(-45),iTransfMatrix::ROTATEz);
     char dealType = 0;
     size_t i = 0;
     while (i < opt.ssize())
@@ -821,7 +867,7 @@ bool     dpcComm::dealManager(OPt& opt)
         {
         case 'T':
             cout << "  -T     imageTranspose  : Transpose a iamge\n";
-           transpose(_Data);
+            transpose(_Data);
             break;
         case 'R':
             cout << "  -R     imageRevolution : Revolution a image\n";
@@ -837,8 +883,7 @@ bool     dpcComm::dealManager(OPt& opt)
             break;
         case 'M':
             cout << "  -M     imageMirror     : Mirror a image\n";
-            //mirror(_Data,UD);
-            change(_Data,m);
+            mirror(_Data,UD);
             break;
         case 'S':
             cout << "  -S     imageShear      : Shear a image\n";
@@ -882,6 +927,10 @@ bool     dpcComm::dealManager(OPt& opt)
             cout << "  -c     imageColorful    : make a image to colorfull\n";
             colorful(_Data);
             break;
+        case 'p':
+            cout << "  -p     imageperspective : make a image to perspective\n";
+            perspective(_Data,argv[1],argv[2],argv[3]);
+            break;
         default:
             printf("Not deal with!\n");
             break;
@@ -914,7 +963,8 @@ const char*  dpcComm::doc()
             "  -b  backGround_ize\t: get a image's part of backGround\n" +
             "  -d: (scala)\timageDensity\t: Change a image each pixel's Idensity\n" +
             "  -g  imageGray\t: get a image's gray image\n" +
-            "  -c  imageColorful\t: make a image to colorfull\n";
+            "  -c  imageColorful\t: make a image to colorfull\n"
+            "  -p  imageperspective\t: make a image to perspective\n";
     return doc.c_str();
 }
 

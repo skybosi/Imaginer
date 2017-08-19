@@ -327,7 +327,7 @@ bool OPt::getOpt()
 					else
 						res = getMultiArgv(_argv[i], i);
 				}
-				else if (argvl > 2)	// -ab
+                else if (argvl > 2 && InA != isSingleOpt(_argv[i][1]))	// -ab
 				{
 					vargv mixOpt;
 					size_t j = 0;
